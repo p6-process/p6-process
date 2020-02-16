@@ -1,0 +1,165 @@
+openapi: 3.0.0
+info:
+  title: Process definition
+  description: 'Process definition for the process engine P6'
+  contact:
+    email: andrej@lorislab.org
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: http://p6-executor:8080/v1
+paths:
+  /pd/{processId}/{processVersion}:
+    get:
+      summary: Get the process definition
+      operationId: getProcessDefinition
+      parameters:
+      - name: processId
+        in: path
+        description: ID of pet to return
+        required: true
+        schema:
+          type: string
+      - name: processVersion
+        in: path
+        description: ID of pet to return
+        required: true
+        schema:
+          type: string          
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProcessDefinition'
+components:
+  schemas:
+    ProcessDefinition:
+      required:
+      - processId
+      - processVersion
+      type: object
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ProcessMetadata'
+        process:
+          type: array
+          items:
+            $ref: '#/components/schemas/Node'
+#    Item:
+#      allOf:
+#        - $ref: '#/components/schemas/Node'
+##      oneOf:
+##        - $ref: '#/components/schemas/StartEvent'
+##        - $ref: '#/components/schemas/EndEvent'
+##        - $ref: '#/components/schemas/ScriptTask'
+#      discriminator:
+#        propertyName: nodeType
+#        mapping:
+#          START_EVENT: '#/components/schemas/StartEvent'
+#          END_EVENT: '#/components/schemas/EndEvent'
+#          SCRIPT_TASK: '#/components/schemas/ScriptTask'
+    ProcessMetadata:
+      type: object
+      properties:
+        processId:
+          type: string
+        processVersion:
+          type: string  
+        processUrl:
+          type: string
+        module:
+          type: string  
+        application:
+          type: string
+    StartEvent:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+      x-discriminator-value: "START_EVENT"
+    EndEvent:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+      x-discriminator-value: "END_EVENT"
+    ScriptTask:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          properties:
+            script:
+              type: string
+      x-discriminator-value: "SCRIPT_TASK"
+    ServiceTask:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          properties:
+            async:
+              type: boolean
+              default: false
+      x-discriminator-value: "SERVICE_TASK"
+    ParallelGateway:
+      allOf:
+        - $ref: '#/components/schemas/Gateway'
+      x-discriminator-value: "PARALLEL_GATEWAY"
+    ExclusiveGateway:
+      allOf:
+        - $ref: '#/components/schemas/Gateway'
+      x-discriminator-value: "EXCLUSIVE_GATEWAY"
+    InclusiveGateway:
+      allOf:
+        - $ref: '#/components/schemas/Gateway'
+      x-discriminator-value: "INCLUSIVE_GATEWAY"
+    Gateway:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          properties:
+            sequenceFlow:
+              $ref: '#/components/schemas/SequenceFlow'
+            defaultSequence:
+              type: string
+            condition:
+              type: object
+              additionalProperties:
+                type: string
+    Node:
+      type: object
+      required:
+        - nodeType      
+      properties:
+        name:
+          type: string
+        sequence:
+          $ref: '#/components/schemas/Sequence'
+        nodeType:
+          $ref: '#/components/schemas/NodeType'
+      discriminator:
+        propertyName: nodeType
+    Sequence:
+      type: object
+      properties:
+        from:
+          type: array
+          items:
+            type: string
+        to:
+          type: array
+          items:
+            type: string
+    NodeType:
+      type: string
+      enum: [SCRIPT_TASK, END_EVENT, START_EVENT, SERVICE_TASK, EXCLUSIVE_GATEWAY, INCLUSIVE_GATEWAY, PARALLEL_GATEWAY, CALL_ACTIVITY]
+    SequenceFlow:
+      type: string
+      enum: [UNSPECIFIED, MIX, CONVERGING, DIVERGING]
+      
+      
+      
+      
+        
+    

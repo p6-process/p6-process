@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "processId": "ServiceTaskProcess",
+    "processVersion": "1.0.0",
+    "application": "p6-example",
+    "module": "p6-example",
+    "processUrl": "http://p6-example:8080"
+  },
+  "process": [
+    {
+      "nodeType": "START_EVENT",
+      "name": "start",
+      "sequence": {
+        "from": [
+        ],
+        "to": [
+          "service"
+        ]
+      }
+    },
+    {
+      "nodeType": "SERVICE_TASK",
+      "name": "service",
+      "sequence": {
+        "from": [
+          "start"
+        ],
+        "to": [
+          "end"
+        ]
+      }
+    },
+    {
+      "nodeType": "END_EVENT",
+      "name": "end",
+      "sequence": {
+        "from": [
+          "service"
+        ],
+        "to": [
+        ]
+      }
+    }
+  ]
+}

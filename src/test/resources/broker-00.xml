@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<configuration xmlns="urn:activemq" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:activemq /schema/artemis-configuration.xsd">
+    <!-- from 1.0.0 to 1.5.5 the following line should be : <core xmlns="urn:activemq:core"> -->
+    <core xmlns="urn:activemq:core" xsi:schemaLocation="urn:activemq:core ">
+
+        <!-- QUEUES -->
+        <addresses>
+            <address name="token-execute-route">
+                <anycast>
+                    <queue name="token-execute-route"/>
+                </anycast>
+            </address>
+            <address name="token-execute-singleton">
+                <anycast>
+                    <queue name="token-execute-singleton"/>
+                </anycast>
+            </address>
+            <address name="deployment">
+                <anycast>
+                    <queue name="deployment"/>
+                </anycast>
+            </address>
+            <address name="process-start">
+                <anycast>
+                    <queue name="process-start"/>
+                </anycast>
+            </address>
+            <address name="token-execute">
+                <anycast>
+                    <queue name="token-execute"/>
+                </anycast>
+            </address>
+            <address name="service-task">
+                <anycast>
+                    <queue name="service-task"/>
+                </anycast>
+            </address>
+        </addresses>
+    </core>
+</configuration>
