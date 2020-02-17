@@ -5,7 +5,7 @@ on:
     branches:
       - master
 env:
-  SAMO_VER: 1.10.0
+  SAMO_VER: 1.11.0
   GRAALVM_VER: 19.3.1
   GRAALVM_JAVA: java11
   GRAALVM_HOME: .graalvm
@@ -43,8 +43,8 @@ jobs:
       - name: Build application
         run: mvn $MAVEN_CLI_OPTS clean package -Pnative
       - name: Build docker
-        run: samo maven docker-build --verbose
+        run: samo maven docker-build
       - name: Test docker
         run: mvn $MAVEN_CLI_OPTS failsafe:integration-test
       - name: Publish docker
-        run: samo maven docker-push --verbose
+        run: samo maven docker-push
