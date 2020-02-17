@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v1
       - name: Samo
         run: |
-          curl https://github.com/lorislab/samo/releases/download/v$SAMO_VER/samo_${SAMO_VER}_Linux_x86_64.tar.gz -O -J -L && tar xfz samo_${SAMO_VER}_Linux_x86_64.tar.gz samo
+          curl https://github.com/lorislab/samo/releases/download/$SAMO_VER/samo_${SAMO_VER}_Linux_x86_64.tar.gz -O -J -L && tar xfz samo_${SAMO_VER}_Linux_x86_64.tar.gz samo
           sudo mv samo /usr/local/bin/.
           rm *.tar.gz
       - name: GraalVM
