@@ -64,7 +64,7 @@ services:
     labels:
       - "test.unit=false"
       - "test.priority=101"
-      - "test.image.pull=false"
+      - "test.image.pull=DEFAULT"
       - "test.env.QUARKUS_DATASOURCE_URL=jdbc:postgresql://p6-executor-postgres:5432/p6?sslmode=disable"
       - "test.env.QUARKUS_INFINISPAN_CLIENT_SERVER_LIST=p6-executor-infinispan:11222"
       - "test.env.AMQP_HOST=p6-executor-artemis"
