@@ -20,7 +20,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 @ApplicationScoped
-public class ExecutorLifecycleService {
+public class DeploymentLifecycleService {
 
     @ConfigProperty(name = "p6.deployment.enabled", defaultValue = "true")
     boolean enabled;

@@ -1,5 +1,7 @@
 package org.lorislab.p6.process.dao.model.enums;
 
+import org.lorislab.p6.process.flow.model.ExclusiveGateway;
+import org.lorislab.p6.process.flow.model.Gateway;
 import org.lorislab.p6.process.flow.model.Node;
 import org.lorislab.p6.process.flow.model.ParallelGateway;
 
@@ -15,7 +17,13 @@ public enum ProcessTokenType {
 
     PARALLEL_GATEWAY_DIVERGING(ProcessTokenResponse.DEFAULT, -1),
 
-    PARALLEL_GATEWAY_CONVERGING(ProcessTokenResponse.SINGLETON, 1);
+    PARALLEL_GATEWAY_CONVERGING(ProcessTokenResponse.SINGLETON, 1),
+
+    EXCLUSIVE_GATEWAY_DIVERGING(ProcessTokenResponse.DEFAULT, -1),
+
+    EXCLUSIVE_GATEWAY_CONVERGING(ProcessTokenResponse.DEFAULT, 1),
+
+    ;
 
     public final ProcessTokenResponse response;
 
@@ -28,8 +36,8 @@ public enum ProcessTokenType {
 
     public static ProcessTokenType valueOf(Node node) {
         String tmp = node.nodeType.name();
-        if (node instanceof ParallelGateway) {
-            ParallelGateway pg = (ParallelGateway) node;
+        if (node instanceof Gateway) {
+            Gateway pg = (Gateway) node;
             tmp = pg.nodeType + "_" + pg.sequenceFlow;
         }
         return ProcessTokenType.valueOf(tmp);

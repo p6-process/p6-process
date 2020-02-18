@@ -38,6 +38,7 @@ public class ProcessExpressionHelper {
     public static boolean ifExpression(String expression, Object data) {
         String tmp = null;
         try {
+            log.debug("If expression: {} data: {}", expression, data);
             String input = expression;
             if (!input.trim().startsWith("{#if")) {
                 input = "{#if " + input + "}true{/}";

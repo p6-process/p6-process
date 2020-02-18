@@ -18,6 +18,7 @@ package org.lorislab.p6.process.test;
 
 import io.restassured.RestAssured;
 import io.vertx.amqp.*;
+import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.lorislab.jel.testcontainers.docker.DockerComposeService;
 import org.lorislab.jel.testcontainers.docker.DockerTestEnvironment;
@@ -25,16 +26,23 @@ import org.lorislab.p6.process.flow.model.*;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.lorislab.jel.testcontainers.InjectLoggerExtension;
+
+import static io.restassured.RestAssured.given;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.equalTo;
 
 /**
  * The abstract test
@@ -46,11 +54,11 @@ public abstract class AbstractTest {
 
     public static String ADDRESS_DEPLOYMENT = "deployment";
 
-    public static String ADDRESS_START_PROCESS = "process-start";
+    static String ADDRESS_START_PROCESS = "process-start";
 
-    public static String ADDRESS_SERVICE_TASK = "service-task";
+    static String ADDRESS_SERVICE_TASK = "service-task";
 
-    public static String ADDRESS_TOKEN_EXECUTE = "token-execute";
+    static String ADDRESS_TOKEN_EXECUTE = "token-execute";
 
     @Inject
     protected Logger log;
@@ -138,77 +146,86 @@ public abstract class AbstractTest {
         }
     }
 
-    protected static ProcessDefinition createProcessDefinition() {
-        ProcessDefinition pd = new ProcessDefinition();
-        ProcessMetadata md = new ProcessMetadata();
-        md.application = "application";
-        md.module = "module";
-        md.processId = "processId";
-        md.processUrl = "processUrl";
-        md.processVersion = "processVersion";
-        pd.metadata = md;
+    protected void waitProcessFinished(String processId, String processInstanceId) {
 
-        pd.process = new ArrayList<>();
+        log.info("Wait for the process {} to finished execution guid {} ", processId, processInstanceId);
+        await()
+                .atMost(5, SECONDS)
+                .untilAsserted(() -> given()
+                        .when()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .pathParam("guid", processInstanceId)
+                        .get("/v1/instance/{guid}")
+                        .prettyPeek()
+                        .then()
+                        .statusCode(Response.Status.OK.getStatusCode())
+                        .body("status", equalTo("FINISHED"))
+                );
+    }
 
-        StartEvent start = new StartEvent();
-        start.name = "start";
-        start.nodeType = NodeType.START_EVENT;
-        start.sequence = new Sequence();
-        start.sequence.to.add("service1");
-        pd.process.add(start);
+    protected String startProcess(String processId, String processVersion, Map<String, Object> body) {
+        log.info("Test {}:{}", processId, processVersion);
+        String processInstanceId = UUID.randomUUID().toString();
 
-        ServiceTask service1 = new ServiceTask();
-        service1.name = "service1";
-        service1.nodeType = NodeType.SERVICE_TASK;
-        service1.sequence = new Sequence();
-        service1.sequence.from.add("start");
-        service1.sequence.to.add("gateway1");
-        pd.process.add(service1);
+        Map<String, Object> data = new HashMap<>();
+        data.put("processId", processId);
+        data.put("processInstanceId", processInstanceId);
+        data.put("processVersion", processVersion);
 
-        ParallelGateway gateway1 = new ParallelGateway();
-        gateway1.name = "gateway1";
-        gateway1.nodeType = NodeType.PARALLEL_GATEWAY;
-        gateway1.sequenceFlow = SequenceFlow.DIVERGING;
-        gateway1.sequence = new Sequence();
-        gateway1.sequence.from.add("service1");
-        gateway1.sequence.to.add("service3");
-        gateway1.sequence.to.add("service4");
-        pd.process.add(gateway1);
+        log.info("Start the process {}", processInstanceId);
+        AmqpMessage startProcess = AmqpMessage.create()
+                .applicationProperties(JsonObject.mapFrom(data))
+                .withBody(JsonObject.mapFrom(body).toString())
+                .id(UUID.randomUUID().toString())
+                .correlationId(processInstanceId)
+                .build();
+        sendMessage(ADDRESS_START_PROCESS, startProcess);
+        return processInstanceId;
+    }
 
-        ServiceTask service3 = new ServiceTask();
-        service3.name = "service3";
-        service3.nodeType = NodeType.SERVICE_TASK;
-        service3.sequence = new Sequence();
-        service3.sequence.from.add("gateway1");
-        service3.sequence.to.add("gateway2");
-        pd.process.add(service3);
+    protected void processServiceTask(ExecuteServiceTask execute) {
+        AmqpMessage message = receivedMessage(ADDRESS_SERVICE_TASK);
+        String tmp = message.bodyAsString();
+        log.info("Service task message {} - {}", message.applicationProperties(), tmp);
 
-        ServiceTask service4 = new ServiceTask();
-        service4.name = "service4";
-        service4.nodeType = NodeType.SERVICE_TASK;
-        service4.sequence = new Sequence();
-        service4.sequence.from.add("gateway1");
-        service4.sequence.to.add("gateway2");
-        pd.process.add(service4);
+        JsonObject json = message.applicationProperties();
+        JsonObject body = new JsonObject(tmp);
 
-        ParallelGateway gateway2 = new ParallelGateway();
-        gateway2.name = "gateway2";
-        gateway2.nodeType = NodeType.PARALLEL_GATEWAY;
-        gateway2.sequenceFlow = SequenceFlow.CONVERGING;
-        gateway2.sequence = new Sequence();
-        gateway2.sequence.from.add("service3");
-        gateway2.sequence.from.add("service4");
-        gateway2.sequence.to.add("end");
-        pd.process.add(gateway2);
+        ServiceTaskData serviceData = new ServiceTaskData();
+        serviceData.data = Collections.unmodifiableMap(body.getMap());
+        serviceData.guid = json.getString("guid");
+        serviceData.name = json.getString("name");
+        serviceData.processId = json.getString("processId");
+        serviceData.processVersion = json.getString("processVersion");
 
-        EndEvent end = new EndEvent();
-        end.name = "end";
-        end.nodeType = NodeType.END_EVENT;
-        end.sequence = new Sequence();
-        end.sequence.from.add("gateway2");
-        pd.process.add(end);
+        // execute test
+        Map<String, Object> data = execute.execute(serviceData);
+        if (data != null) {
+            body.getMap().putAll(data);
+        }
 
-        return pd;
+        // send response message
+        AmqpMessage serviceTaskComplete = AmqpMessage.create()
+                .applicationProperties(message.applicationProperties())
+                .withBody(body.toString())
+                .id(UUID.randomUUID().toString())
+                .correlationId(message.correlationId())
+                .build();
+
+        sendMessage(ADDRESS_TOKEN_EXECUTE, serviceTaskComplete);
+    }
+
+    public static class ServiceTaskData {
+        public String guid;
+        public String name;
+        public String processId;
+        public String processVersion;
+        public Map<String, Object> data;
+    }
+
+    public interface ExecuteServiceTask {
+
+        Map<String, Object> execute(ServiceTaskData data);
     }
 
 }

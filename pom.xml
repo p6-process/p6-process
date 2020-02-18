@@ -251,7 +251,7 @@
                                 <modelAnnotation>io.quarkus.runtime.annotations.RegisterForReflection</modelAnnotation>
                             </modelAnnotations>
                             <configOptions>
-                                <sourceFolder>p6-executor</sourceFolder>
+                                <sourceFolder>p6-process</sourceFolder>
                             </configOptions>
                         </configuration>
                     </execution>
