@@ -23,6 +23,9 @@ public enum ProcessTokenType {
 
     EXCLUSIVE_GATEWAY_CONVERGING(ProcessTokenResponse.DEFAULT, 1),
 
+    INCLUSIVE_GATEWAY_DIVERGING(ProcessTokenResponse.DEFAULT, -1),
+
+    INCLUSIVE_GATEWAY_CONVERGING(ProcessTokenResponse.SINGLETON, 1),
     ;
 
     public final ProcessTokenResponse response;

@@ -33,6 +33,7 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -135,6 +136,7 @@ public class ProcessService {
                     token.setStatus(ProcessTokenStatus.CREATED);
                     token.setPreviousName(null);
                     token.setProcessInstanceGuid(ppi.getGuid());
+                    token.setMessageId(UUID.randomUUID().toString());
                     return token;
                 }).collect(Collectors.toList());
 

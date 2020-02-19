@@ -3,15 +3,13 @@ package org.lorislab.p6.process.stream.events;
 import io.quarkus.arc.Unremovable;
 import org.lorislab.p6.process.dao.ProcessInstanceContentDAO;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
-import org.lorislab.p6.process.dao.ProcessTokenContentDAO;
-import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.dao.model.ProcessInstanceContent;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.dao.model.ProcessTokenContent;
-import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
+import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 import org.lorislab.p6.process.flow.model.Node;
 import org.lorislab.p6.process.flow.model.ProcessDefinitionModel;
 import org.lorislab.p6.process.stream.DataUtil;
@@ -30,12 +28,6 @@ import java.util.List;
 public class EndEventTokenService extends EventService {
 
     @Inject
-    ProcessTokenDAO processTokenRepository;
-
-    @Inject
-    ProcessTokenContentDAO  processTokenContentDAO;
-
-    @Inject
     ProcessInstanceDAO processInstanceRepository;
 
     @Inject
@@ -47,7 +39,7 @@ public class EndEventTokenService extends EventService {
         if (token.getStatus() != ProcessTokenStatus.FINISHED) {
             token.setStatus(ProcessTokenStatus.FINISHED);
             token.setFinishedDate(new Date());
-            processTokenRepository.update(token);
+            token = processTokenDAO.update(token, true);
 
             // update the process instance
             // TODO: check if all tokens finished!

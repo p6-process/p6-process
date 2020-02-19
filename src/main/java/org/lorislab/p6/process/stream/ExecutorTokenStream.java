@@ -38,12 +38,13 @@ public class ExecutorTokenStream {
     private CompletionStage<Void> execute(AmqpMessage<String> message) {
         return CompletableFuture.runAsync(() -> {
             try {
+                String correlationId = message.getAmqpMessage().correlationId();
                 JsonObject json = message.getApplicationProperties();
                 String guid = json.getString("guid");
                 String name = json.getString("name");
 
-                List<ProcessToken> tokens = executorTokenService.executeToken(guid, name, message.getPayload());
-                executorTokenService.executeResponse(guid, name, message.getAmqpMessage().correlationId(), tokens);
+                List<ProcessToken> tokens = executorTokenService.executeToken(correlationId, guid, name, message.getPayload());
+                executorTokenService.executeResponse(guid, name, correlationId, tokens);
                 message.getAmqpMessage().accepted();
             } catch (Exception e) {
                 log.error("Error token message. Message {}", message);

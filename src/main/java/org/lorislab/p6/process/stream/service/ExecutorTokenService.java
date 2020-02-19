@@ -27,17 +27,21 @@ public class ExecutorTokenService {
     Logger log;
 
     @Inject
-    ProcessTokenDAO processTokenRepository;
+    ProcessTokenDAO processTokenDAO;
 
     @Inject
     ExecutorCacheService executorCacheService;
 
     @Transactional(value = Transactional.TxType.REQUIRED, rollbackOn = {RuntimeException.class})
-    public List<ProcessToken> executeToken(String guid, String name, String payload) {
+    public List<ProcessToken> executeToken(String correlationId, String guid, String name, String payload) {
 
-        ProcessToken token = processTokenRepository.findBy(guid);
+        ProcessToken token = processTokenDAO.findBy(guid);
         if (token == null) {
             log.warn("No token found for the guid: {}", guid);
+            return Collections.emptyList();
+        }
+        if (!correlationId.equals(token.getMessageId())) {
+            log.warn("Wrong correlation ID for the token {}. CorrelationId: {} excepted: {}", token, correlationId, token.getMessageId());
             return Collections.emptyList();
         }
         if (!name.equals(token.getNodeName())) {

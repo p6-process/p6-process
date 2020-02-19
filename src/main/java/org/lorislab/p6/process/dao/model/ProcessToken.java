@@ -77,6 +77,9 @@ public class ProcessToken extends Persistent {
     @Column(name = "PROCESS_VERSION")
     private String processVersion;
 
+    @Column(name = "MESSAGE_ID")
+    private String messageId;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "CREATED_FROM",

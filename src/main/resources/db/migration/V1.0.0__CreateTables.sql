@@ -65,6 +65,7 @@ create table PROCESS_TOKEN (
                                START_NODE_NAME varchar(255),
                                TOKEN_STATUS varchar(255),
                                TOKEN_TYPE varchar(255),
+                               MESSAGE_ID varchar(255),
                                primary key (C_GUID)
 );
 

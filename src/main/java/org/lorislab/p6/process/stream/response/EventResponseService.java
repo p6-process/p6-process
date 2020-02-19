@@ -22,7 +22,6 @@ import org.lorislab.p6.process.dao.model.ProcessToken;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 public interface EventResponseService {
 
@@ -30,9 +29,9 @@ public interface EventResponseService {
 
     static AmqpMessageBuilder createMessageBuilder(ProcessToken token, String correlationId) {
         return io.vertx.amqp.AmqpMessage.create()
-                .id(UUID.randomUUID().toString())
+                .id(correlationId)
                 .applicationProperties(EventResponseService.toJson(token))
-                .correlationId(correlationId);
+                .correlationId(token.getMessageId());
     }
 
     static JsonObject toJson(ProcessToken token) {
