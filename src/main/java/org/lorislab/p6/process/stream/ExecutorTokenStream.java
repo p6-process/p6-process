@@ -1,56 +1,40 @@
 package org.lorislab.p6.process.stream;
 
-import io.smallrye.reactive.messaging.amqp.AmqpMessage;
-import io.vertx.core.json.JsonObject;
-import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.lorislab.p6.process.dao.model.ProcessToken;
-import org.lorislab.p6.process.stream.service.ExecutorTokenService;
-import org.slf4j.Logger;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
+import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
+import org.lorislab.p6.process.stream.model.ProcessTokenStream;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 @ApplicationScoped
 public class ExecutorTokenStream {
 
     @Inject
-    Logger log;
-
-    @Inject
     ExecutorTokenService executorTokenService;
 
-    @Incoming("token-execute")
-    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public CompletionStage<Void> message(AmqpMessage<String> message) {
-        return execute(message);
+    @Incoming("process-token-in")
+    @Outgoing("process-token-route-out")
+    public PublisherBuilder<ProcessTokenStream> message(ProcessTokenStream token) {
+        return execute(token);
     }
 
-    @Incoming("token-execute-singleton")
-    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public CompletionStage<Void> singleton(AmqpMessage<String> message) {
-        return execute(message);
+    @Incoming("process-token-singleton-in")
+    @Outgoing("process-token-route-out")
+    public PublisherBuilder<ProcessTokenStream> singleton(ProcessTokenStream token) {
+        return execute(token);
     }
 
-    private CompletionStage<Void> execute(AmqpMessage<String> message) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                String correlationId = message.getAmqpMessage().correlationId();
-                JsonObject json = message.getApplicationProperties();
-                String guid = json.getString("guid");
-                String name = json.getString("name");
+    private PublisherBuilder<ProcessTokenStream> execute(ProcessTokenStream token) {
+        List<ProcessTokenStream> tokens = executorTokenService.executeToken(token);
+        if (tokens == null) {
+            return ReactiveStreams.empty();
+        }
+        return ReactiveStreams.of(tokens.toArray(new ProcessTokenStream[0]));
 
-                List<ProcessToken> tokens = executorTokenService.executeToken(correlationId, guid, name, message.getPayload());
-                executorTokenService.executeResponse(guid, name, correlationId, tokens);
-                message.getAmqpMessage().accepted();
-            } catch (Exception e) {
-                log.error("Error token message. Message {}", message);
-                message.getAmqpMessage().modified(true, false);
-            }
-        });
     }
 
 }

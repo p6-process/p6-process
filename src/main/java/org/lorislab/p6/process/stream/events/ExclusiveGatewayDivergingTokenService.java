@@ -1,17 +1,14 @@
 package org.lorislab.p6.process.stream.events;
 
 import io.quarkus.arc.Unremovable;
-import org.lorislab.p6.process.dao.model.ProcessToken;
-import org.lorislab.p6.process.dao.model.ProcessTokenContent;
-import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 import org.lorislab.p6.process.flow.model.ExclusiveGateway;
 import org.lorislab.p6.process.flow.model.Node;
 import org.lorislab.p6.process.flow.model.ProcessDefinitionModel;
-import org.lorislab.p6.process.stream.DataUtil;
-import org.lorislab.quarkus.jel.jpa.exception.DAOException;
+import org.lorislab.p6.process.stream.model.ProcessTokenStatusStream;
+import org.lorislab.p6.process.stream.model.ProcessTokenStream;
+import org.lorislab.p6.process.stream.model.ProcessTokenTypeStream;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -19,15 +16,13 @@ import java.util.Map;
 
 @Unremovable
 @ApplicationScoped
-@EventServiceType(ProcessTokenType.EXCLUSIVE_GATEWAY_DIVERGING)
+@EventServiceType(ProcessTokenTypeStream.EXCLUSIVE_GATEWAY_DIVERGING)
 public class ExclusiveGatewayDivergingTokenService extends EventService {
 
     @Override
-    @Transactional(value = Transactional.TxType.REQUIRED, rollbackOn = DAOException.class)
-    public List<ProcessToken> execute(ProcessToken token, ProcessDefinitionModel pd, Node node, String payload) {
+    public List<ProcessTokenStream> execute(ProcessTokenStream token, ProcessDefinitionModel pd, Node node) {
 
-        ProcessTokenContent ptc = processTokenContentDAO.findBy(token.getGuid());
-        Map<String, Object> data = DataUtil.deserialize(ptc.getData());
+        Map<String, Object> data = token.data;
 
         String item = null;
         ExclusiveGateway gateway = (ExclusiveGateway) node;
@@ -47,6 +42,10 @@ public class ExclusiveGatewayDivergingTokenService extends EventService {
             item = gateway.defaultSequence;
         }
 
-        return createChildTokens(token, ptc.getData(), pd, Collections.singletonList(item));
+        token.status = ProcessTokenStatusStream.IN_EXECUTION;
+        token.previousName = token.nodeName;
+        token.nodeName = item;
+        token.type = ProcessTokenTypeStream.valueOf(pd.get(item));
+        return Collections.singletonList(token);
     }
 }

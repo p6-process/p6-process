@@ -1,7 +1,7 @@
 package org.lorislab.p6.process.rs;
 
-import org.lorislab.p6.process.dao.ProcessTokenDAO;
-import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.mem.service.ProcessTokenService;
+import org.lorislab.p6.process.stream.model.ProcessTokenStream;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -15,11 +15,11 @@ import java.util.List;
 public class ProcessTokenRestController {
 
     @Inject
-    ProcessTokenDAO dao;
+    ProcessTokenService dao;
 
     @GET
     public Response get() {
-        List<ProcessToken> tmp = dao.find(null, null);
+        List<ProcessTokenStream> tmp = dao.findAll();
         if (tmp == null || tmp.isEmpty()) {
             return Response.noContent().build();
         }
@@ -29,7 +29,7 @@ public class ProcessTokenRestController {
     @GET
     @Path("{guid}")
     public Response get(@PathParam("guid") String guid) {
-        ProcessToken tmp = dao.findBy(guid);
+        ProcessTokenStream tmp = dao.findByGuid(guid);
         if (tmp == null) {
             return Response.noContent().build();
         }

@@ -16,11 +16,9 @@
 
 package org.lorislab.p6.process.rs;
 
-import io.smallrye.reactive.messaging.amqp.AmqpMessage;
 import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
 import org.eclipse.microprofile.openapi.annotations.info.Info;
 import org.eclipse.microprofile.openapi.annotations.servers.Server;
-import org.lorislab.quarkus.jel.log.interceptor.LoggerParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +26,6 @@ import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
-import javax.ws.rs.core.GenericEntity;
-import java.util.Collections;
-import java.util.List;
 
 @OpenAPIDefinition(
         servers = {
@@ -40,22 +35,6 @@ import java.util.List;
 )
 @ApplicationPath("/v1")
 public class JaxrsApplication extends Application {
-
-    static <T> GenericEntity<List<T>> list(List<T> data) {
-        return new GenericEntity<List<T>>(data) {
-        };
-    }
-
-    static <T> GenericEntity<List<T>> list(T data) {
-        return new GenericEntity<List<T>>(Collections.singletonList(data)) {
-        };
-    }
-
-    @LoggerParam(classes = {AmqpMessage.class})
-    public static String logMessage(Object message) {
-        AmqpMessage<?> a = (AmqpMessage<?>) message;
-        return "Message[" + a.getMessageId() + "," + a.getApplicationProperties() + "," + a.getCorrelationId() + "," + a.getDeliveryCount() + "]";
-    }
 
     @Produces
     public Logger produceLogger(InjectionPoint injectionPoint) {

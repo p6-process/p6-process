@@ -14,24 +14,13 @@
  * limitations under the License.
  */
 
-package org.lorislab.p6.process.flow.model;
+package org.lorislab.p6.process.stream.model;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+public enum ProcessInstanceStatus {
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+    CREATED,
 
-@JsonDeserialize(converter = ProcessDefinitionDeserializer.class)
-public class ProcessDefinitionModel extends ProcessDefinition {
+    FAILED,
 
-    public List<Node> start = new ArrayList<>();
-
-    public Map<String, Node> nodes = new HashMap<>();
-
-    public Node get(String name) {
-        return nodes.get(name);
-    }
-
+    FINISHED;
 }

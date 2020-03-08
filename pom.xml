@@ -69,11 +69,6 @@
         </dependency>
         <dependency>
             <groupId>org.lorislab.quarkus</groupId>
-            <artifactId>jel-quarkus-jpa</artifactId>
-            <version>0.12.0</version>
-        </dependency>        
-        <dependency>
-            <groupId>org.lorislab.quarkus</groupId>
             <artifactId>jel-quarkus-log</artifactId>
             <version>0.12.0</version>
         </dependency>        
@@ -83,23 +78,11 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-reactive-messaging-amqp</artifactId>
+            <artifactId>quarkus-smallrye-reactive-messaging-kafka</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-qute</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-hibernate-orm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-jdbc-postgresql</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-flyway</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -117,13 +100,6 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-openapi</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-jpamodelgen</artifactId>
-            <version>5.4.6.Final</version>
-            <scope>provided</scope>
-        </dependency>
-
 
         <!-- TEST -->
         <dependency>
@@ -278,35 +254,6 @@
                                 <configuration>
                                     <enableHttpUrlHandler>true</enableHttpUrlHandler>
                                 </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>ddl</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>de.jpdigital</groupId>
-                        <artifactId>hibernate54-ddl-maven-plugin</artifactId>
-                        <version>2.3.0</version>
-                        <configuration>
-                            <dialects>
-                                <param>postgresql9</param>
-                            </dialects>
-                            <packages>
-                                <param>org.lorislab.p6.data</param>
-                            </packages>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>gen-ddl</goal>
-                                </goals>
-                                <phase>process-classes</phase>
                             </execution>
                         </executions>
                     </plugin>
