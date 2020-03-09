@@ -1,40 +1,38 @@
 package org.lorislab.p6.process.dao.model.enums;
 
-import org.lorislab.p6.process.flow.model.ExclusiveGateway;
 import org.lorislab.p6.process.flow.model.Gateway;
 import org.lorislab.p6.process.flow.model.Node;
-import org.lorislab.p6.process.flow.model.ParallelGateway;
 
 public enum ProcessTokenType {
 
-    START_EVENT(ProcessTokenResponse.DEFAULT, 1),
+    START_EVENT(ProcessTokenRoute.DEFAULT, 1),
 
-    END_EVENT(ProcessTokenResponse.SINGLETON, 0),
+    END_EVENT(ProcessTokenRoute.SINGLETON, 0),
 
-    SERVICE_TASK( ProcessTokenResponse.DEFAULT, 1),
+    SERVICE_TASK(ProcessTokenRoute.DEFAULT, 1),
 
-    SERVICE_TASK_COMPLETE( ProcessTokenResponse.SERVICE_TASK, 1),
+    SERVICE_TASK_COMPLETE(ProcessTokenRoute.SERVICE_TASK, 1),
 
-    PARALLEL_GATEWAY_DIVERGING(ProcessTokenResponse.DEFAULT, -1),
+    PARALLEL_GATEWAY_DIVERGING(ProcessTokenRoute.DEFAULT, -1),
 
-    PARALLEL_GATEWAY_CONVERGING(ProcessTokenResponse.SINGLETON, 1),
+    PARALLEL_GATEWAY_CONVERGING(ProcessTokenRoute.SINGLETON, 1),
 
-    EXCLUSIVE_GATEWAY_DIVERGING(ProcessTokenResponse.DEFAULT, -1),
+    EXCLUSIVE_GATEWAY_DIVERGING(ProcessTokenRoute.DEFAULT, -1),
 
-    EXCLUSIVE_GATEWAY_CONVERGING(ProcessTokenResponse.DEFAULT, 1),
+    EXCLUSIVE_GATEWAY_CONVERGING(ProcessTokenRoute.DEFAULT, 1),
 
-    INCLUSIVE_GATEWAY_DIVERGING(ProcessTokenResponse.DEFAULT, -1),
+    INCLUSIVE_GATEWAY_DIVERGING(ProcessTokenRoute.DEFAULT, -1),
 
-    INCLUSIVE_GATEWAY_CONVERGING(ProcessTokenResponse.SINGLETON, 1),
+    INCLUSIVE_GATEWAY_CONVERGING(ProcessTokenRoute.SINGLETON, 1),
     ;
 
-    public final ProcessTokenResponse response;
+    public final String route;
 
     public final int nextNodeCount;
 
-    ProcessTokenType(ProcessTokenResponse response, int nextNodeCount) {
+    ProcessTokenType(String route, int nextNodeCount) {
         this.nextNodeCount = nextNodeCount;
-        this.response = response;
+        this.route = route;
     }
 
     public static ProcessTokenType valueOf(Node node) {

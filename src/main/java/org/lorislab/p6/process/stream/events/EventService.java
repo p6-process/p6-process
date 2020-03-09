@@ -16,20 +16,16 @@
 
 package org.lorislab.p6.process.stream.events;
 
-import org.lorislab.p6.process.dao.ProcessTokenContentDAO;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.ProcessToken;
-import org.lorislab.p6.process.dao.model.ProcessTokenContent;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
+import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
+import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
 import org.lorislab.p6.process.flow.model.Node;
-import org.lorislab.p6.process.flow.model.ProcessDefinitionModel;
-import org.lorislab.quarkus.jel.jpa.exception.ConstraintDAOException;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class EventService {
@@ -40,56 +36,40 @@ public abstract class EventService {
     @Inject
     ProcessTokenDAO processTokenDAO;
 
-    @Inject
-    ProcessTokenContentDAO processTokenContentDAO;
-
-    public List<ProcessToken> execute(ProcessToken token, ProcessDefinitionModel pd, Node node, String payload) {
+    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionModel pd, Node node) {
         return Collections.emptyList();
     }
 
-    protected static void moveToNexNode(ProcessToken token, ProcessDefinitionModel pd, Node node) {
+    protected static void moveToNexNode(String messageId, ProcessToken token, ProcessDefinitionModel pd, Node node) {
         String next = node.sequence.to.get(0);
-        token.setStatus(ProcessTokenStatus.IN_EXECUTION);
-        token.setPreviousName(token.getNodeName());
-        token.setNodeName(next);
-        token.setMessageId(UUID.randomUUID().toString());
-        token.setType(pd.getNodeProcessTokenType(next));
+        token.status = ProcessTokenStatus.IN_EXECUTION;
+//        token.setPreviousName(token.getNodeName());
+        token.nodeName = next;
+        token.messageId = messageId;
+        token.executionId = UUID.randomUUID().toString();
+        token.type = ProcessTokenType.valueOf(pd.nodes.get(next));
     }
 
-    protected List<ProcessToken> createChildTokens(ProcessToken token, byte[] data, ProcessDefinitionModel pd, List<String> items) {
-        List<ProcessToken> tokens = items.stream().map(item -> {
+    protected List<ProcessToken> createChildTokens(String messageId, ProcessToken token, ProcessDefinitionModel pd, List<String> items) {
+        Map<String, ProcessToken> tokens = items.stream().map(item -> {
             ProcessToken child = new ProcessToken();
-            child.setNodeName(item);
-            child.setProcessId(token.getProcessId());
-            child.setProcessVersion(token.getProcessVersion());
-            child.setCreateNodeName(item);
-            child.setPreviousName(token.getNodeName());
-            child.setParent(token.getGuid());
-            child.setType(pd.getNodeProcessTokenType(item));
-            child.setProcessInstanceGuid(token.getProcessInstanceGuid());
-            child.setStatus(ProcessTokenStatus.IN_EXECUTION);
-            child.setMessageId(UUID.randomUUID().toString());
+            child.nodeName = item;
+            child.processId = token.processId;
+            child.processVersion = token.processVersion;
+//            child.setCreateNodeName(item);
+//            child.setPreviousName(token.getNodeName());
+            child.parent = token.guid;
+            child.type = ProcessTokenType.valueOf(pd.nodes.get(item));
+            child.processInstance = token.processInstance;
+            child.data = token.data;
+            child.status = ProcessTokenStatus.IN_EXECUTION;
+            child.messageId = messageId;
+            child.executionId = UUID.randomUUID().toString();
             return child;
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toMap(t -> t.guid, t -> t));
 
-        // create the child tokens
-        try {
-            processTokenDAO.create(tokens, true);
+        processTokenDAO.createAll(tokens);
 
-            List<ProcessTokenContent> contents = tokens.stream()
-                    .map(ProcessToken::getGuid)
-                    .map(x -> {
-                        ProcessTokenContent pt = new ProcessTokenContent();
-                        pt.setGuid(x);
-                        pt.setData(data);
-                        return pt;
-                    }).collect(Collectors.toList());
-
-            processTokenContentDAO.create(contents);
-        } catch (ConstraintDAOException ex) {
-            log.warn("Tokens are already created. Task {}/{}", token.getGuid(), token.getNodeName());
-            tokens = processTokenDAO.findAllTokensInExecution(token.getProcessInstanceGuid(), token.getGuid());
-        }
-        return tokens;
+        return new ArrayList<>(tokens.values());
     }
 }

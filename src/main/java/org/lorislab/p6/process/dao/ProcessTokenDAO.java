@@ -16,123 +16,50 @@
 
 package org.lorislab.p6.process.dao;
 
+import io.quarkus.infinispan.client.Remote;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.Search;
+import org.infinispan.query.dsl.QueryFactory;
 import org.lorislab.p6.process.dao.model.ProcessToken;
-import org.lorislab.p6.process.dao.model.ProcessToken_;
-import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
-import org.lorislab.quarkus.jel.jpa.exception.DAOException;
-import org.lorislab.quarkus.jel.jpa.service.AbstractEntityDAO;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.persistence.NoResultException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-import javax.transaction.Transactional;
+import javax.inject.Inject;
 import java.util.List;
+import java.util.Map;
 
 @ApplicationScoped
-@Transactional(value = Transactional.TxType.NOT_SUPPORTED, rollbackOn = DAOException.class)
-public class ProcessTokenDAO extends AbstractEntityDAO<ProcessToken> {
+public class ProcessTokenDAO {
 
-    @Transactional(value = Transactional.TxType.REQUIRES_NEW, rollbackOn = DAOException.class)
-    public List<ProcessToken> findAllTokensInExecution(String processInstanceId, String parent) throws DAOException {
-        try {
-            CriteriaQuery<ProcessToken> cq = em.getCriteriaBuilder().createQuery(entityClass);
-            Root<ProcessToken> root = cq.from(entityClass);
-            CriteriaBuilder cb = em.getCriteriaBuilder();
-            cq.where(
-                    cb.equal(root.get(ProcessToken_.PROCESS_INSTANCE_GUID), processInstanceId),
-                    cb.equal(root.get(ProcessToken_.PARENT), parent),
-                    cb.equal(root.get(ProcessToken_.STATUS), ProcessTokenStatus.IN_EXECUTION)
-            );
-            return em.createQuery(cq).getResultList();
-        } catch (Exception ex) {
-            throw new DAOException(ErrorKeys.ERROR_FIND_ALL_TOKENS_IN_EXECUTION_AND_PREVIOUS, ex, processInstanceId, parent);
-        }
+    @Inject
+    @Remote("tokens")
+    RemoteCache<String, ProcessToken> cache;
+
+    public List<ProcessToken> findAll() {
+        QueryFactory qf = Search.getQueryFactory(cache);
+        return qf.create("from ProcessToken b").list();
     }
 
-    @Transactional(value = Transactional.TxType.REQUIRES_NEW, rollbackOn = DAOException.class)
-    public List<ProcessToken> findAllCreatedTokensCreate(String processInstanceId) throws DAOException {
-        try {
-            CriteriaQuery<ProcessToken> cq = em.getCriteriaBuilder().createQuery(entityClass);
-            Root<ProcessToken> root = cq.from(entityClass);
-            CriteriaBuilder cb = em.getCriteriaBuilder();
-            cq.where(
-                    cb.equal(root.get(ProcessToken_.PROCESS_INSTANCE_GUID), processInstanceId),
-                    cb.equal(root.get(ProcessToken_.STATUS), ProcessTokenStatus.CREATED)
-            );
-            return em.createQuery(cq).getResultList();
-        } catch (Exception ex) {
-            throw new DAOException(ErrorKeys.ERROR_FIND_ALL_CREATED_TOKENS, ex, processInstanceId);
-        }
+    public ProcessToken findByGuid(String guid) {
+        return cache.get(guid);
     }
 
-    @Transactional(Transactional.TxType.NOT_SUPPORTED)
-    public ProcessToken findByProcessInstanceIdAndNodeName(String processInstanceId, String nodeName) throws DAOException {
-        try {
-            CriteriaQuery<ProcessToken> cq = em.getCriteriaBuilder().createQuery(entityClass);
-            Root<ProcessToken> root = cq.from(entityClass);
-            CriteriaBuilder cb = em.getCriteriaBuilder();
-            cq.where(
-                    cb.equal(root.get(ProcessToken_.PROCESS_INSTANCE_GUID), processInstanceId),
-                    cb.equal(root.get(ProcessToken_.NODE_NAME), nodeName)
-            );
-            return em.createQuery(cq).getSingleResult();
-        } catch (NoResultException no) {
-            return null;
-        } catch (Exception ex) {
-            throw new DAOException(ErrorKeys.ERROR_FIND_BY_PROCESS_INSTANCE_ID_AND_NODE_NAME, ex, processInstanceId, nodeName);
-        }
+    public ProcessToken update(ProcessToken token) {
+        return cache.replace(token.guid, token);
     }
 
-    @Transactional(value = Transactional.TxType.REQUIRED, rollbackOn = DAOException.class)
-    public ProcessToken findByReferenceAndCreateNodeName(String referenceTokenGuid, String createNodeName) throws DAOException {
-        try {
-            CriteriaQuery<ProcessToken> cq = em.getCriteriaBuilder().createQuery(entityClass);
-            Root<ProcessToken> root = cq.from(entityClass);
-            CriteriaBuilder cb = em.getCriteriaBuilder();
-            cq.where(
-                    cb.equal(root.get(ProcessToken_.REFERENCE_TOKEN_GUID), referenceTokenGuid),
-                    cb.equal(root.get(ProcessToken_.CREATE_NODE_NAME), createNodeName)
-            );
-            return em.createQuery(cq).getSingleResult();
-        } catch (NoResultException no) {
-            return null;
-        } catch (Exception ex) {
-            throw new DAOException(ErrorKeys.ERROR_FIND_BY_REFERENCE_TOKEN, ex, referenceTokenGuid);
-        }
+    public ProcessToken create(ProcessToken token) {
+        return cache.put(token.guid, token);
     }
 
-    @Transactional(value = Transactional.TxType.REQUIRES_NEW, rollbackOn = DAOException.class)
-    public ProcessToken findByProcessIdAndStartNodeName(String processInstanceId, String startNodeName) throws DAOException {
-        try {
-            CriteriaQuery<ProcessToken> cq = em.getCriteriaBuilder().createQuery(entityClass);
-            Root<ProcessToken> root = cq.from(entityClass);
-            CriteriaBuilder cb = em.getCriteriaBuilder();
-            cq.where(
-                    cb.equal(root.get(ProcessToken_.PROCESS_INSTANCE_GUID), processInstanceId),
-                    cb.equal(root.get(ProcessToken_.START_NODE_NAME), startNodeName)
-            );
-            return em.createQuery(cq).getSingleResult();
-        } catch (NoResultException no) {
-            return null;
-        } catch (Exception ex) {
-            throw new DAOException(ErrorKeys.ERROR_FIND_BY_PROCESS_INSTANCE_ID_AND_START_NODE_NAME, ex, processInstanceId, startNodeName);
-        }
+    public void createAll(Map<String, ProcessToken> tokens) {
+        cache.putAll(tokens);
     }
 
-    enum ErrorKeys {
+    public ProcessToken findByReferenceAndCreateNodeName(String reference, String createdNodeName) {
+        // TODO:
 
-        ERROR_FIND_BY_REFERENCE_TOKEN,
-
-        ERROR_FIND_BY_PROCESS_INSTANCE_ID_AND_NODE_NAME,
-
-        ERROR_FIND_BY_PROCESS_INSTANCE_ID_AND_START_NODE_NAME,
-
-        ERROR_FIND_ALL_TOKENS_IN_EXECUTION_AND_PREVIOUS,
-
-        ERROR_FIND_ALL_CREATED_TOKENS,
-
-        ;
+        QueryFactory qf = Search.getQueryFactory(cache);
+        List<ProcessToken> tokens = qf.create("from ProcessToken t where t.reference = '" + reference + "' and t.createNodeName = '" + createdNodeName + "'").list();
+        return tokens.get(0);
     }
 }

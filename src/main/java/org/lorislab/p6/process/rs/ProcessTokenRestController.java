@@ -19,7 +19,7 @@ public class ProcessTokenRestController {
 
     @GET
     public Response get() {
-        List<ProcessToken> tmp = dao.find(null, null);
+        List<ProcessToken> tmp = dao.findAll();
         if (tmp == null || tmp.isEmpty()) {
             return Response.noContent().build();
         }
@@ -29,7 +29,7 @@ public class ProcessTokenRestController {
     @GET
     @Path("{guid}")
     public Response get(@PathParam("guid") String guid) {
-        ProcessToken tmp = dao.findBy(guid);
+        ProcessToken tmp = dao.findByGuid(guid);
         if (tmp == null) {
             return Response.noContent().build();
         }

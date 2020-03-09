@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package org.lorislab.p6.process.flow.model;
+package org.lorislab.p6.process.deployment;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
+import org.lorislab.p6.process.flow.model.Node;
+import org.lorislab.p6.process.flow.model.ProcessDefinition;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,7 +37,4 @@ public class ProcessDefinitionModel extends ProcessDefinition {
         return nodes.get(name);
     }
 
-    public ProcessTokenType getNodeProcessTokenType(String name) {
-        return ProcessTokenType.valueOf(nodes.get(name));
-    }
 }

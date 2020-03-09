@@ -18,7 +18,7 @@ package org.lorislab.p6.process.dao.model.enums;
 
 public enum ProcessInstanceStatus {
 
-    IN_EXECUTION,
+    CREATED,
 
     FAILED,
 

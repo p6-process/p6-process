@@ -16,33 +16,32 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;
-import org.lorislab.quarkus.jel.jpa.model.Persistent;
 
-import javax.persistence.*;
+import java.util.HashMap;
+import java.util.Map;
 
-@Entity
-@Getter
-@Setter
-@Table(name = "PROCESS_INSTANCE")
-public class ProcessInstance extends Persistent {
+public class ProcessInstance {
 
-    @Column(name = "PROCESS_PARENT_GUID")
-    private String processInstanceParentGuid;
+    @ProtoField(number = 1)
+    public String guid;
 
-    @Column(name = "PROCESS_DEF_GUID")
-    private String processDefinitionGuid;
+    @ProtoField(number = 2)
+    public String parentGuid;
 
-    @Column(name = "PROCESS_ID")
-    private String processId;
+    @ProtoField(number = 3)
+    public String messageId;
 
-    @Column(name = "PROCESS_VERSION")
-    private String processVersion;
+    @ProtoField(number = 4)
+    public String processId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "STATUS")
-    private ProcessInstanceStatus status;
+    @ProtoField(number = 5)
+    public String processVersion;
 
+    @ProtoField(number = 6)
+    public ProcessInstanceStatus status;
+
+    @ProtoField(number = 7)
+    public Map<String, Object> data = new HashMap<>();
 }

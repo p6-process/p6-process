@@ -28,9 +28,6 @@ import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
-import javax.ws.rs.core.GenericEntity;
-import java.util.Collections;
-import java.util.List;
 
 @OpenAPIDefinition(
         servers = {
@@ -40,16 +37,6 @@ import java.util.List;
 )
 @ApplicationPath("/v1")
 public class JaxrsApplication extends Application {
-
-    static <T> GenericEntity<List<T>> list(List<T> data) {
-        return new GenericEntity<List<T>>(data) {
-        };
-    }
-
-    static <T> GenericEntity<List<T>> list(T data) {
-        return new GenericEntity<List<T>>(Collections.singletonList(data)) {
-        };
-    }
 
     @LoggerParam(classes = {AmqpMessage.class})
     public static String logMessage(Object message) {

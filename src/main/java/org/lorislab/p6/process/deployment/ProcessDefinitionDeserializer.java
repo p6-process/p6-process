@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.lorislab.p6.process.flow.model;
+package org.lorislab.p6.process.deployment;
 
 import com.fasterxml.jackson.databind.util.StdConverter;
+import org.lorislab.p6.process.flow.model.NodeType;
 
 public class ProcessDefinitionDeserializer extends StdConverter<ProcessDefinitionModel, ProcessDefinitionModel> {
 

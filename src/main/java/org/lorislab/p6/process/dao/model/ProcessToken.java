@@ -16,75 +16,67 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
-import org.lorislab.quarkus.jel.jpa.model.Persistent;
 
-import javax.persistence.*;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-@Entity
-@Getter
-@Setter
-@Table(name = "PROCESS_TOKEN",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "TOKEN_UC_1", columnNames = {"PROCESS_INSTANCE_GUID", "START_NODE_NAME"}),
-                @UniqueConstraint(name = "TOKEN_UC_REF", columnNames = {"PROCESS_INSTANCE_GUID", "REF_TOKEN_GUID", "CREATE_NODE_NAME"}),
-                @UniqueConstraint(name = "TOKEN_UC_CHILD", columnNames = {"PROCESS_INSTANCE_GUID", "PARENT_TOKEN_GUID", "CREATE_NODE_NAME"})
-        })
-public class ProcessToken extends Persistent {
+public class ProcessToken {
 
-    @Column(name = "PARENT_TOKEN_GUID")
-    private String parent;
+    @ProtoField(number = 1)
+    public String guid;
 
-    @Column(name = "REF_TOKEN_GUID")
-    private String referenceTokenGuid;
+    @ProtoField(number = 2)
+    public String messageId;
 
-    @Column(name = "START_NODE_NAME")
-    private String startNodeName;
+    @ProtoField(number = 3)
+    public String processInstance;
 
-    @Column(name = "CREATE_NODE_NAME")
-    private String createNodeName;
+    @ProtoField(number = 4)
+    public String processId;
 
-    @Column(name = "NODE_NAME")
-    private String nodeName;
+    @ProtoField(number = 5)
+    public String processVersion;
 
-    @Column(name = "NODE_PREVIOUS")
-    private String previousName;
+    @ProtoField(number = 6)
+    public String nodeName;
 
-    @Column(name = "TOKEN_STATUS")
-    @Enumerated(EnumType.STRING)
-    private ProcessTokenStatus status;
+    @ProtoField(number = 7)
+    public ProcessTokenStatus status;
 
-    @Column(name = "TOKEN_TYPE")
-    @Enumerated(EnumType.STRING)
-    private ProcessTokenType type;
+    @ProtoField(number = 8)
+    public ProcessTokenType type;
 
-    @Column(name = "FINISHED_DATE")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date finishedDate;
+    @ProtoField(number = 9)
+    public String executionId;
 
-    @Column(name = "PROCESS_INSTANCE_GUID")
-    private String processInstanceGuid;
+    @ProtoField(number = 10)
+    public String parent;
 
-    @Column(name = "PROCESS_ID")
-    private String processId;
+    @ProtoField(number = 11)
+    public Set<String> createdFrom = new HashSet<>();
 
-    @Column(name = "PROCESS_VERSION")
-    private String processVersion;
+    @ProtoField(number = 12)
+    public Map<String, Object> data = new HashMap<>();
 
-    @Column(name = "MESSAGE_ID")
-    private String messageId;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-            name = "CREATED_FROM",
-            joinColumns = @JoinColumn(name = "TOKEN_GUID", foreignKey = @ForeignKey(name = "FK_TOKEN_GUID"))
-    )
-    private Set<String> createdFrom = new HashSet<>();
+//    private String referenceTokenGuid;
+//
+//    private String startNodeName;
+//
+//    private String createNodeName;
+
+//
+//    private String previousName;
+
+//
+//    private Date finishedDate;
+
+
+//    private Set<String> createdFrom = new HashSet<>();
 
 }
