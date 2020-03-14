@@ -18,15 +18,6 @@ public class ProcessInstanceRestController {
     ProcessInstanceDAO dao;
 
     @GET
-    public Response get() {
-        List<ProcessInstance> tmp = dao.findAll();
-        if (tmp == null || tmp.isEmpty()) {
-            return Response.noContent().build();
-        }
-        return Response.ok(tmp).build();
-    }
-
-    @GET
     @Path("{guid}")
     public Response get(@PathParam("guid") String guid) {
         ProcessInstance tmp = dao.findByGuid(guid);

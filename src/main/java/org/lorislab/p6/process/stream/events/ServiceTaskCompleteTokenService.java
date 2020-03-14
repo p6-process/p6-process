@@ -19,7 +19,7 @@ public class ServiceTaskCompleteTokenService extends EventService {
     public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionModel pd, Node node) {
         moveToNexNode(messageId, token, pd, node);
         //FIXME:
-        token = processTokenDAO.update(token);
+        processTokenDAO.update(token);
 
         return Collections.singletonList(token);
     }

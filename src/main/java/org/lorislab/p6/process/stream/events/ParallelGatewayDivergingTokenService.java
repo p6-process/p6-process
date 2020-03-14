@@ -20,7 +20,7 @@ public class ParallelGatewayDivergingTokenService extends EventService {
 
         // close the gateway diverging token
         token.status = ProcessTokenStatus.FINISHED;
-        token = processTokenDAO.update(token);
+        processTokenDAO.update(token);
 
         // child tokens of the gateway node
         return createChildTokens(messageId, token, pd, node.sequence.to);

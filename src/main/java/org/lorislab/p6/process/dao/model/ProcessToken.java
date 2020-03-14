@@ -16,7 +16,7 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import org.infinispan.protostream.annotations.ProtoField;
+import lombok.ToString;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 
@@ -25,58 +25,33 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@ToString
 public class ProcessToken {
 
-    @ProtoField(number = 1)
     public String guid;
 
-    @ProtoField(number = 2)
     public String messageId;
 
-    @ProtoField(number = 3)
     public String processInstance;
 
-    @ProtoField(number = 4)
     public String processId;
 
-    @ProtoField(number = 5)
     public String processVersion;
 
-    @ProtoField(number = 6)
     public String nodeName;
 
-    @ProtoField(number = 7)
     public ProcessTokenStatus status;
 
-    @ProtoField(number = 8)
     public ProcessTokenType type;
 
-    @ProtoField(number = 9)
     public String executionId;
 
-    @ProtoField(number = 10)
     public String parent;
 
-    @ProtoField(number = 11)
+    public String reference;
+
     public Set<String> createdFrom = new HashSet<>();
 
-    @ProtoField(number = 12)
     public Map<String, Object> data = new HashMap<>();
-
-
-//    private String referenceTokenGuid;
-//
-//    private String startNodeName;
-//
-//    private String createNodeName;
-
-//
-//    private String previousName;
-
-//
-//    private Date finishedDate;
-
-
-//    private Set<String> createdFrom = new HashSet<>();
 
 }

@@ -16,13 +16,19 @@
 
 package org.lorislab.p6.process.test;
 
+import io.quarkus.test.common.QuarkusTestResource;
 import io.restassured.RestAssured;
 import io.vertx.amqp.*;
 import io.vertx.core.json.JsonObject;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.lorislab.jel.testcontainers.docker.DockerComposeService;
-import org.lorislab.jel.testcontainers.docker.DockerTestEnvironment;
-import org.lorislab.p6.process.flow.model.*;
+import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.stream.ProcessStream;
+import org.lorislab.quarkus.testcontainers.DockerComposeService;
+import org.lorislab.quarkus.testcontainers.DockerComposeTestResource;
+import org.lorislab.quarkus.testcontainers.DockerService;
+import org.lorislab.quarkus.testcontainers.InjectLoggerExtension;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -37,7 +43,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.lorislab.jel.testcontainers.InjectLoggerExtension;
 
 import static io.restassured.RestAssured.given;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -48,9 +53,8 @@ import static org.hamcrest.Matchers.equalTo;
  * The abstract test
  */
 @ExtendWith(InjectLoggerExtension.class)
+@QuarkusTestResource(DockerComposeTestResource.class)
 public abstract class AbstractTest {
-
-    public static DockerTestEnvironment ENVIRONMENT = new DockerTestEnvironment();
 
     public static String ADDRESS_DEPLOYMENT = "deployment";
 
@@ -68,11 +72,15 @@ public abstract class AbstractTest {
      */
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+    }
 
-        ENVIRONMENT.start();
-        DockerComposeService testService = ENVIRONMENT.getService("p6-executor");
-        if (testService != null) {
-            RestAssured.port = testService.getPort(8080);
+    @DockerService("p6-executor")
+    protected DockerComposeService app;
+
+    @BeforeEach
+    public void init() {
+        if (app != null) {
+            RestAssured.port = app.getPort(8080);
         }
     }
 
@@ -137,15 +145,6 @@ public abstract class AbstractTest {
         }
     }
 
-    protected String loadResource(String name) {
-        try {
-            return Files.readString(
-                    Paths.get(AbstractTest.class.getResource(name).toURI()));
-        } catch (URISyntaxException | IOException ux) {
-            throw new RuntimeException(ux);
-        }
-    }
-
     protected void waitProcessFinished(String processId, String processInstanceId) {
 
         log.info("Wait for the process {} to finished execution guid {} ", processId, processInstanceId);
@@ -167,15 +166,16 @@ public abstract class AbstractTest {
         log.info("Test {}:{}", processId, processVersion);
         String processInstanceId = UUID.randomUUID().toString();
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("processId", processId);
-        data.put("processInstanceId", processInstanceId);
-        data.put("processVersion", processVersion);
+
+        ProcessStream.StartProcessRequest r = new ProcessStream.StartProcessRequest();
+        r.processId = processId;
+        r.processInstanceId = processInstanceId;
+        r.processVersion = processVersion;
+        r.data = body;
 
         log.info("Start the process {}", processInstanceId);
         AmqpMessage startProcess = AmqpMessage.create()
-                .applicationProperties(JsonObject.mapFrom(data))
-                .withBody(JsonObject.mapFrom(body).toString())
+                .withJsonObjectAsBody(JsonObject.mapFrom(r))
                 .id(UUID.randomUUID().toString())
                 .correlationId(processInstanceId)
                 .build();
@@ -185,30 +185,27 @@ public abstract class AbstractTest {
 
     protected void processServiceTask(ExecuteServiceTask execute) {
         AmqpMessage message = receivedMessage(ADDRESS_SERVICE_TASK);
-        String tmp = message.bodyAsString();
-        log.info("Service task message {} - {}", message.applicationProperties(), tmp);
+        ProcessToken token = message.bodyAsJsonObject().mapTo(ProcessToken.class);
 
-        JsonObject json = message.applicationProperties();
-        JsonObject body = new JsonObject(tmp);
+        log.info("Service task message {} ", token);
 
         ServiceTaskData serviceData = new ServiceTaskData();
-        serviceData.data = Collections.unmodifiableMap(body.getMap());
-        serviceData.guid = json.getString("guid");
-        serviceData.name = json.getString("name");
-        serviceData.processId = json.getString("processId");
-        serviceData.processVersion = json.getString("processVersion");
+        serviceData.data = Collections.unmodifiableMap(token.data);
+        serviceData.guid = token.guid;
+        serviceData.name = token.nodeName;
+        serviceData.processId = token.processId;
+        serviceData.processVersion = token.processVersion;
 
         // execute test
         Map<String, Object> data = execute.execute(serviceData);
         if (data != null) {
-            body.getMap().putAll(data);
+            token.data.putAll(data);
         }
 
         // send response message
         AmqpMessage serviceTaskComplete = AmqpMessage.create()
-                .applicationProperties(message.applicationProperties())
-                .withBody(body.toString())
-                .id(UUID.randomUUID().toString())
+                .withJsonObjectAsBody(JsonObject.mapFrom(token))
+                .id(message.id())
                 .correlationId(message.correlationId())
                 .build();
 

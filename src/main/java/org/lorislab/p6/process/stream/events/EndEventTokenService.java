@@ -28,7 +28,7 @@ public class EndEventTokenService extends EventService {
         if (token.status != ProcessTokenStatus.FINISHED) {
             token.status = ProcessTokenStatus.FINISHED;
 //            token.setFinishedDate(new Date());
-            token = processTokenDAO.update(token);
+            processTokenDAO.update(token);
 
             // update the process instance
             // TODO: check if all tokens finished!

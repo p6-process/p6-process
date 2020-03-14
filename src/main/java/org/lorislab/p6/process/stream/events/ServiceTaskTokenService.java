@@ -21,7 +21,7 @@ public class ServiceTaskTokenService extends EventService {
         token.type = ProcessTokenType.SERVICE_TASK_COMPLETE;
         token.messageId = messageId;
         token.executionId = UUID.randomUUID().toString();
-        token = processTokenDAO.update(token);
+        processTokenDAO.update(token);
         return Collections.singletonList(token);
     }
 }

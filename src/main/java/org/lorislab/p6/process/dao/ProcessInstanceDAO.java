@@ -17,37 +17,46 @@
 package org.lorislab.p6.process.dao;
 
 import io.quarkus.infinispan.client.Remote;
+import io.vertx.core.json.JsonObject;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
-import org.infinispan.query.dsl.QueryFactory;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
+import org.lorislab.p6.process.dao.model.ProcessInstanceModel;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.List;
 
 @ApplicationScoped
 public class ProcessInstanceDAO {
 
     @Inject
     @Remote("instances")
-    RemoteCache<String, ProcessInstance> cache;
-
-    public List<ProcessInstance> findAll() {
-        QueryFactory qf = Search.getQueryFactory(cache);
-        return qf.create("from ProcessInstance b").list();
-    }
+    RemoteCache<String, ProcessInstanceModel> cache;
 
     public ProcessInstance findByGuid(String guid) {
-        return cache.get(guid);
+        return map(cache.get(guid));
     }
 
-    public ProcessInstance update(ProcessInstance pi) {
-        return cache.replace(pi.guid, pi);
+    public void update(ProcessInstance pi) {
+        cache.replace(pi.guid, map(pi));
     }
 
-    public ProcessInstance create(ProcessInstance pi) {
-        return cache.put(pi.guid, pi);
+    public void create(ProcessInstance pi) {
+        cache.put(pi.guid, map(pi));
     }
 
+    private ProcessInstance map(ProcessInstanceModel m) {
+        if (m == null) {
+            return null;
+        }
+        return new JsonObject(m.data).mapTo(ProcessInstance.class);
+    }
+
+    private ProcessInstanceModel map(ProcessInstance p) {
+        ProcessInstanceModel m = new ProcessInstanceModel();
+        m.guid = p.guid;
+        m.processId = p.processId;
+        m.processVersion = p.processVersion;
+        m.data = JsonObject.mapFrom(p).toString();
+        return m;
+    }
 }

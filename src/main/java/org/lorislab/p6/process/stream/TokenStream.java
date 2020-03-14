@@ -3,6 +3,7 @@ package org.lorislab.p6.process.stream;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.InstanceHandle;
 import io.smallrye.reactive.messaging.amqp.AmqpMessage;
+import io.vertx.core.json.JsonObject;
 import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -10,7 +11,6 @@ import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
 import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.ProcessToken;
-import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 import org.lorislab.p6.process.deployment.DeploymentService;
 import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
 import org.lorislab.p6.process.flow.model.Node;
@@ -39,20 +39,21 @@ public class TokenStream {
     @Incoming("token-in")
     @Outgoing("token-out")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public PublisherBuilder<AmqpMessage<ProcessToken>> message(AmqpMessage<ProcessToken> message) {
+    public PublisherBuilder<AmqpMessage<JsonObject>> message(AmqpMessage<JsonObject> message) {
         return execute(message);
     }
 
     @Incoming("token-singleton-in")
     @Outgoing("token-singleton-out")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public PublisherBuilder<AmqpMessage<ProcessToken>> singleton(AmqpMessage<ProcessToken> message) {
+    public PublisherBuilder<AmqpMessage<JsonObject>> singleton(AmqpMessage<JsonObject> message) {
+        System.out.println("### " + message.getPayload().toString());
         return execute(message);
     }
 
-    private PublisherBuilder<AmqpMessage<ProcessToken>> execute(AmqpMessage<ProcessToken> message) {
+    private PublisherBuilder<AmqpMessage<JsonObject>> execute(AmqpMessage<JsonObject> message) {
         try {
-            List<ProcessToken> tokens = executeToken(message.getAmqpMessage().id(), message.getPayload());
+            List<ProcessToken> tokens = executeToken(message.getAmqpMessage().id(), message.getPayload().mapTo(ProcessToken.class));
             if (tokens == null || tokens.isEmpty()) {
                 return ReactiveStreams.empty();
             }

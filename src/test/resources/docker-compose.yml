@@ -25,23 +25,6 @@ services:
       - "5672:5672"
     networks:
       - test
-      -
-  p6-executor-postgres:
-    container_name: p6-executor-postgres
-    image: postgres:10.5
-    environment:
-      POSTGRES_DB: "p6"
-      POSTGRES_USER: "p6"
-      POSTGRES_PASSWORD: "p6"
-    labels:
-      - "test.Wait.forLogMessage.regex=.*database system is ready to accept connections.*\\s"
-      - "test.Wait.forLogMessage.times=2"
-      - "test.log=true"
-      - "test.property.quarkus.datasource.url=jdbc:postgresql://$${host:p6-executor-postgres}:$${port:p6-executor-postgres:5432}/p6?sslmode=disable"
-    ports:
-      - "5433:5433"
-    networks:
-      - test
 
   p6-executor-infinispan:
     container_name: p6-executor-infinispan
@@ -49,7 +32,7 @@ services:
     ports:
       - "11222:11222"
     labels:
-      - "test.Wait.forLogMessage.regex=.*Infinispan Server.*started in.*"
+      - "test.Wait.forLogMessage.regex=.*Installed features.*"
       - "test.Wait.forLogMessage.times=1"
       - "test.log=true"
       - "test.property.quarkus.infinispan-client.server-list=$${host:p6-executor-infinispan}:$${port:p6-executor-infinispan:11222}"
@@ -65,7 +48,6 @@ services:
       - "test.unit=false"
       - "test.priority=101"
       - "test.image.pull=DEFAULT"
-      - "test.env.QUARKUS_DATASOURCE_URL=jdbc:postgresql://p6-executor-postgres:5432/p6?sslmode=disable"
       - "test.env.QUARKUS_INFINISPAN_CLIENT_SERVER_LIST=p6-executor-infinispan:11222"
       - "test.env.AMQP_HOST=p6-executor-artemis"
     volumes:

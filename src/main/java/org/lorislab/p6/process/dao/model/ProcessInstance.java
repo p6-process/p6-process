@@ -16,7 +16,6 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import org.infinispan.protostream.annotations.ProtoField;
 import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;
 
 import java.util.HashMap;
@@ -24,24 +23,17 @@ import java.util.Map;
 
 public class ProcessInstance {
 
-    @ProtoField(number = 1)
     public String guid;
 
-    @ProtoField(number = 2)
-    public String parentGuid;
+    public String parent;
 
-    @ProtoField(number = 3)
     public String messageId;
 
-    @ProtoField(number = 4)
     public String processId;
 
-    @ProtoField(number = 5)
     public String processVersion;
 
-    @ProtoField(number = 6)
     public ProcessInstanceStatus status;
 
-    @ProtoField(number = 7)
     public Map<String, Object> data = new HashMap<>();
 }

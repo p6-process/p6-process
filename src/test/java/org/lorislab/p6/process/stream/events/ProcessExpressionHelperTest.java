@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.lorislab.jel.testcontainers.InjectLoggerExtension;
+import org.lorislab.quarkus.testcontainers.InjectLoggerExtension;
 
 import java.util.HashMap;
 import java.util.Map;

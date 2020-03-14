@@ -5,19 +5,9 @@
 
         <!-- QUEUES -->
         <addresses>
-            <address name="token-execute-route">
+            <address name="token-singleton">
                 <anycast>
-                    <queue name="token-execute-route"/>
-                </anycast>
-            </address>
-            <address name="token-execute-singleton">
-                <anycast>
-                    <queue name="token-execute-singleton"/>
-                </anycast>
-            </address>
-            <address name="deployment">
-                <anycast>
-                    <queue name="deployment"/>
+                    <queue name="token-singleton"/>
                 </anycast>
             </address>
             <address name="process-start">

@@ -18,15 +18,6 @@ public class ProcessTokenRestController {
     ProcessTokenDAO dao;
 
     @GET
-    public Response get() {
-        List<ProcessToken> tmp = dao.findAll();
-        if (tmp == null || tmp.isEmpty()) {
-            return Response.noContent().build();
-        }
-        return Response.ok(tmp).build();
-    }
-
-    @GET
     @Path("{guid}")
     public Response get(@PathParam("guid") String guid) {
         ProcessToken tmp = dao.findByGuid(guid);

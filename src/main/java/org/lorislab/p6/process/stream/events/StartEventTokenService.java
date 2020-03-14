@@ -18,7 +18,7 @@ public class StartEventTokenService extends EventService {
     @Override
     public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionModel pd, Node node) {
         moveToNexNode(messageId, token, pd, node);
-        token = processTokenDAO.update(token);
+        processTokenDAO.update(token);
         return Collections.singletonList(token);
     }
 

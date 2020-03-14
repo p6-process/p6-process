@@ -22,9 +22,9 @@ public class ParallelGatewayConvergingTokenService extends EventService {
 
         String next = node.sequence.to.get(0);
 //FIXME:
-        ProcessToken gt = processTokenDAO.findByReferenceAndCreateNodeName(token.parent, next);
+        ProcessToken gt = processTokenDAO.findByReferenceAndNodeName(token.parent, next);
         if (gt == null) {
-            ProcessToken parent = processTokenDAO.findByGuid(token.parent);
+
             gt = new ProcessToken();
             gt.status = ProcessTokenStatus.CREATED;
             gt.processId = token.processId;
@@ -32,18 +32,25 @@ public class ParallelGatewayConvergingTokenService extends EventService {
             gt.nodeName = next;
 //            gt.setCreateNodeName(next);
             gt.type = ProcessTokenType.valueOf(pd.nodes.get(next));
-            gt.parent = parent.parent;
+
+            gt.parent = token.parent;
+            if (token.parent != null) {
+                ProcessToken parent = processTokenDAO.findByGuid(token.parent);
+                if (parent != null && parent.parent != null) {
+                    gt.parent = parent.parent;
+                }
+            }
             gt.processInstance = token.processInstance;
-//            gt.setReferenceTokenGuid(token.getParent());
+            gt.reference = token.parent;
             gt.createdFrom.add(token.guid);
             gt.messageId = messageId;
             gt.executionId = UUID.randomUUID().toString();
-            gt = processTokenDAO.create(gt);
+            processTokenDAO.create(gt);
         } else {
             // add finished parent
             gt.createdFrom.add(token.guid);
             gt.data.putAll(token.data);
-            gt = processTokenDAO.update(gt);
+            processTokenDAO.update(gt);
         }
 
         // child token finished

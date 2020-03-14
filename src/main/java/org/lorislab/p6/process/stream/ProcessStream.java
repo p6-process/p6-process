@@ -45,9 +45,10 @@ public class ProcessStream {
     @Incoming("process-start-in")
     @Outgoing("process-start-out")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public PublisherBuilder<AmqpMessage<ProcessToken>> processStart(AmqpMessage<StartProcessRequest> message) {
+    public PublisherBuilder<AmqpMessage<JsonObject>> processStart(AmqpMessage<JsonObject> message) {
         try {
-            Map<String, ProcessToken> tokens = createTokens(message.getAmqpMessage().id(), message.getPayload());
+            System.out.println("### " + message.getPayload().toString());
+            Map<String, ProcessToken> tokens = createTokens(message.getAmqpMessage().id(), message.getPayload().mapTo(StartProcessRequest.class));
             if (tokens == null || tokens.isEmpty()) {
                 return ReactiveStreams.empty();
             }
@@ -59,14 +60,15 @@ public class ProcessStream {
                     })
                     .onComplete(() -> message.getAmqpMessage().accepted());
         } catch (Exception wex) {
+            wex.printStackTrace();
             log.error("Error process start message. Message {}", message);
             message.getAmqpMessage().modified(true, false);
         }
         return ReactiveStreams.empty();
     }
 
-    public static AmqpMessage<ProcessToken> createMessage(ProcessToken token) {
-        AmqpMessageBuilder<ProcessToken> builder = AmqpMessage.builder();
+    public static AmqpMessage<JsonObject> createMessage(ProcessToken token) {
+        AmqpMessageBuilder<JsonObject> builder = AmqpMessage.builder();
         builder.withContentType(MediaType.APPLICATION_JSON);
         builder.withAddress(token.type.route);
         builder.withId(token.executionId);
@@ -90,7 +92,7 @@ public class ProcessStream {
         pi.processVersion = request.processVersion;
         pi.data = request.data;
 
-        pi = processInstanceDAO.create(pi);
+        processInstanceDAO.create(pi);
 
         final ProcessInstance ppi = pi;
         Map<String, ProcessToken> tokens = pd.start.stream()
@@ -119,7 +121,7 @@ public class ProcessStream {
         return tokens;
     }
 
-    public class StartProcessRequest {
+    public static class StartProcessRequest {
         public String processId;
         public String processInstanceId;
         public String processVersion;

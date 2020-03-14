@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
-package org.lorislab.p6.process.rs;
+package org.lorislab.p6.process.dao.model;
 
-import org.lorislab.quarkus.testcontainers.DockerComposeTest;
+import org.infinispan.protostream.annotations.ProtoField;
 
-@DockerComposeTest
-public class ProcessTokenRestControllerTestIT extends ProcessTokenRestControllerT {
+public class ProcessInstanceModel {
 
+    @ProtoField(number = 1)
+    public String guid;
+
+    @ProtoField(number = 2)
+    public String processId;
+
+    @ProtoField(number = 3)
+    public String processVersion;
+
+    @ProtoField(number = 4)
+    public String data;
 }

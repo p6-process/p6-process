@@ -16,7 +16,9 @@
 
 package org.lorislab.p6.process.rs;
 
+import org.lorislab.quarkus.testcontainers.DockerComposeTest;
 
+@DockerComposeTest
 public class ProcessInstanceRestControllerTestIT extends ProcessInstanceRestControllerT {
 
 }

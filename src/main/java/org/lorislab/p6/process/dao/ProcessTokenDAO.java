@@ -17,22 +17,25 @@
 package org.lorislab.p6.process.dao;
 
 import io.quarkus.infinispan.client.Remote;
+import io.vertx.core.json.JsonObject;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.query.dsl.QueryFactory;
 import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.dao.model.ProcessTokenModel;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ProcessTokenDAO {
 
     @Inject
     @Remote("tokens")
-    RemoteCache<String, ProcessToken> cache;
+    RemoteCache<String, ProcessTokenModel> cache;
 
     public List<ProcessToken> findAll() {
         QueryFactory qf = Search.getQueryFactory(cache);
@@ -40,26 +43,51 @@ public class ProcessTokenDAO {
     }
 
     public ProcessToken findByGuid(String guid) {
-        return cache.get(guid);
+        return map(cache.get(guid));
     }
 
-    public ProcessToken update(ProcessToken token) {
-        return cache.replace(token.guid, token);
+    public void update(ProcessToken token) {
+        cache.replace(token.guid, map(token));
     }
 
-    public ProcessToken create(ProcessToken token) {
-        return cache.put(token.guid, token);
+    public void create(ProcessToken token) {
+        cache.put(token.guid, map(token));
     }
 
     public void createAll(Map<String, ProcessToken> tokens) {
-        cache.putAll(tokens);
+        cache.putAll(map(tokens));
     }
 
-    public ProcessToken findByReferenceAndCreateNodeName(String reference, String createdNodeName) {
-        // TODO:
-
+    public ProcessToken findByReferenceAndNodeName(String reference, String nodeName) {
         QueryFactory qf = Search.getQueryFactory(cache);
-        List<ProcessToken> tokens = qf.create("from ProcessToken t where t.reference = '" + reference + "' and t.createNodeName = '" + createdNodeName + "'").list();
-        return tokens.get(0);
+        List<ProcessToken> tokens = qf.create("from ProcessToken t where t.reference = '" + reference + "' and t.nodeName = '" + nodeName + "'").list();
+        if (tokens != null && !tokens.isEmpty()) {
+            return tokens.get(0);
+        }
+        return null;
+    }
+
+    private Map<String, ProcessTokenModel> map(Map<String, ProcessToken> tokens) {
+        return tokens.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        t -> map(t.getValue())
+                ));
+    }
+
+    private ProcessTokenModel map(ProcessToken t) {
+        ProcessTokenModel m = new ProcessTokenModel();
+        m.guid = t.guid;
+        m.nodeName = t.nodeName;
+        m.reference = t.reference;
+        m.data = JsonObject.mapFrom(t).toString();
+        return m;
+    }
+
+    private ProcessToken map(ProcessTokenModel m) {
+        if (m == null) {
+            return null;
+        }
+        return new JsonObject(m.data).mapTo(ProcessToken.class);
     }
 }
