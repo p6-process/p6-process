@@ -31,4 +31,9 @@ public class ProcessInstanceModel {
 
     @ProtoField(number = 4)
     public String data;
+
+    @Override
+    public String toString() {
+        return "ProcessInstanceModel:" + guid;
+    }
 }

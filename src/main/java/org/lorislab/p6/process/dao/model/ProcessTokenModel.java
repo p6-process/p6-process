@@ -32,4 +32,8 @@ public class ProcessTokenModel {
     @ProtoField(number = 4)
     public String data;
 
+    @Override
+    public String toString() {
+        return "ProcessTokenModel:" + guid;
+    }
 }

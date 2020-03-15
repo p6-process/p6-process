@@ -47,7 +47,7 @@ public class ProcessTokenDAO {
     }
 
     public void update(ProcessToken token) {
-        cache.replace(token.guid, map(token));
+        cache.put(token.guid, map(token));
     }
 
     public void create(ProcessToken token) {

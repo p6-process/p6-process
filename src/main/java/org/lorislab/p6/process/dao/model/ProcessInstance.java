@@ -36,4 +36,9 @@ public class ProcessInstance {
     public ProcessInstanceStatus status;
 
     public Map<String, Object> data = new HashMap<>();
+
+    @Override
+    public String toString() {
+        return "ProcessInstance:" + guid;
+    }
 }

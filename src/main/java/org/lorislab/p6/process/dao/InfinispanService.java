@@ -33,6 +33,11 @@ import javax.inject.Inject;
 @ApplicationScoped
 public class InfinispanService {
 
+    private static final String CACHE_CONFIG =
+            "<infinispan><cache-container>" +
+                    "<distributed-cache name=\"%s\"></distributed-cache>" +
+                    "</cache-container></infinispan>";
+
     /**
      * The cache id.
      */
@@ -57,7 +62,7 @@ public class InfinispanService {
      */
     void onStart(@LoggerExclude @Observes StartupEvent ev) {
         RemoteCacheManagerAdmin admin = cacheManager.administration();
-        admin.getOrCreateCache(TOKENS_ID, CACHE_TEMPLATE);
-        admin.getOrCreateCache(INSTANCES_ID, CACHE_TEMPLATE);
+        admin.getOrCreateCache(TOKENS_ID, new XMLStringConfiguration(String.format(CACHE_CONFIG, TOKENS_ID)));
+        admin.getOrCreateCache(INSTANCES_ID, new XMLStringConfiguration(String.format(CACHE_CONFIG, INSTANCES_ID)));
     }
 }

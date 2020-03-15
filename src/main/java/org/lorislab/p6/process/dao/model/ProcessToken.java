@@ -16,7 +16,6 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import lombok.ToString;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 
@@ -53,4 +52,8 @@ public class ProcessToken {
 
     public Map<String, Object> data = new HashMap<>();
 
+    @Override
+    public String toString() {
+        return "ProcessToken:" + guid;
+    }
 }

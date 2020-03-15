@@ -37,7 +37,7 @@ public class ProcessInstanceDAO {
     }
 
     public void update(ProcessInstance pi) {
-        cache.replace(pi.guid, map(pi));
+        cache.put(pi.guid, map(pi));
     }
 
     public void create(ProcessInstance pi) {
