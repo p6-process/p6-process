@@ -41,7 +41,7 @@ public class JaxrsApplication extends Application {
     @LoggerParam(classes = {AmqpMessage.class})
     public static String logMessage(Object message) {
         AmqpMessage<?> a = (AmqpMessage<?>) message;
-        return "Message[" + a.getMessageId() + "," + a.getApplicationProperties() + "," + a.getCorrelationId() + "," + a.getDeliveryCount() + "]";
+        return "Message[" + a.getMessageId() + "," + a.getCorrelationId() + "," + a.getDeliveryCount() + "]";
     }
 
     @Produces

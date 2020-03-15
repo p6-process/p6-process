@@ -60,9 +60,9 @@ public class ProcessTokenDAO {
 
     public ProcessToken findByReferenceAndNodeName(String reference, String nodeName) {
         QueryFactory qf = Search.getQueryFactory(cache);
-        List<ProcessToken> tokens = qf.create("from ProcessToken t where t.reference = '" + reference + "' and t.nodeName = '" + nodeName + "'").list();
+        List<ProcessTokenModel> tokens = qf.create("from p6_process.ProcessTokenModel t where t.reference = '" + reference + "' and t.nodeName = '" + nodeName + "'").list();
         if (tokens != null && !tokens.isEmpty()) {
-            return tokens.get(0);
+            return map(tokens.get(0));
         }
         return null;
     }

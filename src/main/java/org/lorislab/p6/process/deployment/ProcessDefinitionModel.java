@@ -37,4 +37,11 @@ public class ProcessDefinitionModel extends ProcessDefinition {
         return nodes.get(name);
     }
 
+    @Override
+    public String toString() {
+        return "ProcessDefinitionModel{" +
+                "processId=" + metadata.processId +
+                ", processVersion=" + metadata.processVersion +
+                '}';
+    }
 }

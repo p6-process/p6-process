@@ -19,6 +19,7 @@ package org.lorislab.p6.process.dao;
 import io.quarkus.runtime.StartupEvent;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
+import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.lorislab.quarkus.jel.log.interceptor.LoggerExclude;
 import org.slf4j.Logger;
 
@@ -31,9 +32,6 @@ import javax.inject.Inject;
  */
 @ApplicationScoped
 public class InfinispanService {
-
-    @Inject
-    Logger log;
 
     /**
      * The cache id.
@@ -58,14 +56,8 @@ public class InfinispanService {
      * @param ev the start up event.
      */
     void onStart(@LoggerExclude @Observes StartupEvent ev) {
-        try {
-            log.info("Create cache id: {}, template: {}", INSTANCES_ID, CACHE_TEMPLATE);
-            RemoteCacheManagerAdmin admin = cacheManager.administration();
-            admin.getOrCreateCache(TOKENS_ID, CACHE_TEMPLATE);
-            admin.getOrCreateCache(INSTANCES_ID, CACHE_TEMPLATE);
-        } catch (Exception ex) {
-            log.error("On start method failed to create the cache id: {}, template: {}. Error: {}", INSTANCES_ID, CACHE_TEMPLATE, ex.getMessage());
-            log.error("Error", ex);
-        }
+        RemoteCacheManagerAdmin admin = cacheManager.administration();
+        admin.getOrCreateCache(TOKENS_ID, CACHE_TEMPLATE);
+        admin.getOrCreateCache(INSTANCES_ID, CACHE_TEMPLATE);
     }
 }

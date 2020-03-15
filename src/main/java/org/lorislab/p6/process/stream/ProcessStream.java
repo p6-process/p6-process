@@ -47,7 +47,7 @@ public class ProcessStream {
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
     public PublisherBuilder<AmqpMessage<JsonObject>> processStart(AmqpMessage<JsonObject> message) {
         try {
-            System.out.println("### " + message.getPayload().toString());
+            log.info("Start process {}", message.getPayload());
             Map<String, ProcessToken> tokens = createTokens(message.getAmqpMessage().id(), message.getPayload().mapTo(StartProcessRequest.class));
             if (tokens == null || tokens.isEmpty()) {
                 return ReactiveStreams.empty();

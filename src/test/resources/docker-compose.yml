@@ -28,9 +28,13 @@ services:
 
   p6-executor-infinispan:
     container_name: p6-executor-infinispan
+#    image: infinispan/server:10.1.2.Final
     image: quay.io/lorislab/infinispan-quarkus-server:27102019
     ports:
       - "11222:11222"
+#    environment:
+#        USER: p6
+#        PASS: p6
     labels:
       - "test.Wait.forLogMessage.regex=.*Installed features.*"
       - "test.Wait.forLogMessage.times=1"

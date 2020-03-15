@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@ToString
 public class ProcessToken {
 
     public String guid;

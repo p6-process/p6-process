@@ -53,6 +53,7 @@ public abstract class EventService {
     protected List<ProcessToken> createChildTokens(String messageId, ProcessToken token, ProcessDefinitionModel pd, List<String> items) {
         Map<String, ProcessToken> tokens = items.stream().map(item -> {
             ProcessToken child = new ProcessToken();
+            child.guid = UUID.randomUUID().toString();
             child.nodeName = item;
             child.processId = token.processId;
             child.processVersion = token.processVersion;
