@@ -22,7 +22,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @ApplicationScoped
 public class TokenStream {
@@ -47,7 +46,6 @@ public class TokenStream {
     @Outgoing("token-singleton-out")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
     public PublisherBuilder<AmqpMessage<JsonObject>> singleton(AmqpMessage<JsonObject> message) {
-        System.out.println("### " + message.getPayload().toString());
         return execute(message);
     }
 
