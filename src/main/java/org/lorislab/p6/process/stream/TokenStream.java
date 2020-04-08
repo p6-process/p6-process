@@ -1,5 +1,6 @@
 package org.lorislab.p6.process.stream;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.InstanceHandle;
 import io.smallrye.reactive.messaging.amqp.AmqpMessage;
@@ -35,6 +36,9 @@ public class TokenStream {
     @Inject
     DeploymentService deploymentService;
 
+    @Inject
+    ObjectMapper mapper;
+
     @Incoming("token-in")
     @Outgoing("token-out")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
@@ -51,6 +55,9 @@ public class TokenStream {
 
     private PublisherBuilder<AmqpMessage<JsonObject>> execute(AmqpMessage<JsonObject> message) {
         try {
+//            String tmp = message.getPayload().toString();
+//            List<ProcessToken> tokens = executeToken(message.getAmqpMessage().id(), mapper.readValue(tmp, ProcessToken.class));
+
             List<ProcessToken> tokens = executeToken(message.getAmqpMessage().id(), message.getPayload().mapTo(ProcessToken.class));
             if (tokens == null || tokens.isEmpty()) {
                 return ReactiveStreams.empty();
@@ -64,6 +71,7 @@ public class TokenStream {
                     .onComplete(() -> message.getAmqpMessage().accepted());
         } catch (Exception wex) {
             log.error("Error token message. Message {}", message);
+            log.error("Error token message.", wex);
             message.getAmqpMessage().modified(true, false);
         }
         return ReactiveStreams.empty();
@@ -71,7 +79,7 @@ public class TokenStream {
 
     public List<ProcessToken> executeToken(String messageId, ProcessToken token) {
 
-        ProcessToken pt = processTokenDAO.findByGuid(token.guid);
+        ProcessToken pt = processTokenDAO.findByGuid(token.id);
         if (pt == null) {
             log.warn("No token found for the message token: {}", token);
             return Collections.emptyList();

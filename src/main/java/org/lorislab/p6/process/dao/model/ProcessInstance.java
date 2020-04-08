@@ -16,14 +16,20 @@
 
 package org.lorislab.p6.process.dao.model;
 
+import io.quarkus.mongodb.panache.MongoEntity;
+import io.quarkus.mongodb.panache.PanacheMongoEntityBase;
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class ProcessInstance {
+@MongoEntity(collection = "ProcessInstance")
+public class ProcessInstance extends PanacheMongoEntityBase {
 
-    public String guid;
+    @BsonId
+    public String id;
 
     public String parent;
 
@@ -39,6 +45,6 @@ public class ProcessInstance {
 
     @Override
     public String toString() {
-        return "ProcessInstance:" + guid;
+        return "ProcessInstance:" + id;
     }
 }

@@ -20,24 +20,21 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.restassured.RestAssured;
 import io.vertx.amqp.*;
 import io.vertx.core.json.JsonObject;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.stream.ProcessStream;
+
 import org.lorislab.quarkus.testcontainers.DockerComposeService;
 import org.lorislab.quarkus.testcontainers.DockerComposeTestResource;
 import org.lorislab.quarkus.testcontainers.DockerService;
 import org.lorislab.quarkus.testcontainers.InjectLoggerExtension;
 import org.slf4j.Logger;
 
+
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -191,7 +188,7 @@ public abstract class AbstractTest {
 
         ServiceTaskData serviceData = new ServiceTaskData();
         serviceData.data = Collections.unmodifiableMap(token.data);
-        serviceData.guid = token.guid;
+        serviceData.guid = token.id;
         serviceData.name = token.nodeName;
         serviceData.processId = token.processId;
         serviceData.processVersion = token.processVersion;

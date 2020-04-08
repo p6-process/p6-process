@@ -26,6 +26,7 @@ public class ParallelGatewayConvergingTokenService extends EventService {
         if (gt == null) {
 
             gt = new ProcessToken();
+            gt.id = UUID.randomUUID().toString();
             gt.status = ProcessTokenStatus.CREATED;
             gt.processId = token.processId;
             gt.processVersion = token.processVersion;
@@ -42,13 +43,13 @@ public class ParallelGatewayConvergingTokenService extends EventService {
             }
             gt.processInstance = token.processInstance;
             gt.reference = token.parent;
-            gt.createdFrom.add(token.guid);
+            gt.createdFrom.add(token.id);
             gt.messageId = messageId;
             gt.executionId = UUID.randomUUID().toString();
             processTokenDAO.create(gt);
         } else {
             // add finished parent
-            gt.createdFrom.add(token.guid);
+            gt.createdFrom.add(token.id);
             gt.data.putAll(token.data);
             processTokenDAO.update(gt);
         }

@@ -13,6 +13,7 @@ services:
     volumes:
       - ./broker-00.xml:/var/lib/artemis/etc-override/broker-00.xml
     labels:
+      - "test.priority=1"
       - "test.Wait.forLogMessage.regex=.*AMQ241004: Artemis Console available at.*"
       - "test.Wait.forLogMessage.times=1"
       - "test.log=true"
@@ -26,20 +27,17 @@ services:
     networks:
       - test
 
-  p6-infinispan:
-    container_name: p6-infinispan
-    image: infinispan/server:11.0
-#    image: quay.io/lorislab/infinispan-quarkus-server:27102019
+  p6-mongo:
+    container_name: p6-mongo
+    image: mongo:4.0
     ports:
-      - "11222:11222"
-    environment:
-        USER: p6
-        PASS: p6
+      - "27017:27017"
     labels:
-      - "test.Wait.forLogMessage.regex=.*ISPN080001.*"
+      - "test.priority=2"
+      - "test.Wait.forLogMessage.regex=.*build index done..*"
       - "test.Wait.forLogMessage.times=1"
       - "test.log=true"
-      - "test.property.quarkus.infinispan-client.server-list=$${host:p6-infinispan}:$${port:p6-infinispan:11222}"
+      - "test.property.quarkus.mongodb.connection-string=mongodb://$${host:p6-mongo}:$${port:p6-mongo:27017}"
     networks:
       - test
 

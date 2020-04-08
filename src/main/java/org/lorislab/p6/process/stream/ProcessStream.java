@@ -85,7 +85,7 @@ public class ProcessStream {
         }
 
         ProcessInstance pi = new ProcessInstance();
-        pi.guid = request.processInstanceId;
+        pi.id = request.processInstanceId;
         pi.messageId = messageId;
         pi.status = ProcessInstanceStatus.CREATED;
         pi.processId = request.processId;
@@ -98,12 +98,12 @@ public class ProcessStream {
         Map<String, ProcessToken> tokens = pd.start.stream()
                 .map(node -> {
                     ProcessToken token = new ProcessToken();
-                    token.guid = UUID.randomUUID().toString();
+                    token.id = UUID.randomUUID().toString();
                     token.executionId = UUID.randomUUID().toString();
                     token.messageId = messageId;
                     token.processId = ppi.processId;
                     token.processVersion = ppi.processVersion;
-                    token.processInstance = ppi.guid;
+                    token.processInstance = ppi.id;
                     token.nodeName = node.name;
                     token.status = ProcessTokenStatus.CREATED;
                     token.type = ProcessTokenType.valueOf(node);
@@ -114,7 +114,7 @@ public class ProcessStream {
 //                    token.setPreviousName(null);
 
                     return token;
-                }).collect(Collectors.toMap(t -> t.guid, t -> t));
+                }).collect(Collectors.toMap(t -> t.id, t -> t));
 
         processTokenDAO.createAll(tokens);
 

@@ -16,47 +16,20 @@
 
 package org.lorislab.p6.process.dao;
 
-import io.quarkus.infinispan.client.Remote;
-import io.vertx.core.json.JsonObject;
-import org.infinispan.client.hotrod.RemoteCache;
+import io.quarkus.mongodb.panache.PanacheMongoRepositoryBase;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
-import org.lorislab.p6.process.dao.model.ProcessInstanceModel;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 
 @ApplicationScoped
-public class ProcessInstanceDAO {
+public class ProcessInstanceDAO implements PanacheMongoRepositoryBase<ProcessInstance, String> {
 
-    @Inject
-    @Remote("instances")
-    RemoteCache<String, ProcessInstanceModel> cache;
-
-    public ProcessInstance findByGuid(String guid) {
-        return map(cache.get(guid));
-    }
-
-    public void update(ProcessInstance pi) {
-        cache.put(pi.guid, map(pi));
+    public ProcessInstance findByGuid(String id) {
+        return findById(id);
     }
 
     public void create(ProcessInstance pi) {
-        cache.put(pi.guid, map(pi));
+        persist(pi);
     }
 
-    private ProcessInstance map(ProcessInstanceModel m) {
-        if (m == null) {
-            return null;
-        }
-        return new JsonObject(m.data).mapTo(ProcessInstance.class);
-    }
-
-    private ProcessInstanceModel map(ProcessInstance p) {
-        ProcessInstanceModel m = new ProcessInstanceModel();
-        m.guid = p.guid;
-        m.processId = p.processId;
-        m.processVersion = p.processVersion;
-        m.data = JsonObject.mapFrom(p).toString();
-        return m;
-    }
 }

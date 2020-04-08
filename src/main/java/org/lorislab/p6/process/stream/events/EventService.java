@@ -53,13 +53,13 @@ public abstract class EventService {
     protected List<ProcessToken> createChildTokens(String messageId, ProcessToken token, ProcessDefinitionModel pd, List<String> items) {
         Map<String, ProcessToken> tokens = items.stream().map(item -> {
             ProcessToken child = new ProcessToken();
-            child.guid = UUID.randomUUID().toString();
+            child.id = UUID.randomUUID().toString();
             child.nodeName = item;
             child.processId = token.processId;
             child.processVersion = token.processVersion;
 //            child.setCreateNodeName(item);
 //            child.setPreviousName(token.getNodeName());
-            child.parent = token.guid;
+            child.parent = token.id;
             child.type = ProcessTokenType.valueOf(pd.nodes.get(item));
             child.processInstance = token.processInstance;
             child.data = token.data;
@@ -67,7 +67,7 @@ public abstract class EventService {
             child.messageId = messageId;
             child.executionId = UUID.randomUUID().toString();
             return child;
-        }).collect(Collectors.toMap(t -> t.guid, t -> t));
+        }).collect(Collectors.toMap(t -> t.id, t -> t));
 
         processTokenDAO.createAll(tokens);
 

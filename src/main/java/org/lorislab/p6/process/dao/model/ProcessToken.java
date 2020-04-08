@@ -16,6 +16,9 @@
 
 package org.lorislab.p6.process.dao.model;
 
+import io.quarkus.mongodb.panache.MongoEntity;
+import io.quarkus.mongodb.panache.PanacheMongoEntityBase;
+import org.bson.codecs.pojo.annotations.BsonId;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 
@@ -24,9 +27,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class ProcessToken {
+@MongoEntity(collection = "ProcessToken")
+public class ProcessToken extends PanacheMongoEntityBase {
 
-    public String guid;
+    @BsonId
+    public String id;
 
     public String messageId;
 
@@ -52,8 +57,8 @@ public class ProcessToken {
 
     public Map<String, Object> data = new HashMap<>();
 
-    @Override
+        @Override
     public String toString() {
-        return "ProcessToken:" + guid;
+        return "ProcessToken:" + id;
     }
 }
