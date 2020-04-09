@@ -3,13 +3,10 @@ package org.lorislab.p6.process.stream;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.InstanceHandle;
-import io.smallrye.reactive.messaging.amqp.AmqpMessage;
-import io.vertx.core.json.JsonObject;
+import io.smallrye.reactive.messaging.jms.IncomingJmsMessageMetadata;
 import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
-import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.deployment.DeploymentService;
@@ -17,12 +14,15 @@ import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
 import org.lorislab.p6.process.flow.model.Node;
 import org.lorislab.p6.process.stream.events.EventService;
 import org.lorislab.p6.process.stream.events.EventServiceType;
+import org.lorislab.quarkus.reactive.jms.InputJmsMessage;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 public class TokenStream {
@@ -36,45 +36,29 @@ public class TokenStream {
     @Inject
     DeploymentService deploymentService;
 
-    @Inject
-    ObjectMapper mapper;
-
     @Incoming("token-in")
-    @Outgoing("token-out")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public PublisherBuilder<AmqpMessage<JsonObject>> message(AmqpMessage<JsonObject> message) {
+    public CompletionStage<Void> message(InputJmsMessage<ProcessToken> message) {
         return execute(message);
     }
 
     @Incoming("token-singleton-in")
-    @Outgoing("token-singleton-out")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public PublisherBuilder<AmqpMessage<JsonObject>> singleton(AmqpMessage<JsonObject> message) {
+    public CompletionStage<Void> singleton(InputJmsMessage<ProcessToken> message) {
         return execute(message);
     }
 
-    private PublisherBuilder<AmqpMessage<JsonObject>> execute(AmqpMessage<JsonObject> message) {
+    private CompletionStage<Void> execute(InputJmsMessage<ProcessToken> message) {
         try {
-//            String tmp = message.getPayload().toString();
-//            List<ProcessToken> tokens = executeToken(message.getAmqpMessage().id(), mapper.readValue(tmp, ProcessToken.class));
-
-            List<ProcessToken> tokens = executeToken(message.getAmqpMessage().id(), message.getPayload().mapTo(ProcessToken.class));
-            if (tokens == null || tokens.isEmpty()) {
-                return ReactiveStreams.empty();
-            }
-            return ReactiveStreams.of(tokens.toArray(new ProcessToken[0]))
-                    .map(ProcessStream::createMessage)
-                    .onError(e -> {
-                        log.error("Error execute token. Message {}", e.getMessage());
-                        message.getAmqpMessage().modified(true, false);
-                    })
-                    .onComplete(() -> message.getAmqpMessage().accepted());
+            IncomingJmsMessageMetadata metadata = message.getJmsMetadata();
+            List<ProcessToken> tokens = executeToken(metadata.getCorrelationId(), message.getPayload());
+            message.send(tokens.stream().map(ProcessStream::createMessage));
+            return message.ack();
         } catch (Exception wex) {
             log.error("Error token message. Message {}", message);
             log.error("Error token message.", wex);
-            message.getAmqpMessage().modified(true, false);
+            return message.rollback();
         }
-        return ReactiveStreams.empty();
     }
 
     public List<ProcessToken> executeToken(String messageId, ProcessToken token) {

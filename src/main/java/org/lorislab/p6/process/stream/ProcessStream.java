@@ -1,13 +1,7 @@
 package org.lorislab.p6.process.stream;
 
-import io.smallrye.reactive.messaging.amqp.AmqpMessage;
-import io.smallrye.reactive.messaging.amqp.AmqpMessageBuilder;
-import io.vertx.core.json.JsonObject;
-import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
-import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
+import io.smallrye.reactive.messaging.jms.IncomingJmsMessageMetadata;
+import org.eclipse.microprofile.reactive.messaging.*;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
@@ -15,17 +9,21 @@ import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
-import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
 import org.lorislab.p6.process.deployment.DeploymentService;
+import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
+import org.lorislab.quarkus.reactive.jms.InputJmsMessage;
+import org.lorislab.quarkus.reactive.jms.OutputJmsMessageMetadata;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 public class ProcessStream {
@@ -43,45 +41,36 @@ public class ProcessStream {
     DeploymentService deploymentService;
 
     @Incoming("process-start-in")
-    @Outgoing("process-start-out")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public PublisherBuilder<AmqpMessage<JsonObject>> processStart(AmqpMessage<JsonObject> message) {
+    public CompletionStage<Void> processStart(InputJmsMessage<StartProcessRequest> message) {
         try {
             log.info("Start process {}", message.getPayload());
-            Map<String, ProcessToken> tokens = createTokens(message.getAmqpMessage().id(), message.getPayload().mapTo(StartProcessRequest.class));
-            if (tokens == null || tokens.isEmpty()) {
-                return ReactiveStreams.empty();
-            }
-            return ReactiveStreams.of(tokens.values().toArray(new ProcessToken[0]))
-                    .map(ProcessStream::createMessage)
-                    .onError(e -> {
-                        log.error("Error start tokens. Message {}", e.getMessage());
-                        message.getAmqpMessage().modified(true, false);
-                    })
-                    .onComplete(() -> message.getAmqpMessage().accepted());
+            IncomingJmsMessageMetadata metadata = message.getJmsMetadata();
+            List<ProcessToken> tokens = createTokens(metadata.getCorrelationId(), message.getPayload());
+            message.send(tokens.stream().map(ProcessStream::createMessage));
+            return message.ack();
         } catch (Exception wex) {
-            wex.printStackTrace();
+            log.error("Error start process", wex);
             log.error("Error process start message. Message {}", message);
-            message.getAmqpMessage().modified(true, false);
+            return message.rollback();
         }
-        return ReactiveStreams.empty();
     }
 
-    public static AmqpMessage<JsonObject> createMessage(ProcessToken token) {
-        AmqpMessageBuilder<JsonObject> builder = AmqpMessage.builder();
-        builder.withContentType(MediaType.APPLICATION_JSON);
-        builder.withAddress(token.type.route);
-        builder.withId(token.executionId);
-        builder.withJsonObjectAsBody(JsonObject.mapFrom(token));
-        return builder.build();
+    public static Message<ProcessToken> createMessage(ProcessToken token) {
+        Metadata m = OutputJmsMessageMetadata.builder()
+                .withTypeQueue()
+                .withDestination(token.type.route)
+                .withCorrelationId(token.executionId)
+                .build().of();
+        return Message.of(token, m);
     }
 
-    public Map<String, ProcessToken> createTokens(String messageId, StartProcessRequest request) {
+    public List<ProcessToken> createTokens(String messageId, StartProcessRequest request) {
 
         ProcessDefinitionModel pd = deploymentService.getProcessDefinition(request.processId, request.processVersion);
         if (pd == null) {
             log.error("No process definition found for the {}/{}/{}", request.processInstanceId, request.processId, request.processVersion);
-            return Collections.emptyMap();
+            return Collections.emptyList();
         }
 
         ProcessInstance pi = new ProcessInstance();
@@ -95,7 +84,7 @@ public class ProcessStream {
         processInstanceDAO.create(pi);
 
         final ProcessInstance ppi = pi;
-        Map<String, ProcessToken> tokens = pd.start.stream()
+        List<ProcessToken> tokens = pd.start.stream()
                 .map(node -> {
                     ProcessToken token = new ProcessToken();
                     token.id = UUID.randomUUID().toString();
@@ -112,12 +101,10 @@ public class ProcessStream {
 //                    token.setCreateNodeName(node.name);
 //                    token.setStatus(ProcessTokenStatus.CREATED);
 //                    token.setPreviousName(null);
-
                     return token;
-                }).collect(Collectors.toMap(t -> t.id, t -> t));
+                }).collect(Collectors.toList());
 
-        processTokenDAO.createAll(tokens);
-
+        processTokenDAO.persist(tokens);
         return tokens;
     }
 

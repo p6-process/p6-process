@@ -17,13 +17,12 @@ services:
       - "test.Wait.forLogMessage.regex=.*AMQ241004: Artemis Console available at.*"
       - "test.Wait.forLogMessage.times=1"
       - "test.log=true"
-      - "test.property.amqp-port=$${port:p6-artemis:5672}"
-      - "test.property.amqp-host=$${host:p6-artemis}"
-      - "test.property.amqp-client-port=$${port:p6-artemis:5672}"
-      - "test.property.amqp-client-host=$${host:p6-artemis}"
+      - "test.property.quarkus.artemis.username=admin"
+      - "test.property.quarkus.artemis.password=admin"
+      - "test.property.quarkus.artemis.url=tcp://$${host:p6-artemis}:$${port:p6-artemis:61616}"
     ports:
       - "8161:8161"
-      - "5672:5672"
+      - "61616:61616"
     networks:
       - test
 
@@ -51,7 +50,7 @@ services:
       - "test.priority=101"
       - "test.image.pull=DEFAULT"
       - "test.env.QUARKUS_INFINISPAN_CLIENT_SERVER_LIST=p6-infinispan:11222"
-      - "test.env.AMQP_HOST=p6-artemis"
+      - "test.env.ARTEMIS_URL=tcp://p6-artemis:61616"
     volumes:
       - ./p6:/work/p6
     networks:

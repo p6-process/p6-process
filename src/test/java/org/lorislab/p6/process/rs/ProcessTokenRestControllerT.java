@@ -36,7 +36,7 @@ public class ProcessTokenRestControllerT extends AbstractTest {
                 .get("/v1/token/{guid}")
                 .prettyPeek()
                 .then()
-                .statusCode(Response.Status.NO_CONTENT.getStatusCode());
+                .statusCode(Response.Status.NOT_FOUND.getStatusCode());
     }
 
 }

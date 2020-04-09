@@ -16,11 +16,12 @@
 
 package org.lorislab.p6.process.rs;
 
-import io.smallrye.reactive.messaging.amqp.AmqpMessage;
+import io.smallrye.reactive.messaging.jms.IncomingJmsMessageMetadata;
 import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
 import org.eclipse.microprofile.openapi.annotations.info.Info;
 import org.eclipse.microprofile.openapi.annotations.servers.Server;
 import org.lorislab.quarkus.jel.log.interceptor.LoggerParam;
+import org.lorislab.quarkus.reactive.jms.InputJmsMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,10 +39,11 @@ import javax.ws.rs.core.Application;
 @ApplicationPath("/v1")
 public class JaxrsApplication extends Application {
 
-    @LoggerParam(classes = {AmqpMessage.class})
+    @LoggerParam(classes = {InputJmsMessage.class})
     public static String logMessage(Object message) {
-        AmqpMessage<?> a = (AmqpMessage<?>) message;
-        return "Message[" + a.getMessageId() + "," + a.getCorrelationId() + "," + a.getDeliveryCount() + "]";
+        InputJmsMessage<?> tmp = (InputJmsMessage<?>) message;
+        IncomingJmsMessageMetadata metadata = tmp.getJmsMetadata();
+        return "Message[" + metadata.getMessageId() + "," + metadata.getCorrelationId() + "," + metadata.getIntProperty("JMSXDeliveryCount") + "]";
     }
 
     @Produces

@@ -21,7 +21,6 @@ import org.lorislab.p6.process.dao.model.ProcessToken;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.List;
-import java.util.Map;
 
 @ApplicationScoped
 public class ProcessTokenDAO implements PanacheMongoRepositoryBase<ProcessToken, String> {
@@ -32,10 +31,6 @@ public class ProcessTokenDAO implements PanacheMongoRepositoryBase<ProcessToken,
 
     public void create(ProcessToken token) {
         persist(token);
-    }
-
-    public void createAll(Map<String, ProcessToken> tokens) {
-        tokens.forEach((k,v) -> persist(v));
     }
 
     public ProcessToken findByReferenceAndNodeName(String reference, String nodeName) {

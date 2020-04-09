@@ -18,33 +18,34 @@ package org.lorislab.p6.process.test;
 
 import io.quarkus.test.common.QuarkusTestResource;
 import io.restassured.RestAssured;
-import io.vertx.amqp.*;
 import io.vertx.core.json.JsonObject;
+import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.stream.ProcessStream;
-
 import org.lorislab.quarkus.testcontainers.DockerComposeService;
 import org.lorislab.quarkus.testcontainers.DockerComposeTestResource;
 import org.lorislab.quarkus.testcontainers.DockerService;
 import org.lorislab.quarkus.testcontainers.InjectLoggerExtension;
 import org.slf4j.Logger;
 
-
 import javax.inject.Inject;
+import javax.jms.*;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.lang.IllegalStateException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
+import static org.lorislab.quarkus.reactive.jms.InputJmsMessage.createJmsMessage;
 
 /**
  * The abstract test
@@ -81,64 +82,54 @@ public abstract class AbstractTest {
         }
     }
 
-    protected AmqpMessage receivedMessage(String address) {
-        return receivedMessage(address, 5);
+    protected ConnectionFactory createConnectionFactory() {
+        String username = System.getProperty("quarkus.artemis.username");
+        String password = System.getProperty("quarkus.artemis.password");;
+        String url = System.getProperty("quarkus.artemis.url");
+        return new ActiveMQConnectionFactory(url, username, password);
     }
 
-    protected AmqpMessage receivedMessage(String address, long timeout) {
+    protected ProcessToken receivedMessage(String address) {
+        return receivedMessage(address, 5000);
+    }
 
-        AmqpClient client = null;
+    protected ProcessToken receivedMessage(String address, long timeout) {
         try {
-            client = AmqpClient.create(new AmqpClientOptions());
+            ConnectionFactory cf = createConnectionFactory();
+            try (JMSContext context = cf.createContext(Session.AUTO_ACKNOWLEDGE);) {
+                Destination destination = context.createQueue(address);
+                JMSConsumer consumer = context.createConsumer(destination);
+                Message message = consumer.receive(timeout);
 
-            CompletableFuture<AmqpReceiver> rf = new CompletableFuture<>();
-            client.createReceiver(address, x -> rf.complete(x.result()));
-            AmqpReceiver receiver = rf.get(timeout, TimeUnit.SECONDS);
-
-            CompletableFuture<AmqpMessage> message = new CompletableFuture<>();
-            receiver.handler(message::complete);
-            return message.get(5, TimeUnit.SECONDS);
-        } catch (TimeoutException | InterruptedException | ExecutionException ex) {
+                String content = message.getBody(String.class);
+                if (content != null && !content.isBlank()) {
+                    Jsonb jsonb = JsonbBuilder.create();
+                    return jsonb.fromJson(content, ProcessToken.class);
+                }
+            }
+        } catch (Exception ex) {
             throw new IllegalStateException("Error received message", ex);
-        } finally {
-            close(client);
         }
+        return null;
     }
 
-    protected void sendMessage(String address, AmqpMessage... messages) {
-        AmqpClient client = null;
+    protected void sendMessage(String address, Object... items) {
         try {
-            client = AmqpClient.create(new AmqpClientOptions());
+            ConnectionFactory cf = createConnectionFactory();
+            try (JMSContext context = cf.createContext(Session.SESSION_TRANSACTED);) {
+                Destination destination = context.createQueue(address);
+                JMSProducer producer = context.createProducer();
 
-            CompletableFuture<AmqpSender> senderFuture = new CompletableFuture<>();
-            client.createSender(address, x -> senderFuture.complete(x.result()));
-            AmqpSender sender = senderFuture.get(5, TimeUnit.SECONDS);
 
-            for (AmqpMessage msg : messages) {
-                CompletableFuture<Void> message = new CompletableFuture<>();
-                sender.sendWithAck(msg, a -> message.complete(a.result()));
-                message.get(5, TimeUnit.SECONDS);
-            };
-
+                Jsonb jsonb = JsonbBuilder.create();
+                for (Object item : items) {
+                    Message message = createJmsMessage(context, jsonb, item);
+                    producer.send(destination, message);
+                }
+                context.commit();
+            }
         } catch (Exception ex) {
-            throw new IllegalStateException("Error send message", ex);
-        } finally {
-            close(client);
-        }
-    }
-
-    private void close(AmqpClient client) {
-        if (client == null) {
-            return;
-        }
-        try {
-            CompletableFuture<Void> close = new CompletableFuture<>();
-            client.close(c -> {
-                close.complete(c.result());
-            });
-            close.get(5, TimeUnit.SECONDS);
-        } catch (Exception ex) {
-            throw new IllegalStateException("Error send message", ex);
+            throw new IllegalStateException("Error received message", ex);
         }
     }
 
@@ -164,25 +155,19 @@ public abstract class AbstractTest {
         String processInstanceId = UUID.randomUUID().toString();
 
 
-        ProcessStream.StartProcessRequest r = new ProcessStream.StartProcessRequest();
-        r.processId = processId;
-        r.processInstanceId = processInstanceId;
-        r.processVersion = processVersion;
-        r.data = body;
+        ProcessStream.StartProcessRequest request = new ProcessStream.StartProcessRequest();
+        request.processId = processId;
+        request.processInstanceId = processInstanceId;
+        request.processVersion = processVersion;
+        request.data = body;
 
         log.info("Start the process {}", processInstanceId);
-        AmqpMessage startProcess = AmqpMessage.create()
-                .withJsonObjectAsBody(JsonObject.mapFrom(r))
-                .id(UUID.randomUUID().toString())
-                .correlationId(processInstanceId)
-                .build();
-        sendMessage(ADDRESS_START_PROCESS, startProcess);
+        sendMessage(ADDRESS_START_PROCESS, request);
         return processInstanceId;
     }
 
     protected void processServiceTask(ExecuteServiceTask execute) {
-        AmqpMessage message = receivedMessage(ADDRESS_SERVICE_TASK);
-        ProcessToken token = message.bodyAsJsonObject().mapTo(ProcessToken.class);
+        ProcessToken token = receivedMessage(ADDRESS_SERVICE_TASK);
 
         log.info("Service task message {} ", token);
 
@@ -198,15 +183,7 @@ public abstract class AbstractTest {
         if (data != null) {
             token.data.putAll(data);
         }
-
-        // send response message
-        AmqpMessage serviceTaskComplete = AmqpMessage.create()
-                .withJsonObjectAsBody(JsonObject.mapFrom(token))
-                .id(message.id())
-                .correlationId(message.correlationId())
-                .build();
-
-        sendMessage(ADDRESS_TOKEN_EXECUTE, serviceTaskComplete);
+        sendMessage(ADDRESS_TOKEN_EXECUTE, token);
     }
 
     public static class ServiceTaskData {

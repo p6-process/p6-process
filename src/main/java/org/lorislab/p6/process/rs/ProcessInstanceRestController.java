@@ -22,7 +22,7 @@ public class ProcessInstanceRestController {
     public Response get(@PathParam("guid") String guid) {
         ProcessInstance tmp = dao.findByGuid(guid);
         if (tmp == null) {
-            return Response.noContent().build();
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
         return Response.ok(tmp).build();
     }
@@ -32,7 +32,7 @@ public class ProcessInstanceRestController {
     public Response getParameters(@PathParam("guid") String guid) {
         ProcessInstance tmp = dao.findByGuid(guid);
         if (tmp == null || tmp.data == null) {
-            return Response.noContent().build();
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
         return Response.ok(tmp.data).build();
     }

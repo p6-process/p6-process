@@ -25,7 +25,9 @@ import org.lorislab.p6.process.flow.model.Node;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public abstract class EventService {
@@ -51,7 +53,7 @@ public abstract class EventService {
     }
 
     protected List<ProcessToken> createChildTokens(String messageId, ProcessToken token, ProcessDefinitionModel pd, List<String> items) {
-        Map<String, ProcessToken> tokens = items.stream().map(item -> {
+        List<ProcessToken> tokens = items.stream().map(item -> {
             ProcessToken child = new ProcessToken();
             child.id = UUID.randomUUID().toString();
             child.nodeName = item;
@@ -67,10 +69,10 @@ public abstract class EventService {
             child.messageId = messageId;
             child.executionId = UUID.randomUUID().toString();
             return child;
-        }).collect(Collectors.toMap(t -> t.id, t -> t));
+        }).collect(Collectors.toList());
 
-        processTokenDAO.createAll(tokens);
+        processTokenDAO.persist(tokens);
 
-        return new ArrayList<>(tokens.values());
+        return tokens;
     }
 }

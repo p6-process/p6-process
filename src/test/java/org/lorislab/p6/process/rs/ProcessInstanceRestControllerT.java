@@ -36,7 +36,7 @@ public class ProcessInstanceRestControllerT extends AbstractTest {
                 .get("/v1/instance/{guid}")
                 .prettyPeek()
                 .then()
-                .statusCode(Response.Status.NO_CONTENT.getStatusCode());
+                .statusCode(Response.Status.NOT_FOUND.getStatusCode());
     }
 
 }

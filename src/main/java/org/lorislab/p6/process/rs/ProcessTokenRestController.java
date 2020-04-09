@@ -22,7 +22,7 @@ public class ProcessTokenRestController {
     public Response get(@PathParam("guid") String guid) {
         ProcessToken tmp = dao.findByGuid(guid);
         if (tmp == null) {
-            return Response.noContent().build();
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
         return Response.ok(tmp).build();
     }
