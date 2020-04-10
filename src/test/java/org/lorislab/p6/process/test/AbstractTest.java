@@ -18,7 +18,6 @@ package org.lorislab.p6.process.test;
 
 import io.quarkus.test.common.QuarkusTestResource;
 import io.restassured.RestAssured;
-import io.vertx.core.json.JsonObject;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -113,7 +112,7 @@ public abstract class AbstractTest {
         return null;
     }
 
-    protected void sendMessage(String address, Object... items) {
+    protected <T> void sendMessage(String address, MessageBeforeSendListener<T> listener, T... items) {
         try {
             ConnectionFactory cf = createConnectionFactory();
             try (JMSContext context = cf.createContext(Session.SESSION_TRANSACTED);) {
@@ -122,8 +121,11 @@ public abstract class AbstractTest {
 
 
                 Jsonb jsonb = JsonbBuilder.create();
-                for (Object item : items) {
+                for (T item : items) {
                     Message message = createJmsMessage(context, jsonb, item);
+                    if (listener != null) {
+                        listener.update(message, item);
+                    }
                     producer.send(destination, message);
                 }
                 context.commit();
@@ -162,7 +164,7 @@ public abstract class AbstractTest {
         request.data = body;
 
         log.info("Start the process {}", processInstanceId);
-        sendMessage(ADDRESS_START_PROCESS, request);
+        sendMessage(ADDRESS_START_PROCESS, null, request);
         return processInstanceId;
     }
 
@@ -183,7 +185,7 @@ public abstract class AbstractTest {
         if (data != null) {
             token.data.putAll(data);
         }
-        sendMessage(ADDRESS_TOKEN_EXECUTE, token);
+        sendMessage(ADDRESS_TOKEN_EXECUTE, this::setCorrelationId, token);
     }
 
     public static class ServiceTaskData {
@@ -192,6 +194,19 @@ public abstract class AbstractTest {
         public String processId;
         public String processVersion;
         public Map<String, Object> data;
+    }
+
+    protected  void setCorrelationId(Message m, ProcessToken t) {
+        try {
+            m.setJMSCorrelationID(t.executionId);
+        } catch (JMSException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    public interface MessageBeforeSendListener<T> {
+
+        void update(Message message, T item);
     }
 
     public interface ExecuteServiceTask {

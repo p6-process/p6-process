@@ -56,6 +56,7 @@ public class ParallelGatewayConvergingTokenService extends EventService {
 
         // child token finished
         token.status = ProcessTokenStatus.FINISHED;
+        processTokenDAO.update(token);
 
         int size1 = gt.createdFrom.size();
         int size2 = node.sequence.from.size();
