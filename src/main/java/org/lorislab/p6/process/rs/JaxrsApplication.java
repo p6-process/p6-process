@@ -21,7 +21,7 @@ import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
 import org.eclipse.microprofile.openapi.annotations.info.Info;
 import org.eclipse.microprofile.openapi.annotations.servers.Server;
 import org.lorislab.quarkus.jel.log.interceptor.LoggerParam;
-import org.lorislab.quarkus.reactive.jms.InputJmsMessage;
+import org.lorislab.quarkus.reactive.jms.tx.IncomingJmsTxMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,9 +39,9 @@ import javax.ws.rs.core.Application;
 @ApplicationPath("/v1")
 public class JaxrsApplication extends Application {
 
-    @LoggerParam(classes = {InputJmsMessage.class})
+    @LoggerParam(classes = {IncomingJmsTxMessage.class})
     public static String logMessage(Object message) {
-        InputJmsMessage<?> tmp = (InputJmsMessage<?>) message;
+        IncomingJmsTxMessage<?> tmp = (IncomingJmsTxMessage<?>) message;
         IncomingJmsMessageMetadata metadata = tmp.getJmsMetadata();
         return "Message[" + metadata.getMessageId() + "," + metadata.getCorrelationId() + "," + metadata.getIntProperty("JMSXDeliveryCount") + "]";
     }

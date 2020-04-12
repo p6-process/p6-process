@@ -44,7 +44,7 @@ import static io.restassured.RestAssured.given;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
-import static org.lorislab.quarkus.reactive.jms.InputJmsMessage.createJmsMessage;
+import static org.lorislab.quarkus.reactive.jms.tx.IncomingJmsTxMessage.createJmsMessage;
 
 /**
  * The abstract test

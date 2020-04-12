@@ -4,7 +4,7 @@ services:
 
   p6-artemis:
     container_name: p6-artemis
-    image: vromero/activemq-artemis:2.9.0-alpine
+    image: vromero/activemq-artemis:2.11.0-alpine
     environment:
       ARTEMIS_USERNAME: "admin"
       ARTEMIS_PASSWORD: "admin"
@@ -32,7 +32,7 @@ services:
     ports:
       - "27017:27017"
     labels:
-      - "test.priority=2"
+      - "test.priority=1"
       - "test.Wait.forLogMessage.regex=.*build index done..*"
       - "test.Wait.forLogMessage.times=1"
       - "test.log=true"

@@ -1,7 +1,10 @@
 package org.lorislab.p6.process.stream;
 
 import io.smallrye.reactive.messaging.jms.IncomingJmsMessageMetadata;
-import org.eclipse.microprofile.reactive.messaging.*;
+import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
+import org.eclipse.microprofile.reactive.messaging.Metadata;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
@@ -11,8 +14,8 @@ import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 import org.lorislab.p6.process.deployment.DeploymentService;
 import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
-import org.lorislab.quarkus.reactive.jms.InputJmsMessage;
-import org.lorislab.quarkus.reactive.jms.OutputJmsMessageMetadata;
+import org.lorislab.quarkus.reactive.jms.tx.IncomingJmsTxMessage;
+import org.lorislab.quarkus.reactive.jms.tx.OutgoingJmsTxMessageMetadata;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -23,7 +26,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @ApplicationScoped
 public class ProcessStream {
@@ -42,7 +44,7 @@ public class ProcessStream {
 
     @Incoming("process-start-in")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public CompletionStage<Void> processStart(InputJmsMessage<StartProcessRequest> message) {
+    public CompletionStage<Void> processStart(IncomingJmsTxMessage<StartProcessRequest> message) {
         try {
             log.info("Start process {}", message.getPayload());
             IncomingJmsMessageMetadata metadata = message.getJmsMetadata();
@@ -57,7 +59,7 @@ public class ProcessStream {
     }
 
     public static Message<ProcessToken> createMessage(ProcessToken token) {
-        Metadata m = OutputJmsMessageMetadata.builder()
+        Metadata m = OutgoingJmsTxMessageMetadata.builder()
                 .withTypeQueue()
                 .withDestination(token.type.route)
                 .withCorrelationId(token.executionId)

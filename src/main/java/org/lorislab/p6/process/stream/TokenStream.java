@@ -1,12 +1,10 @@
 package org.lorislab.p6.process.stream;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.InstanceHandle;
 import io.smallrye.reactive.messaging.jms.IncomingJmsMessageMetadata;
 import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.deployment.DeploymentService;
@@ -14,7 +12,7 @@ import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
 import org.lorislab.p6.process.flow.model.Node;
 import org.lorislab.p6.process.stream.events.EventService;
 import org.lorislab.p6.process.stream.events.EventServiceType;
-import org.lorislab.quarkus.reactive.jms.InputJmsMessage;
+import org.lorislab.quarkus.reactive.jms.tx.IncomingJmsTxMessage;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -22,7 +20,6 @@ import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
-import java.util.stream.Stream;
 
 @ApplicationScoped
 public class TokenStream {
@@ -38,17 +35,17 @@ public class TokenStream {
 
     @Incoming("token-in")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public CompletionStage<Void> message(InputJmsMessage<ProcessToken> message) {
+    public CompletionStage<Void> message(IncomingJmsTxMessage<ProcessToken> message) {
         return execute(message);
     }
 
     @Incoming("token-singleton-in")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public CompletionStage<Void> singleton(InputJmsMessage<ProcessToken> message) {
+    public CompletionStage<Void> singleton(IncomingJmsTxMessage<ProcessToken> message) {
         return execute(message);
     }
 
-    private CompletionStage<Void> execute(InputJmsMessage<ProcessToken> message) {
+    private CompletionStage<Void> execute(IncomingJmsTxMessage<ProcessToken> message) {
         try {
             IncomingJmsMessageMetadata metadata = message.getJmsMetadata();
             List<ProcessToken> tokens = executeToken(metadata.getCorrelationId(), message.getPayload());
