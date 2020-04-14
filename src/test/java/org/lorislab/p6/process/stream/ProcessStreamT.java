@@ -15,10 +15,10 @@ import static org.hamcrest.Matchers.equalTo;
 public class ProcessStreamT extends AbstractTest {
 
     @Test
-    @DisplayName("Start process test")
+    @DisplayName("Start-end process test")
     public void startProcessTest() {
-        String processId = "StartProcess";
-        String processVersion = "1.0.0";
+        String processId = "startEndProcess";
+        String processVersion = "1.2.3";
         // start process
         String processInstanceId = startProcess(processId, processVersion, Map.of("key","value"));
         // wait to finished process
@@ -38,7 +38,7 @@ public class ProcessStreamT extends AbstractTest {
     @Test
     @DisplayName("Service task process test")
     public void serviceTaskProcessTest() {
-        String processId = "ServiceTaskProcess";
+        String processId = "serviceTaskProcess";
         String processVersion = "1.0.0";
         // start process
         String processInstanceId = startProcess(processId, processVersion, Map.of("key","value"));
@@ -61,9 +61,9 @@ public class ProcessStreamT extends AbstractTest {
     }
 
     @Test
-    @DisplayName("Simple process test")
+    @DisplayName("Parallel gateway process test")
     public void simpleProcessTest() {
-        String processId = "SimpleProcess";
+        String processId = "parallelGateway";
         String processVersion = "1.0.0";
         // start process
         String processInstanceId = startProcess(processId, processVersion, Map.of("key","value1"));

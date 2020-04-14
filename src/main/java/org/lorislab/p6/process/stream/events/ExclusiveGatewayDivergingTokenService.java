@@ -3,9 +3,9 @@ package org.lorislab.p6.process.stream.events;
 import io.quarkus.arc.Unremovable;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
-import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
-import org.lorislab.p6.process.flow.model.ExclusiveGateway;
-import org.lorislab.p6.process.flow.model.Node;
+import org.lorislab.p6.process.model.ExclusiveGateway;
+import org.lorislab.p6.process.model.Node;
+import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.Collections;
@@ -19,7 +19,7 @@ import java.util.Map;
 public class ExclusiveGatewayDivergingTokenService extends EventService {
 
     @Override
-    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionModel pd, Node node) {
+    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node) {
 
         String item = null;
         ExclusiveGateway gateway = (ExclusiveGateway) node;
@@ -34,9 +34,9 @@ public class ExclusiveGatewayDivergingTokenService extends EventService {
                 item = key;
             }
         }
-        log.info("ExclusiveGateway node: {} next: {} default: {}", node.name, item, gateway.defaultSequence);
+        log.info("ExclusiveGateway node: {} next: {} default: {}", node.name, item, gateway.defaultNext);
         if (item == null) {
-            item = gateway.defaultSequence;
+            item = gateway.defaultNext;
         }
 
         return createChildTokens(messageId, token, pd, Collections.singletonList(item));

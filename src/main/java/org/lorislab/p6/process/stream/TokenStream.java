@@ -8,8 +8,8 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.deployment.DeploymentService;
-import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
-import org.lorislab.p6.process.flow.model.Node;
+import org.lorislab.p6.process.model.Node;
+import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 import org.lorislab.p6.process.stream.events.EventService;
 import org.lorislab.p6.process.stream.events.EventServiceType;
 import org.lorislab.quarkus.reactive.jms.tx.IncomingJmsTxMessage;
@@ -70,13 +70,13 @@ public class TokenStream {
             return Collections.emptyList();
         }
 
-        ProcessDefinitionModel pd = deploymentService.getProcessDefinition(token.processId, token.processVersion);
+        ProcessDefinitionRuntime pd = deploymentService.getProcessDefinition(token.processId, token.processVersion);
         if (pd == null) {
             log.error("No process definition found for the {}/{}/{}", token.processInstance, token.processId, token.processVersion);
             return Collections.emptyList();
         }
 
-        Node node = pd.getNode(token.nodeName);
+        Node node = pd.nodes.get(token.nodeName);
         if (node == null) {
             log.error("No node found in the process definition. The task will be ignored. Token: {}", token);
             return Collections.emptyList();
@@ -84,9 +84,8 @@ public class TokenStream {
 
         int nc = token.type.nextNodeCount;
         int size = 0;
-        List<String> next = null;
-        if (node.sequence != null && node.sequence.to != null) {
-            next = node.sequence.to;
+        List<String> next = node.next;
+        if (next != null ) {
             size = next.size();
         }
 

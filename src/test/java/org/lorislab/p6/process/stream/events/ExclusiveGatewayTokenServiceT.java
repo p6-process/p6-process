@@ -13,7 +13,7 @@ public class ExclusiveGatewayTokenServiceT extends AbstractTest {
     @Test
     @DisplayName("Exclusive gateway process test first option")
     public void exclusiveGatewayProcessFirstTest() {
-        String processId = "ExclusiveProcessTest";
+        String processId = "exclusiveGatewayProcess";
         String processVersion = "1.0.0";
 
         // start process
@@ -21,7 +21,7 @@ public class ExclusiveGatewayTokenServiceT extends AbstractTest {
 
         // process test1
         processServiceTask(x -> {
-            Assertions.assertEquals("test1", x.name);
+            Assertions.assertEquals("service1", x.name);
             return Map.of("step", "test1");
         });
 
@@ -32,7 +32,7 @@ public class ExclusiveGatewayTokenServiceT extends AbstractTest {
     @Test
     @DisplayName("Exclusive gateway process test second option")
     public void exclusiveGatewayProcessSecondTest() {
-        String processId = "ExclusiveProcessTest";
+        String processId = "exclusiveGatewayProcess";
         String processVersion = "1.0.0";
 
         // start process
@@ -40,7 +40,7 @@ public class ExclusiveGatewayTokenServiceT extends AbstractTest {
 
         // process test1
         processServiceTask(x -> {
-            Assertions.assertEquals("test2", x.name);
+            Assertions.assertEquals("service2", x.name);
             return Map.of("step", "test2");
         });
 
@@ -51,7 +51,7 @@ public class ExclusiveGatewayTokenServiceT extends AbstractTest {
     @Test
     @DisplayName("Exclusive gateway process test default option")
     public void exclusiveGatewayProcessDefaultTest() {
-        String processId = "ExclusiveProcessTest";
+        String processId = "exclusiveGatewayProcess";
         String processVersion = "1.0.0";
 
         // start process
@@ -59,7 +59,7 @@ public class ExclusiveGatewayTokenServiceT extends AbstractTest {
 
         // process test1
         processServiceTask(x -> {
-            Assertions.assertEquals("test2", x.name);
+            Assertions.assertEquals("service2", x.name);
             return Map.of("step", "default");
         });
 

@@ -20,8 +20,8 @@ import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
-import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
-import org.lorislab.p6.process.flow.model.Node;
+import org.lorislab.p6.process.model.Node;
+import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -38,12 +38,12 @@ public abstract class EventService {
     @Inject
     ProcessTokenDAO processTokenDAO;
 
-    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionModel pd, Node node) {
+    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node) {
         return Collections.emptyList();
     }
 
-    protected static void moveToNexNode(String messageId, ProcessToken token, ProcessDefinitionModel pd, Node node) {
-        String next = node.sequence.to.get(0);
+    protected static void moveToNexNode(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node) {
+        String next = node.next.get(0);
         token.status = ProcessTokenStatus.IN_EXECUTION;
 //        token.setPreviousName(token.getNodeName());
         token.nodeName = next;
@@ -52,7 +52,7 @@ public abstract class EventService {
         token.type = ProcessTokenType.valueOf(pd.nodes.get(next));
     }
 
-    protected List<ProcessToken> createChildTokens(String messageId, ProcessToken token, ProcessDefinitionModel pd, List<String> items) {
+    protected List<ProcessToken> createChildTokens(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, List<String> items) {
         List<ProcessToken> tokens = items.stream().map(item -> {
             ProcessToken child = new ProcessToken();
             child.id = UUID.randomUUID().toString();

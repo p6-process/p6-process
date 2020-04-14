@@ -1,7 +1,7 @@
 package org.lorislab.p6.process.dao.model.enums;
 
-import org.lorislab.p6.process.flow.model.Gateway;
-import org.lorislab.p6.process.flow.model.Node;
+import org.lorislab.p6.process.model.Gateway;
+import org.lorislab.p6.process.model.Node;
 
 public enum ProcessTokenType {
 
@@ -36,10 +36,10 @@ public enum ProcessTokenType {
     }
 
     public static ProcessTokenType valueOf(Node node) {
-        String tmp = node.nodeType.name();
+        String tmp = node.type.name();
         if (node instanceof Gateway) {
             Gateway pg = (Gateway) node;
-            tmp = pg.nodeType + "_" + pg.sequenceFlow;
+            tmp = pg.type + "_" + pg.sequence;
         }
         return ProcessTokenType.valueOf(tmp);
     }

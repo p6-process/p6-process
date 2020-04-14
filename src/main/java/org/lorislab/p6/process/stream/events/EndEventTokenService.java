@@ -7,8 +7,8 @@ import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
-import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
-import org.lorislab.p6.process.flow.model.Node;
+import org.lorislab.p6.process.model.Node;
+import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -24,7 +24,7 @@ public class EndEventTokenService extends EventService {
     ProcessInstanceDAO processInstanceRepository;
 
     @Override
-    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionModel pd, Node node) {
+    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node) {
         if (token.status != ProcessTokenStatus.FINISHED) {
             token.status = ProcessTokenStatus.FINISHED;
 //            token.setFinishedDate(new Date());

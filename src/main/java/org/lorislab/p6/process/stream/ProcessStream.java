@@ -13,7 +13,7 @@ import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 import org.lorislab.p6.process.deployment.DeploymentService;
-import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
+import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 import org.lorislab.quarkus.reactive.jms.tx.IncomingJmsTxMessage;
 import org.lorislab.quarkus.reactive.jms.tx.OutgoingJmsTxMessageMetadata;
 import org.slf4j.Logger;
@@ -69,7 +69,7 @@ public class ProcessStream {
 
     public List<ProcessToken> createTokens(String messageId, StartProcessRequest request) {
 
-        ProcessDefinitionModel pd = deploymentService.getProcessDefinition(request.processId, request.processVersion);
+        ProcessDefinitionRuntime pd = deploymentService.getProcessDefinition(request.processId, request.processVersion);
         if (pd == null) {
             log.error("No process definition found for the {}/{}/{}", request.processInstanceId, request.processId, request.processVersion);
             return Collections.emptyList();
@@ -86,7 +86,7 @@ public class ProcessStream {
         processInstanceDAO.create(pi);
 
         final ProcessInstance ppi = pi;
-        List<ProcessToken> tokens = pd.start.stream()
+        List<ProcessToken> tokens = pd.startNodes.values().stream()
                 .map(node -> {
                     ProcessToken token = new ProcessToken();
                     token.id = UUID.randomUUID().toString();

@@ -4,8 +4,8 @@ import io.quarkus.arc.Unremovable;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
-import org.lorislab.p6.process.deployment.ProcessDefinitionModel;
-import org.lorislab.p6.process.flow.model.Node;
+import org.lorislab.p6.process.model.Node;
+import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.Collections;
@@ -18,9 +18,9 @@ import java.util.UUID;
 public class ParallelGatewayConvergingTokenService extends EventService {
 
     @Override
-    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionModel pd, Node node) {
+    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node) {
 
-        String next = node.sequence.to.get(0);
+        String next = node.next.get(0);
 //FIXME:
         ProcessToken gt = processTokenDAO.findByReferenceAndNodeName(token.parent, next);
         if (gt == null) {
@@ -59,8 +59,8 @@ public class ParallelGatewayConvergingTokenService extends EventService {
         processTokenDAO.update(token);
 
         int size1 = gt.createdFrom.size();
-        int size2 = node.sequence.from.size();
-        log.info("Token finished {} node parents {}. Result {}>={}, {}", gt.createdFrom, node.sequence.from, size1, size2, size1 >= size2);
+        int size2 = node.previous.size();
+        log.info("Token finished {} node parents {}. Result {}>={}, {}", gt.createdFrom, node.previous, size1, size2, size1 >= size2);
         if (size1 >= size2) {
             log.info("Parallel gateway finished Token:{}", gt);
             return Collections.singletonList(gt);
