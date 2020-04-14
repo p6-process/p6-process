@@ -7,7 +7,6 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 @Path("instance")
 @Produces(MediaType.APPLICATION_JSON)
@@ -31,9 +30,9 @@ public class ProcessInstanceRestController {
     @Path("{guid}/parameters")
     public Response getParameters(@PathParam("guid") String guid) {
         ProcessInstance tmp = dao.findByGuid(guid);
-        if (tmp == null || tmp.data == null) {
+        if (tmp == null || tmp.getData() == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return Response.ok(tmp.data).build();
+        return Response.ok(tmp.getData()).build();
     }
 }

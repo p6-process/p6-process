@@ -83,13 +83,13 @@ public abstract class AbstractTest {
 
     protected ConnectionFactory createConnectionFactory() {
         String username = System.getProperty("quarkus.artemis.username");
-        String password = System.getProperty("quarkus.artemis.password");;
+        String password = System.getProperty("quarkus.artemis.password");
         String url = System.getProperty("quarkus.artemis.url");
         return new ActiveMQConnectionFactory(url, username, password);
     }
 
     protected ProcessToken receivedMessage(String address) {
-        return receivedMessage(address, 5000);
+        return receivedMessage(address, 3000);
     }
 
     protected ProcessToken receivedMessage(String address, long timeout) {
@@ -107,6 +107,7 @@ public abstract class AbstractTest {
                 }
             }
         } catch (Exception ex) {
+            ex.printStackTrace();
             throw new IllegalStateException("Error received message", ex);
         }
         return null;
@@ -139,7 +140,7 @@ public abstract class AbstractTest {
 
         log.info("Wait for the process {} to finished execution guid {} ", processId, processInstanceId);
         await()
-                .atMost(5, SECONDS)
+                .atMost(7, SECONDS)
                 .untilAsserted(() -> given()
                         .when()
                         .contentType(MediaType.APPLICATION_JSON)
@@ -174,16 +175,16 @@ public abstract class AbstractTest {
         log.info("Service task message {} ", token);
 
         ServiceTaskData serviceData = new ServiceTaskData();
-        serviceData.data = Collections.unmodifiableMap(token.data);
-        serviceData.guid = token.id;
-        serviceData.name = token.nodeName;
-        serviceData.processId = token.processId;
-        serviceData.processVersion = token.processVersion;
+        serviceData.data = Collections.unmodifiableMap(token.getData());
+        serviceData.guid = token.getId();
+        serviceData.name = token.getNodeName();
+        serviceData.processId = token.getProcessId();
+        serviceData.processVersion = token.getProcessVersion();
 
         // execute test
         Map<String, Object> data = execute.execute(serviceData);
         if (data != null) {
-            token.data.putAll(data);
+            token.getData().putAll(data);
         }
         sendMessage(ADDRESS_TOKEN_EXECUTE, this::setCorrelationId, token);
     }
@@ -198,7 +199,7 @@ public abstract class AbstractTest {
 
     protected  void setCorrelationId(Message m, ProcessToken t) {
         try {
-            m.setJMSCorrelationID(t.executionId);
+            m.setJMSCorrelationID(t.getExecutionId());
         } catch (JMSException ex) {
             throw new IllegalStateException(ex);
         }

@@ -8,6 +8,7 @@ import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -18,49 +19,50 @@ import java.util.UUID;
 public class ParallelGatewayConvergingTokenService extends EventService {
 
     @Override
+    @Transactional(Transactional.TxType.REQUIRED)
     public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node) {
 
         String next = node.next.get(0);
 //FIXME:
-        ProcessToken gt = processTokenDAO.findByReferenceAndNodeName(token.parent, next);
+        ProcessToken gt = processTokenDAO.findByReferenceAndNodeName(token.getParent(), next);
         if (gt == null) {
 
             gt = new ProcessToken();
-            gt.id = UUID.randomUUID().toString();
-            gt.status = ProcessTokenStatus.CREATED;
-            gt.processId = token.processId;
-            gt.processVersion = token.processVersion;
-            gt.nodeName = next;
+            gt.setId(UUID.randomUUID().toString());
+            gt.setStatus(ProcessTokenStatus.CREATED);
+            gt.setProcessId(token.getProcessId());
+            gt.setProcessVersion(token.getProcessVersion());
+            gt.setNodeName(next);
 //            gt.setCreateNodeName(next);
-            gt.type = ProcessTokenType.valueOf(pd.nodes.get(next));
+            gt.setType(ProcessTokenType.valueOf(pd.nodes.get(next)));
 
-            gt.parent = token.parent;
-            if (token.parent != null) {
-                ProcessToken parent = processTokenDAO.findByGuid(token.parent);
-                if (parent != null && parent.parent != null) {
-                    gt.parent = parent.parent;
+            gt.setParent(token.getParent());
+            if (token.getParent() != null) {
+                ProcessToken parent = processTokenDAO.findByGuid(token.getParent());
+                if (parent != null && parent.getParent() != null) {
+                    gt.setParent(parent.getParent());
                 }
             }
-            gt.processInstance = token.processInstance;
-            gt.reference = token.parent;
-            gt.createdFrom.add(token.id);
-            gt.messageId = messageId;
-            gt.executionId = UUID.randomUUID().toString();
+            gt.setProcessInstance(token.getProcessInstance());
+            gt.setReference(token.getParent());
+            gt.getCreatedFrom().add(token.getId());
+            gt.setMessageId(messageId);
+            gt.setExecutionId(UUID.randomUUID().toString());
             processTokenDAO.create(gt);
         } else {
             // add finished parent
-            gt.createdFrom.add(token.id);
-            gt.data.putAll(token.data);
+            gt.getCreatedFrom().add(token.getId());
+            gt.getData().putAll(token.getData());
             processTokenDAO.update(gt);
         }
 
         // child token finished
-        token.status = ProcessTokenStatus.FINISHED;
+        token.setStatus(ProcessTokenStatus.FINISHED);
         processTokenDAO.update(token);
 
-        int size1 = gt.createdFrom.size();
+        int size1 = gt.getCreatedFrom().size();
         int size2 = node.previous.size();
-        log.info("Token finished {} node parents {}. Result {}>={}, {}", gt.createdFrom, node.previous, size1, size2, size1 >= size2);
+        log.info("Token finished {} node parents {}. Result {}>={}, {}", gt.getCreatedFrom(), node.previous, size1, size2, size1 >= size2);
         if (size1 >= size2) {
             log.info("Parallel gateway finished Token:{}", gt);
             return Collections.singletonList(gt);

@@ -16,25 +16,51 @@
 
 package org.lorislab.p6.process.dao;
 
-import io.quarkus.mongodb.panache.PanacheMongoRepositoryBase;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import javax.transaction.Transactional;
 import java.util.List;
 
 @ApplicationScoped
-public class ProcessTokenDAO implements PanacheMongoRepositoryBase<ProcessToken, String> {
+public class ProcessTokenDAO {
+
+    @Inject
+    EntityManager em;
 
     public ProcessToken findByGuid(String id) {
-        return findById(id);
+        return em.find(ProcessToken.class, id);
     }
 
+    @Transactional(Transactional.TxType.REQUIRED)
     public void create(ProcessToken token) {
-        persist(token);
+        em.persist(token);
+    }
+
+    @Transactional(Transactional.TxType.REQUIRED)
+    public void createTokens(List<ProcessToken> tokens) {
+        if (tokens != null && !tokens.isEmpty()) {
+            tokens.forEach(em::merge);
+            em.flush();
+        }
+    }
+
+    @Transactional(Transactional.TxType.REQUIRED)
+    public ProcessToken update(ProcessToken token) {
+        ProcessToken tmp = em.merge(token);
+        em.flush();
+        return tmp;
     }
 
     public ProcessToken findByReferenceAndNodeName(String reference, String nodeName) {
-        List<ProcessToken> tmp = find("reference = ?1 and nodeName = ?2", reference, nodeName).list();
+        TypedQuery<ProcessToken> tq = em.createQuery("SELECT t FROM ProcessToken  t WHERE t.reference = :reference and t.nodeName = :nodeName", ProcessToken.class);
+        List<ProcessToken> tmp = tq
+                .setParameter("reference", reference)
+                .setParameter("nodeName", nodeName)
+                .getResultList();
         if (tmp != null && !tmp.isEmpty()) {
             if (tmp.size() == 1) {
                 return tmp.get(0);

@@ -12,6 +12,7 @@ import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,17 +25,18 @@ public class EndEventTokenService extends EventService {
     ProcessInstanceDAO processInstanceRepository;
 
     @Override
+    @Transactional(Transactional.TxType.REQUIRED)
     public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node) {
-        if (token.status != ProcessTokenStatus.FINISHED) {
-            token.status = ProcessTokenStatus.FINISHED;
+        if (token.getStatus() != ProcessTokenStatus.FINISHED) {
+            token.setStatus(ProcessTokenStatus.FINISHED);
 //            token.setFinishedDate(new Date());
             processTokenDAO.update(token);
 
             // update the process instance
             // TODO: check if all tokens finished!
-            ProcessInstance pi = processInstanceRepository.findByGuid(token.processInstance);
-            pi.status = ProcessInstanceStatus.FINISHED;
-            pi.data.putAll(token.data);
+            ProcessInstance pi = processInstanceRepository.findByGuid(token.getProcessInstance());
+            pi.setStatus(ProcessInstanceStatus.FINISHED);
+            pi.getData().putAll(token.getData());
             processInstanceRepository.update(pi);
         }
         return Collections.emptyList();

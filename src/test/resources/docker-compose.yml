@@ -10,6 +10,9 @@ services:
       ARTEMIS_PASSWORD: "admin"
       DISABLE_SECURITY: "true"
       ARTEMIS_PERF_JOURNAL: "NEVER"
+      CRITICAL_ANALYZER: "false"
+      ENABLE_JMX: "false"
+      ENABLE_JMX_EXPORTER: "false"
     volumes:
       - ./broker-00.xml:/var/lib/artemis/etc-override/broker-00.xml
     labels:
@@ -21,22 +24,22 @@ services:
       - "test.property.quarkus.artemis.password=admin"
       - "test.property.quarkus.artemis.url=tcp://$${host:p6-artemis}:$${port:p6-artemis:61616}"
     ports:
-      - "8161:8161"
       - "61616:61616"
     networks:
       - test
 
-  p6-mongo:
-    container_name: p6-mongo
-    image: mongo:4.0
+  p6-db:
+    container_name: p6-db
+    image: cockroachdb/cockroach:v19.2.6
+    command: start-single-node --insecure --listen-addr=0.0.0.0
     ports:
-      - "27017:27017"
+      - "26257:26257"
     labels:
       - "test.priority=1"
-      - "test.Wait.forLogMessage.regex=.*build index done..*"
+      - "test.Wait.forLogMessage.regex=.*nodeID.*"
       - "test.Wait.forLogMessage.times=1"
       - "test.log=true"
-      - "test.property.quarkus.mongodb.connection-string=mongodb://$${host:p6-mongo}:$${port:p6-mongo:27017}"
+      - "test.property.quarkus.datasource.jdbc.url=jdbc:postgresql://$${host:p6-db}:$${port:p6-db:26257}/postgres?sslmode=disable"
     networks:
       - test
 
@@ -49,7 +52,7 @@ services:
       - "test.unit=false"
       - "test.priority=101"
       - "test.image.pull=DEFAULT"
-      - "test.env.QUARKUS_INFINISPAN_CLIENT_SERVER_LIST=p6-infinispan:11222"
+      - "test.env.QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://p6-db:26257?sslmode=disable"
       - "test.env.ARTEMIS_URL=tcp://p6-artemis:61616"
     volumes:
       - ./p6:/work/p6

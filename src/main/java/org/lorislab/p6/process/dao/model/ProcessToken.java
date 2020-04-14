@@ -16,49 +16,70 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import io.quarkus.mongodb.panache.MongoEntity;
-import io.quarkus.mongodb.panache.PanacheMongoEntityBase;
-import org.bson.codecs.pojo.annotations.BsonId;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.TypeDefs;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 
+import javax.persistence.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@MongoEntity(collection = "ProcessToken")
-public class ProcessToken extends PanacheMongoEntityBase {
+@TypeDefs({
+        @TypeDef(name = "json", typeClass = JsonStringType.class),
+        @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+})
+@Entity
+@Table(name = "PROCESS_TOKEN")
+@Getter
+@Setter
+public class ProcessToken {
 
-    @BsonId
-    public String id;
+    @Id
+    private String id;
 
-    public String messageId;
+    @Version
+    @Column(name="OPTLOCK")
+    private Integer version;
 
-    public String processInstance;
+    private String messageId;
 
-    public String processId;
+    private String processInstance;
 
-    public String processVersion;
+    private String processId;
 
-    public String nodeName;
+    private String processVersion;
 
-    public ProcessTokenStatus status;
+    private String nodeName;
 
-    public ProcessTokenType type;
+    @Enumerated(EnumType.STRING)
+    private ProcessTokenStatus status;
 
-    public String executionId;
+    @Enumerated(EnumType.STRING)
+    private ProcessTokenType type;
 
-    public String parent;
+    private String executionId;
 
-    public String reference;
+    private String parent;
 
-    public Set<String> createdFrom = new HashSet<>();
+    private String reference;
 
-    public Map<String, Object> data = new HashMap<>();
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> createdFrom = new HashSet<>();
 
-        @Override
+    @Type(type = "jsonb")
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> data = new HashMap<>();
+
+    @Override
     public String toString() {
-        return "ProcessToken:" + id;
+        return this.getClass().getSimpleName() + ":" + id;
     }
 }

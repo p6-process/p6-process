@@ -16,35 +16,53 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import io.quarkus.mongodb.panache.MongoEntity;
-import io.quarkus.mongodb.panache.PanacheMongoEntityBase;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.TypeDefs;
 import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;
 
+import javax.persistence.*;
 import java.util.HashMap;
 import java.util.Map;
 
-@MongoEntity(collection = "ProcessInstance")
-public class ProcessInstance extends PanacheMongoEntityBase {
+@TypeDefs({
+        @TypeDef(name = "json", typeClass = JsonStringType.class),
+        @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+})
+@Entity
+@Table(name = "PROCESS_INSTANCE")
+@Getter
+@Setter
+public class ProcessInstance {
 
-    @BsonId
-    public String id;
+    @Id
+    private String id;
 
-    public String parent;
+    @Version
+    @Column(name="OPTLOCK")
+    private Integer version;
 
-    public String messageId;
+    private String messageId;
 
-    public String processId;
+    private String parent;
 
-    public String processVersion;
+    private String processId;
 
-    public ProcessInstanceStatus status;
+    private String processVersion;
 
-    public Map<String, Object> data = new HashMap<>();
+    @Enumerated(EnumType.STRING)
+    private ProcessInstanceStatus status;
+
+    @Type(type = "jsonb")
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> data = new HashMap<>();
 
     @Override
     public String toString() {
-        return "ProcessInstance:" + id;
+        return this.getClass().getSimpleName() + ":" + id;
     }
 }

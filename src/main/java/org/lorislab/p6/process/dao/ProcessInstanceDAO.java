@@ -16,20 +16,32 @@
 
 package org.lorislab.p6.process.dao;
 
-import io.quarkus.mongodb.panache.PanacheMongoRepositoryBase;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 
 @ApplicationScoped
-public class ProcessInstanceDAO implements PanacheMongoRepositoryBase<ProcessInstance, String> {
+public class ProcessInstanceDAO {
+
+    @Inject
+    EntityManager em;
 
     public ProcessInstance findByGuid(String id) {
-        return findById(id);
+        return em.find(ProcessInstance.class, id);
     }
 
+    @Transactional(Transactional.TxType.REQUIRED)
     public void create(ProcessInstance pi) {
-        persist(pi);
+        em.persist(pi);
     }
 
+    @Transactional(Transactional.TxType.REQUIRED)
+    public ProcessInstance update(ProcessInstance pi) {
+        ProcessInstance tmp = em.merge(pi);
+        em.flush();
+        return tmp;
+    }
 }

@@ -7,6 +7,7 @@ import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,10 +17,13 @@ import java.util.List;
 public class ServiceTaskCompleteTokenService extends EventService {
 
     @Override
-    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node) {
+    @Transactional(Transactional.TxType.REQUIRED)
+    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node, ProcessToken newToken) {
+
+        token.getData().putAll(newToken.getData());
         moveToNexNode(messageId, token, pd, node);
         //FIXME:
-        processTokenDAO.update(token);
+        token = processTokenDAO.update(token);
 
         return Collections.singletonList(token);
     }

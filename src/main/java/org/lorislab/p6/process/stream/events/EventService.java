@@ -25,6 +25,7 @@ import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -38,40 +39,46 @@ public abstract class EventService {
     @Inject
     ProcessTokenDAO processTokenDAO;
 
+    @Transactional(Transactional.TxType.REQUIRED)
     public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node) {
         return Collections.emptyList();
     }
 
+    @Transactional(Transactional.TxType.REQUIRED)
+    public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node, ProcessToken newToken) {
+        return execute(messageId, token, pd, node);
+    }
+
     protected static void moveToNexNode(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node) {
         String next = node.next.get(0);
-        token.status = ProcessTokenStatus.IN_EXECUTION;
+        token.setStatus(ProcessTokenStatus.IN_EXECUTION);
 //        token.setPreviousName(token.getNodeName());
-        token.nodeName = next;
-        token.messageId = messageId;
-        token.executionId = UUID.randomUUID().toString();
-        token.type = ProcessTokenType.valueOf(pd.nodes.get(next));
+        token.setNodeName(next);
+        token.setMessageId(messageId);
+        token.setExecutionId(UUID.randomUUID().toString());
+        token.setType(ProcessTokenType.valueOf(pd.nodes.get(next)));
     }
 
     protected List<ProcessToken> createChildTokens(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, List<String> items) {
         List<ProcessToken> tokens = items.stream().map(item -> {
             ProcessToken child = new ProcessToken();
-            child.id = UUID.randomUUID().toString();
-            child.nodeName = item;
-            child.processId = token.processId;
-            child.processVersion = token.processVersion;
+            child.setId(UUID.randomUUID().toString());
+            child.setNodeName(item);
+            child.setProcessId(token.getProcessId());
+            child.setProcessVersion(token.getProcessVersion());
 //            child.setCreateNodeName(item);
 //            child.setPreviousName(token.getNodeName());
-            child.parent = token.id;
-            child.type = ProcessTokenType.valueOf(pd.nodes.get(item));
-            child.processInstance = token.processInstance;
-            child.data = token.data;
-            child.status = ProcessTokenStatus.IN_EXECUTION;
-            child.messageId = messageId;
-            child.executionId = UUID.randomUUID().toString();
+            child.setParent(token.getId());
+            child.setType(ProcessTokenType.valueOf(pd.nodes.get(item)));
+            child.setProcessInstance(token.getProcessInstance());
+            child.setData(token.getData());
+            child.setStatus(ProcessTokenStatus.IN_EXECUTION);
+            child.setMessageId(messageId);
+            child.setExecutionId(UUID.randomUUID().toString());
             return child;
         }).collect(Collectors.toList());
 
-        processTokenDAO.persist(tokens);
+        processTokenDAO.createTokens(tokens);
 
         return tokens;
     }

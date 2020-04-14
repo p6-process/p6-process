@@ -8,10 +8,8 @@ import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
 import javax.enterprise.context.ApplicationScoped;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import javax.transaction.Transactional;
+import java.util.*;
 
 @Unremovable
 @ApplicationScoped
@@ -19,6 +17,7 @@ import java.util.Map;
 public class ExclusiveGatewayDivergingTokenService extends EventService {
 
     @Override
+    @Transactional(Transactional.TxType.REQUIRED)
     public List<ProcessToken> execute(String messageId, ProcessToken token, ProcessDefinitionRuntime pd, Node node) {
 
         String item = null;
@@ -29,7 +28,7 @@ public class ExclusiveGatewayDivergingTokenService extends EventService {
         Iterator<String> keys = condition.keySet().iterator();
         while (item == null && keys.hasNext()) {
             String key = keys.next();
-            boolean tmp = ProcessExpressionHelper.ifExpression(condition.get(key), token.data);
+            boolean tmp = ProcessExpressionHelper.ifExpression(condition.get(key), token.getData());
             if (tmp) {
                 item = key;
             }
@@ -39,6 +38,12 @@ public class ExclusiveGatewayDivergingTokenService extends EventService {
             item = gateway.defaultNext;
         }
 
-        return createChildTokens(messageId, token, pd, Collections.singletonList(item));
+        token.setNodeName(item);
+        token.setMessageId(messageId);
+        token.setExecutionId(UUID.randomUUID().toString());
+        token.setType(ProcessTokenType.valueOf(pd.nodes.get(item)));
+        token = processTokenDAO.update(token);
+
+        return Collections.singletonList(token);
     }
 }
