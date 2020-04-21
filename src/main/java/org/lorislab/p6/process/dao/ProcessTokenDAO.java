@@ -38,6 +38,7 @@ public class ProcessTokenDAO {
     @Transactional(Transactional.TxType.REQUIRED)
     public void create(ProcessToken token) {
         em.persist(token);
+        em.flush();
     }
 
     @Transactional(Transactional.TxType.REQUIRED)

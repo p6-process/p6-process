@@ -51,7 +51,7 @@ public class TokenExecutor {
         return Message.of(token, m);
     }
 
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    @Transactional
     public List<ProcessToken> createTokens(String messageId, ProcessStream.StartProcessRequest request) {
 
         ProcessDefinitionRuntime pd = deploymentService.getProcessDefinition(request.processId, request.processVersion);
@@ -66,7 +66,7 @@ public class TokenExecutor {
         pi.setStatus(ProcessInstanceStatus.CREATED);
         pi.setProcessId(request.processId);
         pi.setProcessVersion(request.processVersion);
-        pi.setData(request.data);
+        pi.getData().putAll(request.data);
 
         processInstanceDAO.create(pi);
 

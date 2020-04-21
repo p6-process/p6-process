@@ -1,5 +1,6 @@
 package org.lorislab.p6.process.stream;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.reactive.messaging.jms.IncomingJmsMessageMetadata;
 import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -38,6 +39,7 @@ public class ProcessStream {
         }
     }
 
+    @RegisterForReflection
     public static class StartProcessRequest {
         public String processId;
         public String processInstanceId;

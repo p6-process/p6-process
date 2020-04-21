@@ -16,26 +16,20 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
-import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.hibernate.annotations.TypeDefs;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
+import org.lorislab.quarkus.hibernate.types.json.JsonBinaryType;
+import org.lorislab.quarkus.hibernate.types.json.JsonTypes;
 
 import javax.persistence.*;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-@TypeDefs({
-        @TypeDef(name = "json", typeClass = JsonStringType.class),
-        @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
-})
+@TypeDef(name = JsonTypes.JSON_BIN, typeClass = JsonBinaryType.class)
 @Entity
 @Table(name = "PROCESS_TOKEN")
 @Getter
@@ -74,9 +68,9 @@ public class ProcessToken {
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> createdFrom = new HashSet<>();
 
-    @Type(type = "jsonb")
-    @Column(columnDefinition = "jsonb")
-    private Map<String, Object> data = new HashMap<>();
+    @Type(type = JsonTypes.JSON_BIN)
+    @Column(columnDefinition = JsonTypes.JSON_BIN)
+    private Parameters data = new Parameters();
 
     @Override
     public String toString() {

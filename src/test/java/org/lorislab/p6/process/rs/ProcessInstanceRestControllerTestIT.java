@@ -16,9 +16,9 @@
 
 package org.lorislab.p6.process.rs;
 
-import org.lorislab.quarkus.testcontainers.DockerComposeTest;
+import io.quarkus.test.junit.NativeImageTest;
 
-@DockerComposeTest
-public class ProcessInstanceRestControllerTestIT extends ProcessInstanceRestControllerT {
+@NativeImageTest
+public class ProcessInstanceRestControllerTestIT extends ProcessInstanceRestControllerTest {
 
 }

@@ -61,6 +61,11 @@
     
     <dependencies>
         <dependency>
+            <groupId>org.lorislab.quarkus</groupId>
+            <artifactId>quarkus-hibernate-types</artifactId>
+            <version>0.1.2</version>
+        </dependency>
+        <dependency>
             <groupId>org.lorislab.p6</groupId>
             <artifactId>p6-process-model</artifactId>
             <version>0.2.2</version>
@@ -80,11 +85,6 @@
             <groupId>org.lorislab.quarkus</groupId>
             <artifactId>quarkus-reactive-jms-tx</artifactId>
             <version>0.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vladmihalcea</groupId>
-            <artifactId>hibernate-types-52</artifactId>
-            <version>2.9.8</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -112,11 +112,11 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-reactive-messaging</artifactId>
+            <artifactId>quarkus-smallrye-reactive-streams-operators</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-context-propagation</artifactId>
+            <artifactId>quarkus-smallrye-reactive-messaging</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -129,10 +129,6 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-resteasy-jackson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-openapi</artifactId>
         </dependency>
 
         <!-- TEST -->
@@ -149,7 +145,7 @@
         <dependency>
             <groupId>org.lorislab.quarkus</groupId>
             <artifactId>quarkus-testcontainers</artifactId>
-            <version>0.8.0</version>
+            <version>0.9.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -204,21 +200,10 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>native</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                        <phase>integration-test</phase>
-                    </execution>
-                </executions>
                 <configuration>
                     <systemPropertyVariables>
                         <java.util.logging.SimpleFormatter.format>%1$tF %1$tH:%1$tM:%1$tS,%1$tL %4$-5s [%3$s] %5$s %n
                         </java.util.logging.SimpleFormatter.format>
-                        <test.integration>true</test.integration>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

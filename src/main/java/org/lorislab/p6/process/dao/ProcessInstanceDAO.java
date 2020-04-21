@@ -36,6 +36,7 @@ public class ProcessInstanceDAO {
     @Transactional(Transactional.TxType.REQUIRED)
     public void create(ProcessInstance pi) {
         em.persist(pi);
+        em.flush();
     }
 
     @Transactional(Transactional.TxType.REQUIRED)

@@ -19,17 +19,13 @@ package org.lorislab.p6.process.test;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.restassured.RestAssured;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.stream.ProcessStream;
-import org.lorislab.quarkus.testcontainers.DockerComposeService;
 import org.lorislab.quarkus.testcontainers.DockerComposeTestResource;
-import org.lorislab.quarkus.testcontainers.DockerService;
-import org.lorislab.quarkus.testcontainers.InjectLoggerExtension;
+import org.lorislab.quarkus.testcontainers.QuarkusTestcontainers;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import javax.jms.*;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
@@ -49,11 +45,9 @@ import static org.lorislab.quarkus.reactive.jms.tx.IncomingJmsTxMessage.createJm
 /**
  * The abstract test
  */
-@ExtendWith(InjectLoggerExtension.class)
+@QuarkusTestcontainers
 @QuarkusTestResource(DockerComposeTestResource.class)
 public abstract class AbstractTest {
-
-    public static String ADDRESS_DEPLOYMENT = "deployment";
 
     static String ADDRESS_START_PROCESS = "process-start";
 
@@ -61,8 +55,7 @@ public abstract class AbstractTest {
 
     static String ADDRESS_TOKEN_EXECUTE = "token-execute";
 
-    @Inject
-    protected Logger log;
+    protected Logger log = LoggerFactory.getLogger(this.getClass());
 
     /**
      * Starts the containers before the tests
@@ -71,15 +64,15 @@ public abstract class AbstractTest {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     }
 
-    @DockerService("p6-executor")
-    protected DockerComposeService app;
-
-    @BeforeEach
-    public void init() {
-        if (app != null) {
-            RestAssured.port = app.getPort(8080);
-        }
-    }
+//    @DockerService("p6-process")
+//    protected DockerComposeService app;
+//
+//    @BeforeEach
+//    public void init() {
+//        if (app != null) {
+//            RestAssured.port = app.getPort(8080);
+//        }
+//    }
 
     protected ConnectionFactory createConnectionFactory() {
         String username = System.getProperty("quarkus.artemis.username");

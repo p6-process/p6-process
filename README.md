@@ -8,6 +8,13 @@ P6 process engine.
 [![Docker Repository on Quay](https://img.shields.io/badge/dynamic/json?logoColor=white&color=green&logo=docker&style=for-the-badge&label=Latest&query=%24.tags%5B1%5D.name&url=https%3A%2F%2Fquay.io%2Fapi%2Fv1%2Frepository%2Fp6-process%2Fp6-process%2Ftag%2F%3FonlyActiveTags%3Dtrue)](https://quay.io/repository/p6-process/p6-process)
 
 
+### Build and tests
+
+```shell script
+mvn clean package
+samo maven docker-build
+mvn failsafe:integration-test failsafe:verify
+```
 #### Generate DDL
 
 ```shell script

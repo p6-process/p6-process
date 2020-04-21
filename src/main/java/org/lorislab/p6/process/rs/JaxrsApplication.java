@@ -17,9 +17,6 @@
 package org.lorislab.p6.process.rs;
 
 import io.smallrye.reactive.messaging.jms.IncomingJmsMessageMetadata;
-import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
-import org.eclipse.microprofile.openapi.annotations.info.Info;
-import org.eclipse.microprofile.openapi.annotations.servers.Server;
 import org.lorislab.quarkus.jel.log.interceptor.LoggerParam;
 import org.lorislab.quarkus.reactive.jms.tx.IncomingJmsTxMessage;
 import org.slf4j.Logger;
@@ -30,12 +27,7 @@ import javax.enterprise.inject.spi.InjectionPoint;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 
-@OpenAPIDefinition(
-        servers = {
-                @Server(url = "http://p6-process:8080/")
-        },
-        info = @Info(title = "p6-process", description = "p6 process service", version = "1.0")
-)
+
 @ApplicationPath("/v1")
 public class JaxrsApplication extends Application {
 

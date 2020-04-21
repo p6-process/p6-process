@@ -16,7 +16,6 @@ services:
     volumes:
       - ./broker-00.xml:/var/lib/artemis/etc-override/broker-00.xml
     labels:
-      - "test.priority=1"
       - "test.Wait.forLogMessage.regex=.*AMQ241004: Artemis Console available at.*"
       - "test.Wait.forLogMessage.times=1"
       - "test.log=true"
@@ -27,6 +26,23 @@ services:
       - "61616:61616"
     networks:
       - test
+
+#  p6-db:
+#    container_name: p6-db
+#    image: postgres:10.5
+#    environment:
+#      POSTGRES_DB: "p6"
+#      POSTGRES_USER: "p6"
+#      POSTGRES_PASSWORD: "p6"
+#    labels:
+#      - "test.Wait.forLogMessage.regex=.*database system is ready to accept connections.*\\s"
+#      - "test.Wait.forLogMessage.times=2"
+#      - "test.log=true"
+#      - "test.property.quarkus.datasource.jdbc.url=jdbc:postgresql://$${host:p6-db}:$${port:p6-db:5432}/p6?sslmode=disable"
+#    ports:
+#      - "5432:5432"
+#    networks:
+#      - "test"
 
   p6-db:
     container_name: p6-db
@@ -45,15 +61,20 @@ services:
 
   p6-process:
     container_name: p6-process
-    image: quay.io/p6-process/p6-process:latest
+    image: p6-process:latest
     ports:
       - "8080:8080"
     labels:
       - "test.unit=false"
       - "test.priority=101"
       - "test.image.pull=DEFAULT"
-      - "test.env.QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://p6-db:26257?sslmode=disable"
-      - "test.env.ARTEMIS_URL=tcp://p6-artemis:61616"
+      - "test.property.quarkus.http.test-port=$${port:p6-process:8080}"
+      - "test.env.QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://p6-db:26257/postgres?sslmode=disable"
+      - "test.env.QUARKUS_ARTEMIS_URL=tcp://p6-artemis:61616"
+      - "test.env.QUARKUS_ARTEMIS_USERNAME=admin"
+      - "test.env.QUARKUS_ARTEMIS_PASSWORD=admin"
+      - "test.env.QUARKUS_DATASOURCE_USERNAME=root"
+      - "test.env.QUARKUS_DATASOURCE_PASSWORD="
     volumes:
       - ./p6:/work/p6
     networks:

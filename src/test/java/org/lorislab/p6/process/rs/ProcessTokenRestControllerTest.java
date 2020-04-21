@@ -16,9 +16,29 @@
 
 package org.lorislab.p6.process.rs;
 
+import io.quarkus.test.junit.DisabledOnNativeImage;
 import io.quarkus.test.junit.QuarkusTest;
+import org.junit.jupiter.api.Test;
+import org.lorislab.p6.process.test.AbstractTest;
+
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import static io.restassured.RestAssured.given;
 
 @QuarkusTest
-public class ProcessTokenRestControllerTest extends ProcessTokenRestControllerT {
+public class ProcessTokenRestControllerTest extends AbstractTest {
+
+    @Test
+    public void getNotFoundTest() {
+        given()
+                .when()
+                .contentType(MediaType.APPLICATION_JSON)
+                .pathParam("guid", "123456")
+                .get("/v1/token/{guid}")
+                .prettyPeek()
+                .then()
+                .statusCode(Response.Status.NOT_FOUND.getStatusCode());
+    }
 
 }
