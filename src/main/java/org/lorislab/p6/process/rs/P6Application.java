@@ -16,27 +16,13 @@
 
 package org.lorislab.p6.process.rs;
 
-import io.smallrye.reactive.messaging.jms.IncomingJmsMessageMetadata;
-import org.lorislab.quarkus.jel.log.interceptor.LoggerParam;
-import org.lorislab.quarkus.reactive.jms.tx.IncomingJmsTxMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
 
-
-@ApplicationPath("/v1")
-public class JaxrsApplication extends Application {
-
-    @LoggerParam(classes = {IncomingJmsTxMessage.class})
-    public static String logMessage(Object message) {
-        IncomingJmsTxMessage<?> tmp = (IncomingJmsTxMessage<?>) message;
-        IncomingJmsMessageMetadata metadata = tmp.getJmsMetadata();
-        return "Message[" + metadata.getMessageId() + "," + metadata.getCorrelationId() + "," + metadata.getIntProperty("JMSXDeliveryCount") + "]";
-    }
+public class P6Application {
 
     @Produces
     public Logger produceLogger(InjectionPoint injectionPoint) {

@@ -1,13 +1,13 @@
 package org.lorislab.p6.process.rs;
 
-import org.lorislab.p6.process.dao.ProcessTokenDAO;
+import io.smallrye.mutiny.Uni;
+import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 @Path("token")
 @Produces(MediaType.APPLICATION_JSON)
@@ -15,15 +15,13 @@ import java.util.List;
 public class ProcessTokenRestController {
 
     @Inject
-    ProcessTokenDAO dao;
+    io.vertx.mutiny.pgclient.PgPool client;
 
     @GET
-    @Path("{guid}")
-    public Response get(@PathParam("guid") String guid) {
-        ProcessToken tmp = dao.findByGuid(guid);
-        if (tmp == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-        return Response.ok(tmp).build();
+    @Path("{id}")
+    public Uni<Response> get(@PathParam("id") String id) {
+        return ProcessToken.findById(client, id)
+                .onItem().apply(item -> item != null ? Response.ok(item) : Response.status(Response.Status.NOT_FOUND))
+                .onItem().apply(Response.ResponseBuilder::build);
     }
 }

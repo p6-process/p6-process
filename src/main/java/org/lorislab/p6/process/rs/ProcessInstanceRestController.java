@@ -1,6 +1,6 @@
 package org.lorislab.p6.process.rs;
 
-import org.lorislab.p6.process.dao.ProcessInstanceDAO;
+import io.smallrye.mutiny.Uni;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 
 import javax.inject.Inject;
@@ -14,25 +14,14 @@ import javax.ws.rs.core.Response;
 public class ProcessInstanceRestController {
 
     @Inject
-    ProcessInstanceDAO dao;
+    io.vertx.mutiny.pgclient.PgPool client;
 
     @GET
-    @Path("{guid}")
-    public Response get(@PathParam("guid") String guid) {
-        ProcessInstance tmp = dao.findByGuid(guid);
-        if (tmp == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-        return Response.ok(tmp).build();
+    @Path("{id}")
+    public Uni<Response> get(@PathParam("id") String id) {
+        return ProcessInstance.findById(client, id)
+                .onItem().apply(item -> item != null ? Response.ok(item) : Response.status(Response.Status.NOT_FOUND))
+                .onItem().apply(Response.ResponseBuilder::build);
     }
 
-    @GET
-    @Path("{guid}/parameters")
-    public Response getParameters(@PathParam("guid") String guid) {
-        ProcessInstance tmp = dao.findByGuid(guid);
-        if (tmp == null || tmp.getData() == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-        return Response.ok(tmp.getData()).build();
-    }
 }

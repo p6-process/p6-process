@@ -1,9 +1,6 @@
-package org.lorislab.p6.process.stream.events;
+package org.lorislab.p6.process.stream.reactive;
 
-import io.quarkus.qute.Engine;
-import io.quarkus.qute.Expression;
-import io.quarkus.qute.IfSectionHelper;
-import io.quarkus.qute.Template;
+import io.quarkus.qute.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,8 +60,8 @@ public class ProcessExpressionHelper {
         String tmp = null;
         try {
             Template template = ENGINE.parse("{" + expression + "}");
-            tmp = template.render(data);
-            CompletableFuture<Object> literal = Expression.literal(tmp).literal;
+            tmp = template.data(data).render();
+            CompletableFuture<Object> literal = template.getExpressions().iterator().next().getLiteralValue();
             if (literal == null) {
                 return tmp;
             }

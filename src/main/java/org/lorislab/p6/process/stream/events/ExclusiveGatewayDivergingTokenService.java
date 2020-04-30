@@ -6,6 +6,7 @@ import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 import org.lorislab.p6.process.model.ExclusiveGateway;
 import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
+import org.lorislab.p6.process.stream.reactive.ProcessExpressionHelper;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.transaction.Transactional;

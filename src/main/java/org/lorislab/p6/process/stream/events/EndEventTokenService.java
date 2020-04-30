@@ -1,7 +1,6 @@
 package org.lorislab.p6.process.stream.events;
 
 import io.quarkus.arc.Unremovable;
-import org.lorislab.p6.process.dao.ProcessInstanceDAO;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;

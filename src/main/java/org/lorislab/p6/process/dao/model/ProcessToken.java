@@ -16,61 +16,69 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
+import io.smallrye.mutiny.Uni;
+import io.vertx.core.json.JsonObject;
+import io.vertx.mutiny.pgclient.PgPool;
+import io.vertx.mutiny.sqlclient.RowSet;
+import io.vertx.mutiny.sqlclient.Transaction;
+import io.vertx.mutiny.sqlclient.Tuple;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
-import org.lorislab.quarkus.hibernate.types.json.JsonBinaryType;
-import org.lorislab.quarkus.hibernate.types.json.JsonTypes;
 
-import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
-@TypeDef(name = JsonTypes.JSON_BIN, typeClass = JsonBinaryType.class)
-@Entity
-@Table(name = "PROCESS_TOKEN")
-@Getter
-@Setter
 public class ProcessToken {
 
-    @Id
-    private String id;
+    public String id;
 
-    @Version
-    @Column(name="OPTLOCK")
-    private Integer version;
+    public Integer version;
 
-    private String messageId;
+    public String messageId;
 
-    private String processInstance;
+    public String processInstance;
 
-    private String processId;
+    public String processId;
 
-    private String processVersion;
+    public String processVersion;
 
-    private String nodeName;
+    public String nodeName;
 
-    @Enumerated(EnumType.STRING)
-    private ProcessTokenStatus status;
+    public ProcessTokenStatus status;
 
-    @Enumerated(EnumType.STRING)
-    private ProcessTokenType type;
+    public ProcessTokenType type;
 
-    private String executionId;
+    public String executionId;
 
-    private String parent;
+    public String parent;
 
-    private String reference;
+    public String reference;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> createdFrom = new HashSet<>();
+    public Set<String> createdFrom = new HashSet<>();
 
-    @Type(type = JsonTypes.JSON_BIN)
-    @Column(columnDefinition = JsonTypes.JSON_BIN)
-    private Parameters data = new Parameters();
+    public JsonObject data = new JsonObject();
+
+    public ProcessToken copy() {
+        return this;
+    }
+
+    public static Uni<ProcessToken> findById(PgPool client, String id) {
+        return client.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE id = $1", Tuple.of(id))
+                .map(RowSet::iterator)
+                .map(iterator -> iterator.hasNext() ? ProcessTokenMapperImpl.mapS(iterator.next()) : null);
+    }
+
+    public Uni<ProcessToken> findById(Transaction tx, String id) {
+        return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE id = $1", Tuple.of(id))
+                .onItem().apply(RowSet::iterator)
+                .onItem().apply(i -> i.hasNext() ? ProcessTokenMapperImpl.mapS(i.next()) : null);
+    }
+
+    public Uni<ProcessToken> findByReferenceAndNodeName(Transaction tx, String ref, String nn) {
+        return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE reference = $1 and nodeName = $2", Tuple.of(ref, nn))
+                .onItem().apply(RowSet::iterator)
+                .onItem().apply(i -> i.hasNext() ? ProcessTokenMapperImpl.mapS(i.next()) : null);
+    }
 
     @Override
     public String toString() {

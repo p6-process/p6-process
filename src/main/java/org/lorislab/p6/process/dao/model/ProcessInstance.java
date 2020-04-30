@@ -16,44 +16,44 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
+import io.smallrye.mutiny.Uni;
+import io.vertx.core.json.JsonObject;
+import io.vertx.mutiny.pgclient.PgPool;
+import io.vertx.mutiny.sqlclient.Row;
+import io.vertx.mutiny.sqlclient.RowSet;
+import io.vertx.mutiny.sqlclient.Transaction;
+import io.vertx.mutiny.sqlclient.Tuple;
 import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;
-import org.lorislab.quarkus.hibernate.types.json.JsonBinaryType;
-import org.lorislab.quarkus.hibernate.types.json.JsonTypes;
 
-import javax.persistence.*;
-
-@TypeDef(name = JsonTypes.JSON_BIN, typeClass = JsonBinaryType.class)
-@Entity
-@Table(name = "PROCESS_INSTANCE")
-@Getter
-@Setter
 public class ProcessInstance {
 
-    @Id
-    private String id;
+    public String id;
 
-    @Version
-    @Column(name="OPTLOCK")
-    private Integer version;
+    public Integer version;
 
-    private String messageId;
+    public String messageId;
 
-    private String parent;
+    public String parent;
 
-    private String processId;
+    public String processId;
 
-    private String processVersion;
+    public String processVersion;
 
-    @Enumerated(EnumType.STRING)
-    private ProcessInstanceStatus status;
+    public ProcessInstanceStatus status;
 
-    @Type(type = JsonTypes.JSON_BIN)
-    @Column(columnDefinition = JsonTypes.JSON_BIN)
-    private Parameters data = new Parameters();
+    public JsonObject data = new JsonObject();
+
+    public static Uni<ProcessInstance> findById(PgPool client, String id) {
+        return client.preparedQuery("SELECT * FROM PROCESS_INSTANCE WHERE id = $1", Tuple.of(id))
+                .map(RowSet::iterator)
+                .map(iterator -> iterator.hasNext() ? ProcessInstanceMapperImpl.mapS(iterator.next()) : null);
+    }
+
+    public static Uni<ProcessInstance> findById(Transaction tx, String id) {
+        return tx.preparedQuery("SELECT * FROM PROCESS_INSTANCE WHERE id = $1", Tuple.of(id))
+                .onItem().apply(RowSet::iterator)
+                .onItem().apply(i -> i.hasNext() ? ProcessInstanceMapperImpl.mapS(i.next()) : null);
+    }
 
     @Override
     public String toString() {

@@ -23,4 +23,5 @@ public enum ProcessInstanceStatus {
     FAILED,
 
     FINISHED;
+
 }
