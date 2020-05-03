@@ -5,7 +5,6 @@ import io.quarkus.runtime.StartupEvent;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionLoader;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
-import org.lorislab.quarkus.jel.log.interceptor.LoggerExclude;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -34,20 +33,24 @@ public class DeploymentService {
 
     private Map<String, ProcessDefinitionRuntime> definitions = new HashMap<>();
 
-    void onStart(@Observes @LoggerExclude StartupEvent ev) {
+    void onStart(@Observes StartupEvent ev) {
         log.info("P6 process engine is starting...");
         if (enabled) {
             log.info("Start deploy processes from {}", dir);
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(dir), path -> path.toString().endsWith(".yaml"))) {
-                for (Path path : directoryStream) {
-                    log.info("Deploy process {}.", path);
+            if (Files.exists(Paths.get(dir))) {
+                try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(dir), path -> path.toString().endsWith(".yaml"))) {
+                    for (Path path : directoryStream) {
+                        log.info("Deploy process {}.", path);
 
-                    ProcessDefinitionRuntime pd = ProcessDefinitionLoader.loadRuntime(path.toFile());
-                    String id = getCacheId(pd.id, pd.version);
-                    definitions.put(id, pd);
+                        ProcessDefinitionRuntime pd = ProcessDefinitionLoader.loadRuntime(path.toFile());
+                        String id = getCacheId(pd.id, pd.version);
+                        definitions.put(id, pd);
+                    }
+                } catch (IOException ex) {
+                    throw new UncheckedIOException("Error deploy the process", ex);
                 }
-            } catch (IOException ex) {
-                throw new UncheckedIOException("Error deploy the process", ex);
+            } else {
+                log.warn("P6 process directory '{}' does not exists.", dir);
             }
         } else {
             log.info("Deployment is disabled");
@@ -55,7 +58,7 @@ public class DeploymentService {
         log.info("P6 process engine started.");
     }
 
-    void onStop(@Observes @LoggerExclude ShutdownEvent ev) {
+    void onStop(@Observes ShutdownEvent ev) {
         log.info("P6 process engine is stopping...");
     }
 

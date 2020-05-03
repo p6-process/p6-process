@@ -24,14 +24,14 @@ import io.vertx.mutiny.sqlclient.RowSet;
 import io.vertx.mutiny.sqlclient.Transaction;
 import io.vertx.mutiny.sqlclient.Tuple;
 import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;
+import org.lorislab.vertx.sql.mapper.SqlColumn;
 
 public class ProcessInstance {
 
+    @SqlColumn(ignore=true)
+    public boolean created;
+
     public String id;
-
-    public Integer version;
-
-    public String messageId;
 
     public String parent;
 
@@ -43,10 +43,22 @@ public class ProcessInstance {
 
     public JsonObject data = new JsonObject();
 
+    public Uni<String> create(Transaction tx) {
+        return tx.preparedQuery("INSERT INTO PROCESS_INSTANCE (id, parent,processId,processVersion,status,data) VALUES ($1,$2,$3,$4,$5, $6) RETURNING (id)"
+                , Tuple.of(id, parent, processId, processVersion, status.name(), data))
+                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getString("id"));
+    }
+
+    public Uni<Long> create(PgPool client) {
+        return client.preparedQuery("INSERT INTO PROCESS_INSTANCE (parent,processId,processVersion,status,data) VALUES ($1,$2,$3,$4,$5) RETURNING (id)"
+                , Tuple.of(parent, processId, processVersion, status.name(), data))
+                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong("id"));
+    }
+
     public static Uni<ProcessInstance> findById(PgPool client, String id) {
         return client.preparedQuery("SELECT * FROM PROCESS_INSTANCE WHERE id = $1", Tuple.of(id))
                 .map(RowSet::iterator)
-                .map(iterator -> iterator.hasNext() ? ProcessInstanceMapperImpl.mapS(iterator.next()) : null);
+                .map(it -> it.hasNext() ? ProcessInstanceMapperImpl.mapS(it.next()) : null);
     }
 
     public static Uni<ProcessInstance> findById(Transaction tx, String id) {

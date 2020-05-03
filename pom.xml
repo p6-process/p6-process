@@ -63,7 +63,7 @@
         <dependency>
             <groupId>org.lorislab.vertx</groupId>
             <artifactId>vertx-sql-mapper</artifactId>
-            <version>0.1.1</version>
+            <version>0.1.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -80,11 +80,11 @@
             <version>1.18.10</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.lorislab.quarkus</groupId>
-            <artifactId>jel-quarkus-log</artifactId>
-            <version>0.14.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.lorislab.quarkus</groupId>-->
+<!--            <artifactId>jel-quarkus-log</artifactId>-->
+<!--            <version>0.14.0</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
@@ -107,12 +107,20 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy</artifactId>
+            <artifactId>quarkus-vertx-web</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy-jackson</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.quarkus</groupId>-->
+<!--            <artifactId>quarkus-resteasy-mutiny</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.quarkus</groupId>-->
+<!--            <artifactId>quarkus-resteasy</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.quarkus</groupId>-->
+<!--            <artifactId>quarkus-resteasy-jackson</artifactId>-->
+<!--        </dependency>-->
 
         <!-- TEST -->
         <dependency>
@@ -141,6 +149,13 @@
             <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>2.1.5</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

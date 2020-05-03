@@ -24,11 +24,15 @@ import io.vertx.mutiny.sqlclient.Transaction;
 import io.vertx.mutiny.sqlclient.Tuple;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
 import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
+import org.lorislab.vertx.sql.mapper.SqlColumn;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class ProcessToken {
+
+    @SqlColumn(ignore=true)
+    public boolean created;
 
     public String id;
 
@@ -68,13 +72,13 @@ public class ProcessToken {
                 .map(iterator -> iterator.hasNext() ? ProcessTokenMapperImpl.mapS(iterator.next()) : null);
     }
 
-    public Uni<ProcessToken> findById(Transaction tx, String id) {
+    public static Uni<ProcessToken> findById(Transaction tx, String id) {
         return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE id = $1", Tuple.of(id))
                 .onItem().apply(RowSet::iterator)
                 .onItem().apply(i -> i.hasNext() ? ProcessTokenMapperImpl.mapS(i.next()) : null);
     }
 
-    public Uni<ProcessToken> findByReferenceAndNodeName(Transaction tx, String ref, String nn) {
+    public static Uni<ProcessToken> findByReferenceAndNodeName(Transaction tx, String ref, String nn) {
         return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE reference = $1 and nodeName = $2", Tuple.of(ref, nn))
                 .onItem().apply(RowSet::iterator)
                 .onItem().apply(i -> i.hasNext() ? ProcessTokenMapperImpl.mapS(i.next()) : null);

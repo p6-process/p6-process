@@ -1,19 +1,23 @@
 package org.lorislab.p6.process.stream.reactive;
 
+import org.lorislab.p6.process.dao.model.Message;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 public class ExecutionResult {
 
     public ExecutionItem item;
 
-    public Stream<ProcessToken> createTokens;
+    public List<ProcessToken> createTokens;
 
-    public Stream<ProcessToken> updateTokens;
+    public List<ProcessToken> tokens;
 
-    public ProcessInstance updateProcessInstance;
+    public ProcessInstance processInstance;
+
+    public List<Message> messages;
 
     public boolean save = false;
 

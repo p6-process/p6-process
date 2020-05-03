@@ -1,3 +1,11 @@
+create table PROCESS_MSG
+(
+    id             SERIAL,
+    created        bigint,
+    ref            varchar(255),
+    primary key (id)
+);
+
 create table PROCESS_INSTANCE
 (
     id             varchar(255) not null,
@@ -28,14 +36,3 @@ create table PROCESS_TOKEN
     OPTLOCK         int4,
     primary key (id)
 );
-
-create table ProcessToken_createdFrom
-(
-    ProcessToken_id varchar(255) not null,
-    createdFrom     varchar(255)
-);
-
-alter table ProcessToken_createdFrom
-    add constraint FKlokp1l0rwlm2ffbh1rwcrh0aw
-        foreign key (ProcessToken_id)
-            references PROCESS_TOKEN;

@@ -16,13 +16,10 @@
 
 package org.lorislab.p6.process.rs;
 
-import io.quarkus.test.junit.DisabledOnNativeImage;
 import io.quarkus.test.junit.QuarkusTest;
+import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.Test;
 import org.lorislab.p6.process.test.AbstractTest;
-
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import static io.restassured.RestAssured.given;
 
@@ -34,12 +31,12 @@ public class ProcessInstanceRestControllerTest extends AbstractTest {
         log.info("Test logger");
         given()
                 .when()
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(ContentType.APPLICATION_JSON.getMimeType())
                 .pathParam("guid", "123456")
-                .get("/v1/instance/{guid}")
+                .get("/instance/{guid}")
                 .prettyPeek()
                 .then()
-                .statusCode(Response.Status.NOT_FOUND.getStatusCode());
+                .statusCode(404);
     }
 
 }
