@@ -24,7 +24,7 @@ public class TokenExecutor {
     Long id;
 
     void onStart(@Observes StartupEvent ev) {
-        id = vertx.setTimer(TimeUnit.SECONDS.toMillis(scheduler), this::action);
+//        id = vertx.setTimer(TimeUnit.SECONDS.toMillis(scheduler), this::action);
     }
 
     void onStop(@Observes ShutdownEvent ev) {
