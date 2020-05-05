@@ -2,12 +2,11 @@ package org.lorislab.p6.process.stream.reactive;
 
 import io.smallrye.mutiny.Uni;
 import lombok.extern.slf4j.Slf4j;
+import org.lorislab.p6.process.dao.ProcessInstanceDAO;
+import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.Message;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.dao.model.ProcessToken;
-import org.lorislab.p6.process.dao.model.enums.ProcessInstanceStatus;
-import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
-import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
 import org.lorislab.p6.process.model.ExclusiveGateway;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
@@ -25,9 +24,9 @@ public class ExecutionService {
     public Uni<ExecutionResult> startNode(ExecutionItem item) {
         String next = item.node.next.get(0);
         ProcessToken token = item.token.copy();
-        token.status = ProcessTokenStatus.IN_EXECUTION;
+        token.status = ProcessToken.Status.IN_EXECUTION;
         token.nodeName = next;
-        token.type = ProcessTokenType.valueOf(item.pd.nodes.get(next));
+        token.type = ProcessToken.Type.valueOf(item.pd.nodes.get(next));
 
         ExecutionResult result = new ExecutionResult(item);
         result.tokens = List.of(token);
@@ -35,12 +34,12 @@ public class ExecutionService {
     }
 
     public Uni<ExecutionResult> endNode(ExecutionItem item) {
-        if (item.token.status != ProcessTokenStatus.FINISHED) {
+        if (item.token.status != ProcessToken.Status.FINISHED) {
             ProcessToken token = item.token.copy();
             // load process instance
-            return ProcessInstance.findById(item.tx,token.processInstance)
+            return ProcessInstanceDAO.findById(item.tx,token.processInstance)
                     .onItem().apply(p -> {
-                        p.status = ProcessInstanceStatus.FINISHED;
+                        p.status = ProcessInstance.Status.FINISHED;
                         p.data.mergeIn(token.data);
 
                         ExecutionResult result = new ExecutionResult(item);
@@ -56,7 +55,7 @@ public class ExecutionService {
     public Uni<ExecutionResult> parallelGatewayDiverging(ExecutionItem item) {
 
         ProcessToken token = item.token.copy();
-        token.status = ProcessTokenStatus.FINISHED;
+        token.status = ProcessToken.Status.FINISHED;
 
         ExecutionResult result = new ExecutionResult(item);
         result.tokens = List.of(token);
@@ -69,14 +68,14 @@ public class ExecutionService {
     public Uni<ExecutionResult> parallelGatewayConverging(ExecutionItem item) {
         String next = item.node.next.get(0);
 
-        Uni<ProcessToken> uni = ProcessToken.findByReferenceAndNodeName(item.tx, item.token.parent, next)
+        Uni<ProcessToken> uni = ProcessTokenDAO.findByReferenceAndNodeName(item.tx, item.token.parent, next)
                 .ifNoItem().after(Duration.ZERO)
                 .recoverWithUni(Uni.createFrom().item(() -> createParallelGatewayConvergingToken(item)));
 
         return  uni.onItem().apply(gt -> {
             // update existing token
             ProcessToken token = item.token.copy();
-            token.status = ProcessTokenStatus.FINISHED;
+            token.status = ProcessToken.Status.FINISHED;
 
             // copy all data from existing token to gateway token
             gt.createdFrom.add(item.token.id);
@@ -126,7 +125,7 @@ public class ExecutionService {
 
         ProcessToken token = item.token.copy();
         token.nodeName = next;
-        token.type = ProcessTokenType.valueOf(item.pd.nodes.get(next));
+        token.type = ProcessToken.Type.valueOf(item.pd.nodes.get(next));
 
         ExecutionResult result = new ExecutionResult(item);
         result.tokens = List.of(token);
@@ -135,9 +134,9 @@ public class ExecutionService {
 
     public Uni<ExecutionResult> exclusiveGatewayConverging(ExecutionItem item) {
         ProcessToken token = item.token.copy();
-        token.status = ProcessTokenStatus.IN_EXECUTION;
+        token.status = ProcessToken.Status.IN_EXECUTION;
         token.nodeName = item.node.next.get(0);
-        token.type = ProcessTokenType.valueOf(item.pd.nodes.get(token.nodeName));
+        token.type = ProcessToken.Type.valueOf(item.pd.nodes.get(token.nodeName));
 
         ExecutionResult result = new ExecutionResult(item);
         result.tokens = List.of(token);
@@ -151,11 +150,11 @@ public class ExecutionService {
         ProcessToken result = new ProcessToken();
         result.created = true;
         result.id = UUID.randomUUID().toString();
-        result.status = ProcessTokenStatus.CREATED;
+        result.status = ProcessToken.Status.CREATED;
         result.processId = token.processId;
         result.processVersion = token.processVersion;
         result.nodeName = token.nodeName;
-        result.type = ProcessTokenType.valueOf(item.pd.nodes.get(next));
+        result.type = ProcessToken.Type.valueOf(item.pd.nodes.get(next));
         result.parent = token.parent;
         // FIXME
 //        if (token.getParent() != null) {
@@ -181,10 +180,10 @@ public class ExecutionService {
             child.processId = token.processId;
             child.processVersion = token.processVersion;
             child.parent = token.id;
-            child.type = ProcessTokenType.valueOf(pd.nodes.get(item));
+            child.type = ProcessToken.Type.valueOf(pd.nodes.get(item));
             child.processInstance = token.processInstance;
             child.data = token.data;
-            child.status= ProcessTokenStatus.IN_EXECUTION;
+            child.status= ProcessToken.Status.IN_EXECUTION;
             child.executionId = UUID.randomUUID().toString();
             return child;
         }).collect(Collectors.toList());

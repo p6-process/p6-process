@@ -16,14 +16,9 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import io.smallrye.mutiny.Uni;
 import io.vertx.core.json.JsonObject;
-import io.vertx.mutiny.pgclient.PgPool;
-import io.vertx.mutiny.sqlclient.RowSet;
-import io.vertx.mutiny.sqlclient.Transaction;
-import io.vertx.mutiny.sqlclient.Tuple;
-import org.lorislab.p6.process.dao.model.enums.ProcessTokenStatus;
-import org.lorislab.p6.process.dao.model.enums.ProcessTokenType;
+import org.lorislab.p6.process.model.Gateway;
+import org.lorislab.p6.process.model.Node;
 import org.lorislab.vertx.sql.mapper.SqlColumn;
 
 import java.util.HashSet;
@@ -31,7 +26,7 @@ import java.util.Set;
 
 public class ProcessToken {
 
-    @SqlColumn(ignore=true)
+    @SqlColumn(ignore = true)
     public boolean created;
 
     public String id;
@@ -48,9 +43,9 @@ public class ProcessToken {
 
     public String nodeName;
 
-    public ProcessTokenStatus status;
+    public Status status;
 
-    public ProcessTokenType type;
+    public Type type;
 
     public String executionId;
 
@@ -66,26 +61,70 @@ public class ProcessToken {
         return this;
     }
 
-    public static Uni<ProcessToken> findById(PgPool client, String id) {
-        return client.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE id = $1", Tuple.of(id))
-                .map(RowSet::iterator)
-                .map(iterator -> iterator.hasNext() ? ProcessTokenMapperImpl.mapS(iterator.next()) : null);
-    }
-
-    public static Uni<ProcessToken> findById(Transaction tx, String id) {
-        return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE id = $1", Tuple.of(id))
-                .onItem().apply(RowSet::iterator)
-                .onItem().apply(i -> i.hasNext() ? ProcessTokenMapperImpl.mapS(i.next()) : null);
-    }
-
-    public static Uni<ProcessToken> findByReferenceAndNodeName(Transaction tx, String ref, String nn) {
-        return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE reference = $1 and nodeName = $2", Tuple.of(ref, nn))
-                .onItem().apply(RowSet::iterator)
-                .onItem().apply(i -> i.hasNext() ? ProcessTokenMapperImpl.mapS(i.next()) : null);
-    }
-
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + ":" + id;
     }
+
+    public enum Status {
+
+        CREATED,
+
+        IN_EXECUTION,
+
+        FAILED,
+
+        FINISHED;
+
+    }
+
+    private static final String ROUTE_DEFAULT = "token-execute";
+
+    private static final String ROUTE_SINGLETON = "token-singleton";
+
+    private static final String ROUTE_SERVICE_TASK = "service-task";
+
+    public enum Type {
+
+        START_EVENT(ROUTE_DEFAULT, 1),
+
+        END_EVENT(ROUTE_SINGLETON, 0),
+
+        SERVICE_TASK(ROUTE_DEFAULT, 1),
+
+        SERVICE_TASK_COMPLETE(ROUTE_SERVICE_TASK, 1),
+
+        PARALLEL_GATEWAY_DIVERGING(ROUTE_DEFAULT, -1),
+
+        PARALLEL_GATEWAY_CONVERGING(ROUTE_SINGLETON, 1),
+
+        EXCLUSIVE_GATEWAY_DIVERGING(ROUTE_DEFAULT, -1),
+
+        EXCLUSIVE_GATEWAY_CONVERGING(ROUTE_DEFAULT, 1),
+
+        INCLUSIVE_GATEWAY_DIVERGING(ROUTE_DEFAULT, -1),
+
+        INCLUSIVE_GATEWAY_CONVERGING(ROUTE_SINGLETON, 1),
+        ;
+
+        public final String route;
+
+        public final int nextNodeCount;
+
+        Type(String route, int nextNodeCount) {
+            this.nextNodeCount = nextNodeCount;
+            this.route = route;
+        }
+
+        public static Type valueOf(Node node) {
+            String tmp = node.type.name();
+            if (node instanceof Gateway) {
+                Gateway pg = (Gateway) node;
+                tmp = pg.type + "_" + pg.sequence;
+            }
+            return Type.valueOf(tmp);
+        }
+
+    }
+
 }

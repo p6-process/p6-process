@@ -5,7 +5,7 @@ import io.quarkus.vertx.web.RouteBase;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.mutiny.pgclient.PgPool;
-import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.dao.ProcessTokenDAO;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -23,6 +23,6 @@ public class ProcessTokenRestController {
     @Route(path = ":id", methods = HttpMethod.GET)
     public void get(RoutingContext rc) {
         String id = rc.pathParam("id");
-        ProcessToken.findById(client, id).subscribe().with(ok(rc), error(rc));
+        ProcessTokenDAO.findById(client, id).subscribe().with(ok(rc), error(rc));
     }
 }

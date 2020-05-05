@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.lorislab.p6.process.dao.model.Message;
 import org.lorislab.p6.process.dao.model.MessageMapperImpl;
-import org.lorislab.p6.process.dao.model.ProcessInstanceMapperImpl;
 
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
@@ -70,13 +69,14 @@ public class ProcessExecutor {
     private Uni<Message> processMessage() {
         log.info("Process message");
         return client.begin()
-                .onItem().apply(tx -> tx.query(SELECT_PROCESS_MESSAGE).map(RowSet::iterator)
+                .flatMap(tx -> tx.query(SELECT_PROCESS_MESSAGE)
+                        .map(RowSet::iterator)
                         .map(it -> it.hasNext() ? it.next() : null)
                         .map(MessageMapperImpl::mapS)
                         .onItem().apply(m -> tx.commit()
                                         .onItem().apply(x -> m)
                                 ).flatMap(x -> x)
-                        ).flatMap(x -> x);
+                        );
     }
 
     public static class TimeExecutor {

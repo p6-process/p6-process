@@ -2,6 +2,7 @@ package org.lorislab.p6.process.deployment;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionLoader;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
@@ -10,6 +11,7 @@ import org.slf4j.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
@@ -19,7 +21,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-@ApplicationScoped
+@Slf4j
+@Singleton
 public class DeploymentService {
 
     @ConfigProperty(name = "p6.deployment.enabled", defaultValue = "true")
@@ -28,10 +31,7 @@ public class DeploymentService {
     @ConfigProperty(name = "p6.deployment.dir", defaultValue = "p6")
     String dir;
 
-    @Inject
-    Logger log;
-
-    private Map<String, ProcessDefinitionRuntime> definitions = new HashMap<>();
+    private static final Map<String, ProcessDefinitionRuntime> DEFINITIONS = new HashMap<>();
 
     void onStart(@Observes StartupEvent ev) {
         log.info("P6 process engine is starting...");
@@ -44,7 +44,7 @@ public class DeploymentService {
 
                         ProcessDefinitionRuntime pd = ProcessDefinitionLoader.loadRuntime(path.toFile());
                         String id = getCacheId(pd.id, pd.version);
-                        definitions.put(id, pd);
+                        DEFINITIONS.put(id, pd);
                     }
                 } catch (IOException ex) {
                     throw new UncheckedIOException("Error deploy the process", ex);
@@ -63,8 +63,8 @@ public class DeploymentService {
     }
 
 
-    public ProcessDefinitionRuntime getProcessDefinition(String processId, String processVersion) {
-        return definitions.get(getCacheId(processId, processVersion));
+    public static ProcessDefinitionRuntime getProcessDefinition(String processId, String processVersion) {
+        return DEFINITIONS.get(getCacheId(processId, processVersion));
     }
 
     /**

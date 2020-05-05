@@ -16,10 +16,15 @@
 
 package org.lorislab.p6.process.rs;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.test.junit.QuarkusTest;
+import io.vertx.core.json.JsonObject;
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.Test;
 import org.lorislab.p6.process.test.AbstractTest;
+
+import java.util.HashMap;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 
@@ -28,7 +33,6 @@ public class ProcessInstanceRestControllerTest extends AbstractTest {
 
     @Test
     public void getNotFoundTest() {
-        log.info("Test logger");
         given()
                 .when()
                 .contentType(ContentType.APPLICATION_JSON.getMimeType())
@@ -36,7 +40,25 @@ public class ProcessInstanceRestControllerTest extends AbstractTest {
                 .get("/instance/{guid}")
                 .prettyPeek()
                 .then()
-                .statusCode(404);
+                .statusCode(HttpResponseStatus.NOT_FOUND.code());
+    }
+
+    @Test
+    public void startProcessTest() {
+        StartProcessRequestDTO r = new StartProcessRequestDTO();
+        r.id = UUID.randomUUID().toString();
+        r.processId = "startEndProcess";
+        r.processVersion = "1.2.3";
+        r.data = new HashMap<>();
+
+        given()
+                .when()
+                .contentType(ContentType.APPLICATION_JSON.getMimeType())
+                .body(r)
+                .post("/instance/")
+                .prettyPeek()
+                .then()
+                .statusCode(HttpResponseStatus.OK.code());
     }
 
 }
