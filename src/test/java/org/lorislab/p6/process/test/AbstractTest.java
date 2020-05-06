@@ -18,25 +18,10 @@ package org.lorislab.p6.process.test;
 
 import io.quarkus.test.common.QuarkusTestResource;
 import io.restassured.RestAssured;
-import org.lorislab.p6.process.dao.model.ProcessToken;
-import org.lorislab.p6.process.stream.ProcessStream;
 import org.lorislab.quarkus.testcontainers.DockerComposeTestResource;
 import org.lorislab.quarkus.testcontainers.QuarkusTestcontainers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import java.lang.IllegalStateException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.UUID;
-
-import static io.restassured.RestAssured.given;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.equalTo;
 
 /**
  * The abstract test

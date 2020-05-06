@@ -166,7 +166,7 @@ public class ExecutionService {
         result.processInstance = token.processInstance;
         result.reference = token.parent;
         result.createdFrom.add(token.id);
-        result.messageId = token.messageId;
+//        result.messageId = token.messageId;
         result.executionId = UUID.randomUUID().toString();
         return result;
     }

@@ -26,7 +26,7 @@ import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import java.util.function.Consumer;
 
-public class P6Application {
+public class Application {
 
     /**
      * {@code "application/json"}

@@ -40,7 +40,7 @@
     </developers>
 
     <properties>
-        <quarkus.version>1.4.1.Final</quarkus.version>
+        <quarkus.version>1.4.2.Final</quarkus.version>
         <surefire-plugin.version>3.0.0-M4</surefire-plugin.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
@@ -67,10 +67,6 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-reactive-pg-client</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.lorislab.p6</groupId>
             <artifactId>p6-process-model</artifactId>
             <version>0.2.2</version>
@@ -92,16 +88,20 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-jdbc-postgresql</artifactId>
+            <artifactId>quarkus-reactive-pg-client</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-jsonb</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-flyway</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.quarkus</groupId>-->
+<!--            <artifactId>quarkus-jdbc-postgresql</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.quarkus</groupId>-->
+<!--            <artifactId>quarkus-jsonb</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.quarkus</groupId>-->
+<!--            <artifactId>quarkus-flyway</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-qute</artifactId>
@@ -211,6 +211,11 @@
     <profiles>
         <profile>
             <id>native</id>
+            <activation>
+                <property>
+                    <name>native</name>
+                </property>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
@@ -219,42 +224,12 @@
                         <version>${quarkus.version}</version>
                         <executions>
                             <execution>
-                                <id>native</id>
                                 <goals>
                                     <goal>native-image</goal>
                                 </goals>
                                 <configuration>
                                     <enableHttpUrlHandler>true</enableHttpUrlHandler>
                                 </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>ddl</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>de.jpdigital</groupId>
-                        <artifactId>hibernate54-ddl-maven-plugin</artifactId>
-                        <version>2.3.0</version>
-                        <configuration>
-                            <dialects>
-                                <param>postgresql9</param>
-                            </dialects>
-                            <packages>
-                                <param>org.lorislab.p6.data</param>
-                            </packages>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>gen-ddl</goal>
-                                </goals>
-                                <phase>process-classes</phase>
                             </execution>
                         </executions>
                     </plugin>

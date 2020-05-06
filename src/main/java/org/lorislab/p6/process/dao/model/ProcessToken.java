@@ -16,6 +16,7 @@
 
 package org.lorislab.p6.process.dao.model;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
 import org.lorislab.p6.process.model.Gateway;
 import org.lorislab.p6.process.model.Node;
@@ -24,16 +25,13 @@ import org.lorislab.vertx.sql.mapper.SqlColumn;
 import java.util.HashSet;
 import java.util.Set;
 
+@RegisterForReflection
 public class ProcessToken {
 
     @SqlColumn(ignore = true)
     public boolean created;
 
     public String id;
-
-    public Integer version;
-
-    public String messageId;
 
     public String processInstance;
 
@@ -63,7 +61,7 @@ public class ProcessToken {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + ":" + id;
+        return "ProcessToken:" + id;
     }
 
     public enum Status {

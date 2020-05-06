@@ -16,9 +16,11 @@
 
 package org.lorislab.p6.process.dao.model;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
 import org.lorislab.vertx.sql.mapper.SqlColumn;
 
+@RegisterForReflection
 public class ProcessInstance {
 
     @SqlColumn(ignore = true)
@@ -38,7 +40,7 @@ public class ProcessInstance {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + ":" + id;
+        return "ProcessInstance:" + id;
     }
 
     public enum Status {

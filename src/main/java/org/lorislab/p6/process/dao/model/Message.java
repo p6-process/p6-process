@@ -1,7 +1,10 @@
 package org.lorislab.p6.process.dao.model;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
 import java.time.Instant;
 
+@RegisterForReflection
 public class Message {
 
     public Long id;

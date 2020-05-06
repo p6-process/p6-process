@@ -11,23 +11,23 @@ import org.lorislab.p6.process.deployment.DeploymentService;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 import org.lorislab.p6.process.rs.StartProcessRequestDTO;
 
+import javax.enterprise.context.ApplicationScoped;
 import java.util.UUID;
 
 @Slf4j
+@ApplicationScoped
 public class ProcessStream {
 
-    public static Uni<ProcessInstance> startProcess(PgPool client, StartProcessRequestDTO request) {
-        return createProcessInstance(request).flatMap(pi ->
-            client.begin().flatMap(tx -> ProcessInstanceDAO.create(tx, pi).onItem().apply(id ->
-                            MessageDAO.create(tx, id).onItem().apply(mi ->
-                                    tx.commit().onItem().apply(x -> pi)
-                            ).flatMap(x -> x)
+    public Uni<ProcessInstance> startProcess(PgPool client, StartProcessRequestDTO request) {
+        return createProcessInstance(request).flatMap(pi -> client.begin()
+                .flatMap(tx -> ProcessInstanceDAO.create(tx, pi).onItem().apply(id ->
+                        MessageDAO.create(tx, id).onItem().apply(mi -> tx.commit().onItem().apply(x -> pi)
                         ).flatMap(x -> x)
-                )
-        );
+                    ).flatMap(x -> x)
+            ));
     }
 
-    public static Uni<ProcessInstance> createProcessInstance(StartProcessRequestDTO request) {
+    public Uni<ProcessInstance> createProcessInstance(StartProcessRequestDTO request) {
 
         ProcessDefinitionRuntime pd = DeploymentService.getProcessDefinition(request.processId, request.processVersion);
         if (pd == null) {
@@ -45,6 +45,7 @@ public class ProcessStream {
         } else {
             pi.data = new JsonObject();
         }
+        log.info("Create ProcessInstance {}", pi);
         return Uni.createFrom().item(pi);
     }
 

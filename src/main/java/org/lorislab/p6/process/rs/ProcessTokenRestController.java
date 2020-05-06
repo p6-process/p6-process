@@ -10,7 +10,7 @@ import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import static org.lorislab.p6.process.rs.P6Application.*;
+import static org.lorislab.p6.process.rs.Application.*;
 
 
 @ApplicationScoped

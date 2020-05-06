@@ -12,7 +12,7 @@ import org.lorislab.p6.process.stream.ProcessStream;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import static org.lorislab.p6.process.rs.P6Application.*;
+import static org.lorislab.p6.process.rs.Application.*;
 
 @ApplicationScoped
 @RouteBase(path = "instance", produces = APPLICATION_JSON)
@@ -20,6 +20,9 @@ public class ProcessInstanceRestController {
 
     @Inject
     PgPool client;
+
+    @Inject
+    ProcessStream processStream;
 
     @Route(path = ":id", methods = HttpMethod.GET)
     public void get(RoutingContext rc) {
@@ -33,7 +36,7 @@ public class ProcessInstanceRestController {
         if (request == null) {
             rc.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).end("Start process request not found!");
         }
-        ProcessStream.startProcess(client, request).subscribe().with(ok(rc), error(rc));
+        processStream.startProcess(client, request).subscribe().with(ok(rc), error(rc));
     }
 
 }

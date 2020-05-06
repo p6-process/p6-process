@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
-@Singleton
+@ApplicationScoped
 public class DeploymentService {
 
     @ConfigProperty(name = "p6.deployment.enabled", defaultValue = "true")
