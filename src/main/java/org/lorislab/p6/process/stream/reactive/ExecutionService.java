@@ -10,12 +10,21 @@ import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.model.ExclusiveGateway;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
+@ApplicationScoped
 public class ExecutionService {
+
+    @Inject
+    ProcessInstanceDAO processInstanceDAO;
+
+    @Inject
+    ProcessTokenDAO processTokenDAO;
 
     public Uni<ExecutionResult> serviceTask(ExecutionItem item) {
         return startNode(item);
@@ -37,7 +46,7 @@ public class ExecutionService {
         if (item.token.status != ProcessToken.Status.FINISHED) {
             ProcessToken token = item.token.copy();
             // load process instance
-            return ProcessInstanceDAO.findById(item.tx,token.processInstance)
+            return processInstanceDAO.findById(item.tx,token.processInstance)
                     .onItem().apply(p -> {
                         p.status = ProcessInstance.Status.FINISHED;
                         p.data.mergeIn(token.data);
@@ -68,7 +77,7 @@ public class ExecutionService {
     public Uni<ExecutionResult> parallelGatewayConverging(ExecutionItem item) {
         String next = item.node.next.get(0);
 
-        Uni<ProcessToken> uni = ProcessTokenDAO.findByReferenceAndNodeName(item.tx, item.token.parent, next)
+        Uni<ProcessToken> uni = processTokenDAO.findByReferenceAndNodeName(item.tx, item.token.parent, next)
                 .ifNoItem().after(Duration.ZERO)
                 .recoverWithUni(Uni.createFrom().item(() -> createParallelGatewayConvergingToken(item)));
 

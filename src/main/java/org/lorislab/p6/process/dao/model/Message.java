@@ -1,9 +1,9 @@
 package org.lorislab.p6.process.dao.model;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import lombok.ToString;
 
-import java.time.Instant;
-
+@ToString
 @RegisterForReflection
 public class Message {
 
@@ -15,7 +15,7 @@ public class Message {
 
     public static Message create(String ref) {
         Message message = new Message();
-        message.created = Instant.now().getEpochSecond();
+        message.ref = ref;
         return message;
     }
 }

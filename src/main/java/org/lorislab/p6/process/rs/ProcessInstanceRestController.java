@@ -5,9 +5,9 @@ import io.quarkus.vertx.web.Route;
 import io.quarkus.vertx.web.RouteBase;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.mutiny.pgclient.PgPool;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
-import org.lorislab.p6.process.stream.ProcessStream;
+import org.lorislab.p6.process.dao.ProcessTokenDAO;
+import org.lorislab.p6.process.stream.ProcessService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -15,19 +15,22 @@ import javax.inject.Inject;
 import static org.lorislab.p6.process.rs.Application.*;
 
 @ApplicationScoped
-@RouteBase(path = "instance", produces = APPLICATION_JSON)
+@RouteBase(path = "instances", produces = APPLICATION_JSON)
 public class ProcessInstanceRestController {
 
     @Inject
-    PgPool client;
+    ProcessService processStream;
 
     @Inject
-    ProcessStream processStream;
+    ProcessInstanceDAO processInstanceDAO;
+
+    @Inject
+    ProcessTokenDAO processTokenDAO;
 
     @Route(path = ":id", methods = HttpMethod.GET)
     public void get(RoutingContext rc) {
         String id = rc.pathParam("id");
-        ProcessInstanceDAO.findById(client, id).subscribe().with(ok(rc), error(rc));
+        processInstanceDAO.findById(id).subscribe().with(ok(rc), error(rc));
     }
 
     @Route(path = "", methods = HttpMethod.POST, consumes = APPLICATION_JSON)
@@ -36,7 +39,13 @@ public class ProcessInstanceRestController {
         if (request == null) {
             rc.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).end("Start process request not found!");
         }
-        processStream.startProcess(client, request).subscribe().with(ok(rc), error(rc));
+        processStream.startProcess(request).subscribe().with(accepted(rc), error(rc));
+    }
+
+    @Route(path = ":id/tokens", methods = HttpMethod.GET)
+    public void getTokens(RoutingContext rc) {
+        String id = rc.pathParam("id");
+        processTokenDAO.findByProcessInstance(id).subscribe().with(ok(rc), error(rc));
     }
 
 }

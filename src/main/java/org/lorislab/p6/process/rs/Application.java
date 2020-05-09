@@ -19,6 +19,7 @@ package org.lorislab.p6.process.rs;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,10 +39,19 @@ public class Application {
         return LoggerFactory.getLogger(injectionPoint.getMember().getDeclaringClass().getName());
     }
 
+    public static <T> Consumer<T> accepted(RoutingContext rc) {
+        return response(rc, HttpResponseStatus.ACCEPTED.code());
+    }
+
     public static <T> Consumer<T> ok(RoutingContext rc) {
+        return response(rc, HttpResponseStatus.OK.code());
+    }
+
+    public static <T> Consumer<T> response(RoutingContext rc, int code) {
         return item ->  {
                 if (item != null) {
-                    rc.response().setStatusCode(HttpResponseStatus.OK.code()).end(Json.encodePrettily(item));
+                    rc.response().putHeader(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON)
+                            .setStatusCode(code).end(Json.encodePrettily(item));
                 } else {
                     rc.response().setStatusCode(HttpResponseStatus.NOT_FOUND.code()).end();
                 }

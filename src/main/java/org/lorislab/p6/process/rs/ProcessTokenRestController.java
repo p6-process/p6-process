@@ -14,15 +14,16 @@ import static org.lorislab.p6.process.rs.Application.*;
 
 
 @ApplicationScoped
-@RouteBase(path = "token", consumes = APPLICATION_JSON)
+@RouteBase(path = "tokens", consumes = APPLICATION_JSON)
 public class ProcessTokenRestController {
 
     @Inject
-    PgPool client;
+    ProcessTokenDAO processTokenDAO;
 
     @Route(path = ":id", methods = HttpMethod.GET)
     public void get(RoutingContext rc) {
         String id = rc.pathParam("id");
-        ProcessTokenDAO.findById(client, id).subscribe().with(ok(rc), error(rc));
+        processTokenDAO.findById(id).subscribe().with(ok(rc), error(rc));
     }
+
 }

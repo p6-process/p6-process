@@ -16,6 +16,7 @@
 
 package org.lorislab.p6.process.rs;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.test.junit.QuarkusTest;
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.Test;
@@ -31,11 +32,11 @@ public class ProcessTokenRestControllerTest extends AbstractTest {
         given()
                 .when()
                 .contentType(ContentType.APPLICATION_JSON.getMimeType())
-                .pathParam("guid", "123456")
-                .get("/token/{guid}")
+                .pathParam("id", "123456")
+                .get("/tokens/{id}")
                 .prettyPeek()
                 .then()
-                .statusCode(404);
+                .statusCode(HttpResponseStatus.NOT_FOUND.code());
     }
 
 }

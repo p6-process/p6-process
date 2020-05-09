@@ -18,8 +18,10 @@ package org.lorislab.p6.process.dao.model;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 import org.lorislab.vertx.sql.mapper.SqlColumn;
 
+@ToString
 @RegisterForReflection
 public class ProcessInstance {
 
@@ -30,18 +32,20 @@ public class ProcessInstance {
 
     public String parent;
 
+    @SqlColumn("processid")
     public String processId;
 
+    @SqlColumn("processversion")
     public String processVersion;
 
     public Status status;
 
     public JsonObject data = new JsonObject();
 
-    @Override
-    public String toString() {
-        return "ProcessInstance:" + id;
-    }
+//    @Override
+//    public String toString() {
+//        return "ProcessInstance:" + id;
+//    }
 
     public enum Status {
 

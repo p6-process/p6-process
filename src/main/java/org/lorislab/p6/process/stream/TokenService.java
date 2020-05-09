@@ -1,6 +1,6 @@
 package org.lorislab.p6.process.stream;
 
-public class TokenStream {
+public class TokenService {
 //
 //    @Inject
 //    Logger log;

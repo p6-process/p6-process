@@ -12,27 +12,42 @@ import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 import org.lorislab.p6.process.rs.StartProcessRequestDTO;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.UUID;
 
 @Slf4j
 @ApplicationScoped
-public class ProcessStream {
+public class ProcessService {
 
-    public Uni<ProcessInstance> startProcess(PgPool client, StartProcessRequestDTO request) {
-        return createProcessInstance(request).flatMap(pi -> client.begin()
-                .flatMap(tx -> ProcessInstanceDAO.create(tx, pi).onItem().apply(id ->
-                        MessageDAO.create(tx, id).onItem().apply(mi -> tx.commit().onItem().apply(x -> pi)
-                        ).flatMap(x -> x)
-                    ).flatMap(x -> x)
-            ));
+    @Inject
+    DeploymentService deploymentService;
+
+    @Inject
+    ProcessInstanceDAO processInstanceDAO;
+
+    @Inject
+    MessageDAO messageDAO;
+
+    @Inject
+    PgPool client;
+
+    public Uni<ProcessInstance> startProcess(StartProcessRequestDTO request) {
+        ProcessInstance pi = createProcessInstance(request);
+        if (pi == null) return Uni.createFrom().nullItem();
+        return client.begin()
+                .flatMap(tx -> processInstanceDAO.create(tx, pi).and(messageDAO.createMessage(tx, pi))
+                                .onItem().ignore().andContinueWithNull()
+                                .onItem().produceUni(x -> tx.commit())
+                                .onFailure().recoverWithUni(tx::rollback)
+                ).map(x -> pi);
     }
 
-    public Uni<ProcessInstance> createProcessInstance(StartProcessRequestDTO request) {
+    private ProcessInstance createProcessInstance(StartProcessRequestDTO request) {
 
-        ProcessDefinitionRuntime pd = DeploymentService.getProcessDefinition(request.processId, request.processVersion);
+        ProcessDefinitionRuntime pd = deploymentService.getProcessDefinition(request.processId, request.processVersion);
         if (pd == null) {
             log.error("No process definition found for the {}/{}/{}", request.id, request.processId, request.processVersion);
-            return Uni.createFrom().nullItem();
+            return null;
         }
 
         ProcessInstance pi = new ProcessInstance();
@@ -46,7 +61,7 @@ public class ProcessStream {
             pi.data = new JsonObject();
         }
         log.info("Create ProcessInstance {}", pi);
-        return Uni.createFrom().item(pi);
+        return pi;
     }
 
 //

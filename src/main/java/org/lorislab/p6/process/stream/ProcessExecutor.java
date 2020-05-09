@@ -1,88 +1,114 @@
 package org.lorislab.p6.process.stream;
 
-import io.quarkus.runtime.ShutdownEvent;
-import io.quarkus.runtime.StartupEvent;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.pgclient.PgPool;
-import io.vertx.mutiny.sqlclient.RowSet;
+import io.vertx.mutiny.sqlclient.Transaction;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.lorislab.p6.process.dao.MessageDAO;
+import org.lorislab.p6.process.dao.ProcessInstanceDAO;
+import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.Message;
-import org.lorislab.p6.process.dao.model.MessageMapperImpl;
+import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.deployment.DeploymentService;
+import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
-import javax.enterprise.event.Observes;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Singleton;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
-@Singleton
+@ApplicationScoped
 public class ProcessExecutor {
 
-    @ConfigProperty(name = "process.token.executor.scheduler", defaultValue = "10")
+    @ConfigProperty(name = "process.token.executor.scheduler", defaultValue = "2")
     Long scheduler;
 
     @Inject
     Vertx vertx;
 
-    Long timerId;
-
     @Inject
     PgPool client;
 
-    void onStart(@Observes StartupEvent ev) {
-        timerId = vertx.setTimer(TimeUnit.SECONDS.toMillis(scheduler), this::action);
+    @Inject
+    DeploymentService deploymentService;
+
+    @Inject
+    ProcessInstanceDAO processInstanceDAO;
+
+    @Inject
+    MessageDAO messageDAO;
+
+    @Inject
+    ProcessTokenDAO processTokenDAO;
+
+    public Uni<Long> startTimer() {
+        return Uni.createFrom().item(createTimer());
     }
 
-    void onStop(@Observes ShutdownEvent ev) {
-        if (timerId != null) {
-            vertx.cancelTimer(timerId);
-        }
+    private Long createTimer() {
+        return vertx.setTimer(TimeUnit.SECONDS.toMillis(scheduler), this::action);
     }
 
     void action(Long id) {
-        log.info("Process time execution {}", id);
+        log.info("Process timer execution {}", id);
         Uni.createFrom().nullItem()
                 .onItem().produceUni(i -> execute())
                 .repeat().until(m -> m.message == null)
-                .onCompletion().invoke(() -> {
-                    System.out.println("Start timer");
-                    timerId = vertx.setTimer(TimeUnit.SECONDS.toMillis(scheduler), this::action);
-                    System.out.println("Timer ID " + timerId);
-                })
-                .subscribe().with(m -> {
-                    System.out.println("Execute " + m);
-                },
-                f -> {
-                    f.printStackTrace();
-                });
+                .onCompletion().invoke(this::createTimer)
+                .subscribe().with(m -> log.debug("Execute timer" + m), Throwable::printStackTrace);
     }
 
-    private static final String SELECT_PROCESS_MESSAGE = "DELETE FROM PROCESS_MSG WHERE id = (SELECT id FROM PROCESS_MSG ORDER BY id  FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING id, created, ref";
-
-    private Uni<TimeExecutor> execute() {
-        log.info("Execute time");
-        return processMessage().onItem().apply(TimeExecutor::new);
+    private Uni<MessageWrapper> execute() {
+        return client.begin().flatMap(tx -> messageDAO.nextProcessMessage(tx)
+                .onItem().apply(m -> {
+                    if (m == null) {
+                        tx.close();
+                        return Uni.createFrom().item((Message) null);
+                    }
+                    return saveTokens(tx, m)
+                            .onItem().apply(u -> tx.commit().onItem().apply(x -> u))
+                            .flatMap(x -> x);
+                }).flatMap(x -> x)
+        ).onItem().apply(MessageWrapper::new);
     }
 
-    private Uni<Message> processMessage() {
-        log.info("Process message");
-        return client.begin()
-                .flatMap(tx -> tx.query(SELECT_PROCESS_MESSAGE)
-                        .map(RowSet::iterator)
-                        .map(it -> it.hasNext() ? it.next() : null)
-                        .map(MessageMapperImpl::mapS)
-                        .onItem().apply(m -> tx.commit()
-                                        .onItem().apply(x -> m)
-                                ).flatMap(x -> x)
-                        );
-    }
-
-    public static class TimeExecutor {
+    public static class MessageWrapper {
         Message message;
-        public TimeExecutor(Message message) {
+        public MessageWrapper(Message message) {
             this.message = message;
         }
     }
+
+    private Uni<Message> saveTokens(Transaction tx, Message m) {
+        return createTokens(tx, m.ref).onItem()
+                .apply(t -> processTokenDAO.create(tx, t).and(messageDAO.createMessages(tx, t)).map(x -> m))
+                .flatMap(x -> x);
+    }
+
+    private Uni<List<ProcessToken>> createTokens(Transaction tx, String ref) {
+        return processInstanceDAO.findById(tx, ref)
+                .onItem().produceUni(pi -> {
+                    ProcessDefinitionRuntime pdr = deploymentService.getProcessDefinition(pi.processId, pi.processVersion);
+                    List<ProcessToken> items = pdr.startNodes.values().stream()
+                            .map(node -> {
+                                ProcessToken token = new ProcessToken();
+                                token.id = UUID.randomUUID().toString();
+                                token.processId = pi.processId;
+                                token.processVersion = pi.processVersion;
+                                token.processInstance = pi.id;
+                                token.nodeName = node.name;
+                                token.status = ProcessToken.Status.CREATED;
+                                token.type = ProcessToken.Type.valueOf(node);
+                                token.data = pi.data;
+                                return token;
+                            }).collect(Collectors.toList());
+                    return Uni.createFrom().item(items);
+                });
+    }
+
 }
