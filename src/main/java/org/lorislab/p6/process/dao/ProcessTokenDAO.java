@@ -44,12 +44,6 @@ public class ProcessTokenDAO {
                 .map(iterator -> iterator.hasNext() ? ProcessTokenMapperImpl.mapS(iterator.next()) : null);
     }
 
-    public Uni<ProcessToken> findById(Transaction tx, String id) {
-        return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE id = $1", Tuple.of(id))
-                .onItem().apply(RowSet::iterator)
-                .onItem().apply(i -> i.hasNext() ? ProcessTokenMapperImpl.mapS(i.next()) : null);
-    }
-
     public Uni<ProcessToken> findByReferenceAndNodeName(Transaction tx, String ref, String nn) {
         return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE reference = $1 and nodename = $2", Tuple.of(ref, nn))
                 .onItem().apply(RowSet::iterator)

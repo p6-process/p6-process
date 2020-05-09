@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-@ToString
 @RegisterForReflection
 public class ProcessToken {
 
@@ -67,6 +66,11 @@ public class ProcessToken {
 
     public ProcessToken copy() {
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "ProcessToken:"+id;
     }
 
     public enum Status {

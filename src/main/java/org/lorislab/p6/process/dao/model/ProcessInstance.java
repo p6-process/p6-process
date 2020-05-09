@@ -21,7 +21,6 @@ import io.vertx.core.json.JsonObject;
 import lombok.ToString;
 import org.lorislab.vertx.sql.mapper.SqlColumn;
 
-@ToString
 @RegisterForReflection
 public class ProcessInstance {
 
@@ -42,10 +41,10 @@ public class ProcessInstance {
 
     public JsonObject data = new JsonObject();
 
-//    @Override
-//    public String toString() {
-//        return "ProcessInstance:" + id;
-//    }
+    @Override
+    public String toString() {
+        return "ProcessInstance:" + id;
+    }
 
     public enum Status {
 

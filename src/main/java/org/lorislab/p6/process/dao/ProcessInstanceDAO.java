@@ -23,12 +23,6 @@ public class ProcessInstanceDAO {
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getString("id"));
     }
 
-    public Uni<Long> create(ProcessInstance m) {
-        return client.preparedQuery("INSERT INTO PROCESS_INSTANCE (id,parent,processId,processVersion,status,data) VALUES ($1,$2,$3,$4,$5, $6) RETURNING (id)"
-                , Tuple.of(m.id, m.parent, m.processId, m.processVersion, m.status.name(), m.data))
-                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong("id"));
-    }
-
     public Uni<ProcessInstance> findById(String id) {
         return client.preparedQuery("SELECT id,parent,processId,processVersion,status,data FROM PROCESS_INSTANCE WHERE id = $1", Tuple.of(id))
                 .map(RowSet::iterator)
