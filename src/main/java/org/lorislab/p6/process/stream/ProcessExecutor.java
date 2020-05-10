@@ -3,6 +3,7 @@ package org.lorislab.p6.process.stream;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.pgclient.PgPool;
+import io.vertx.mutiny.pgclient.pubsub.PgSubscriber;
 import io.vertx.mutiny.sqlclient.Transaction;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -25,12 +26,6 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class ProcessExecutor {
 
-    @ConfigProperty(name = "process.token.executor.scheduler", defaultValue = "2")
-    Long scheduler;
-
-    @Inject
-    Vertx vertx;
-
     @Inject
     PgPool client;
 
@@ -46,24 +41,7 @@ public class ProcessExecutor {
     @Inject
     ProcessTokenDAO processTokenDAO;
 
-    public Uni<Long> startTimer() {
-        return Uni.createFrom().item(createTimer());
-    }
-
-    private Long createTimer() {
-        return vertx.setTimer(TimeUnit.SECONDS.toMillis(scheduler), this::action);
-    }
-
-    void action(Long id) {
-        log.info("Process timer execution {}", id);
-        Uni.createFrom().nullItem()
-                .onItem().produceUni(i -> execute())
-                .repeat().until(m -> m.message == null)
-                .onCompletion().invoke(this::createTimer)
-                .subscribe().with(m -> log.debug("Execute timer" + m), Throwable::printStackTrace);
-    }
-
-    private Uni<MessageWrapper> execute() {
+    public Uni<Message> execute() {
         return client.begin().flatMap(tx -> messageDAO.nextProcessMessage(tx)
                 .onItem().apply(m -> {
                     if (m == null) {
@@ -74,14 +52,7 @@ public class ProcessExecutor {
                             .onItem().apply(u -> tx.commit().onItem().apply(x -> u))
                             .flatMap(x -> x);
                 }).flatMap(x -> x)
-        ).onItem().apply(MessageWrapper::new);
-    }
-
-    public static class MessageWrapper {
-        Message message;
-        public MessageWrapper(Message message) {
-            this.message = message;
-        }
+        );
     }
 
     private Uni<Message> saveTokens(Transaction tx, Message m) {

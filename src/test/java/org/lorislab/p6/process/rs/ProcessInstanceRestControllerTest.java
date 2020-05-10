@@ -73,7 +73,7 @@ public class ProcessInstanceRestControllerTest extends AbstractTest {
 
         log.info("Wait for the process instance '{}; to finished", pi);
         await()
-                .atMost(10, SECONDS)
+                .atMost(5, SECONDS)
                 .untilAsserted(() -> given()
                         .when()
                         .contentType(APPLICATION_JSON)
