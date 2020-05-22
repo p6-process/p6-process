@@ -13,6 +13,8 @@ public class Message {
 
     public String ref;
 
+    public String cmd;
+
     public static Message create(String ref) {
         Message message = new Message();
         message.ref = ref;

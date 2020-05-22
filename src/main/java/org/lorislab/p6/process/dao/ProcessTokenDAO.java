@@ -31,27 +31,30 @@ public class ProcessTokenDAO {
 
     public Uni<String> create(Transaction tx, List<ProcessToken> m) {
         List<Tuple> tuples = m.stream().map(this::tuple).collect(Collectors.toList());
-        return tx.preparedBatch(
+        return tx.preparedQuery(
                 "INSERT INTO PROCESS_TOKEN (id,processinstance,processid,processversion,nodename,status,type,executionId,parent,reference,createdfrom,data) " +
-                    "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING (id)"
-                ,tuples)
+                    "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING (id)")
+                .executeBatch(tuples)
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getString("id"));
     }
 
     public Uni<ProcessToken> findById(String id) {
-        return client.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE id = $1", Tuple.of(id))
+        return client.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE id = $1")
+                .execute(Tuple.of(id))
                 .map(RowSet::iterator)
                 .map(iterator -> iterator.hasNext() ? ProcessTokenMapperImpl.mapS(iterator.next()) : null);
     }
 
     public Uni<ProcessToken> findByReferenceAndNodeName(Transaction tx, String ref, String nn) {
-        return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE reference = $1 and nodename = $2", Tuple.of(ref, nn))
+        return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE reference = $1 and nodename = $2")
+                .execute(Tuple.of(ref, nn))
                 .onItem().apply(RowSet::iterator)
                 .onItem().apply(i -> i.hasNext() ? ProcessTokenMapperImpl.mapS(i.next()) : null);
     }
 
     public Uni<List<ProcessToken>> findByProcessInstance(String pi) {
-        return client.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE processinstance = $1", Tuple.of(pi))
+        return client.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE processinstance = $1")
+                .execute(Tuple.of(pi))
                 .map(pgRowSet -> {
                     List<ProcessToken> list = new ArrayList<>(pgRowSet.size());
                     for (Row row : pgRowSet) {

@@ -25,29 +25,34 @@ public class MessageDAO {
 
     public Uni<Long> createMessages(Transaction tx, List<ProcessToken> tokens) {
         List<Tuple> tuples = tokens.stream().map(x -> Tuple.of(x.id)).collect(Collectors.toList());
-        return tx.preparedBatch("INSERT INTO TOKEN_MSG (ref) VALUES ($1) RETURNING (id)", tuples)
+        return tx.preparedQuery("INSERT INTO TOKEN_MSG (ref) VALUES ($1) RETURNING (id)")
+                .executeBatch(tuples)
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong("id"));
     }
 
-    public Uni<Long> createMessage(Transaction tx, ProcessInstance pi) {
-        return tx.preparedQuery("INSERT INTO PROCESS_MSG (ref) VALUES ($1) RETURNING (id)", Tuple.of(pi.id))
+    public Uni<Long> createProcessMessage(Transaction tx, String ref, String cmd) {
+        return tx.preparedQuery("INSERT INTO PROCESS_MSG (ref, cmd) VALUES ($1,$2) RETURNING (id)")
+                .execute(Tuple.of(ref, cmd))
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong("id"));
     }
 
     public Uni<Message> nextProcessMessage(Transaction tx) {
-        return tx.query("DELETE FROM PROCESS_MSG WHERE id = (SELECT id FROM PROCESS_MSG ORDER BY id  FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING id, created, ref")
+        return tx.query("DELETE FROM PROCESS_MSG WHERE id = (SELECT id FROM PROCESS_MSG ORDER BY id  FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING id, created, ref, cmd")
+                .execute()
                 .map(RowSet::iterator)
                 .map(it -> it.hasNext() ? MessageMapperImpl.mapS(it.next()) : null);
     }
 
     public Uni<Message> nextTokenMessage(Transaction tx) {
-        return tx.query("DELETE FROM TOKEN_MSG WHERE id = (SELECT id FROM PROCESS_MSG ORDER BY id  FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING id, created, ref")
+        return tx.query("DELETE FROM TOKEN_MSG WHERE id = (SELECT id FROM TOKEN_MSG ORDER BY id  FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING id, created, ref, cmd")
+                .execute()
                 .map(RowSet::iterator)
                 .map(it -> it.hasNext() ? MessageMapperImpl.mapS(it.next()) : null);
     }
 
     public Multi<String> findAllTokenMessages() {
         return client.query("SELECT count(id) FROM TOKEN_MSG")
+                .execute()
                 .map(RowSet::iterator)
                 .map(r -> r.hasNext() ? r.next().getLong(0) : null)
                 .onItem().produceMulti(i -> {
@@ -60,6 +65,7 @@ public class MessageDAO {
 
     public Multi<String> findAllProcessMessages() {
         return client.query("SELECT count(id) FROM PROCESS_MSG")
+                .execute()
                 .map(RowSet::iterator)
                 .map(r -> r.hasNext() ? r.next().getLong(0) : null)
                 .onItem().produceMulti(i -> {

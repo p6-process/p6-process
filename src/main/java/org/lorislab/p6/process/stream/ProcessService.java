@@ -6,6 +6,7 @@ import io.vertx.mutiny.pgclient.PgPool;
 import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.dao.MessageDAO;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
+import org.lorislab.p6.process.dao.model.MessageCmd;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.deployment.DeploymentService;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
@@ -35,7 +36,7 @@ public class ProcessService {
         ProcessInstance pi = createProcessInstance(request);
         if (pi == null) return Uni.createFrom().nullItem();
         return client.begin()
-                .flatMap(tx -> processInstanceDAO.create(tx, pi).and(messageDAO.createMessage(tx, pi))
+                .flatMap(tx -> processInstanceDAO.create(tx, pi).and(messageDAO.createProcessMessage(tx, pi.id, MessageCmd.START_PROCESS))
                                 .onItem().ignore().andContinueWithNull()
                                 .onItem().produceUni(x -> tx.commit())
                                 .onFailure().recoverWithUni(tx::rollback)

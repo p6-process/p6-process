@@ -1,21 +1,11 @@
 package org.lorislab.p6.process.deployment;
 
-import io.quarkus.runtime.ShutdownEvent;
-import io.quarkus.runtime.StartupEvent;
-import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.Uni;
-import io.vertx.mutiny.core.Vertx;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionLoader;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
-import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
@@ -23,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -38,33 +27,30 @@ public class DeploymentService {
 
     private final Map<String, ProcessDefinitionRuntime> DEFINITIONS = new HashMap<>();
 
-    public Uni<Long> deploy() {
+    public void start() {
         if (!enabled) {
             log.info("Deployment is disabled");
-            return Uni.createFrom().item(-1L);
+            return;
         }
-        return Uni.createFrom().item(loadProcesses());
+        loadProcesses();
     }
 
-    private Long loadProcesses() {
-        long result = 0;
+    private void loadProcesses() {
         if (Files.exists(Paths.get(dir))) {
-                try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(dir), path -> path.toString().endsWith(".yaml"))) {
-                    for (Path path : directoryStream) {
-                        log.info("Deploy process {}.", path);
+            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(dir), path -> path.toString().endsWith(".yaml"))) {
+                for (Path path : directoryStream) {
+                    log.info("Deploy process {}.", path);
 
-                        ProcessDefinitionRuntime pd = ProcessDefinitionLoader.loadRuntime(path.toFile());
-                        String id = getCacheId(pd.id, pd.version);
-                        DEFINITIONS.put(id, pd);
-                        result++;
-                    }
-                } catch (IOException ex) {
-                    throw new UncheckedIOException("Error deploy the process", ex);
+                    ProcessDefinitionRuntime pd = ProcessDefinitionLoader.loadRuntime(path.toFile());
+                    String id = getCacheId(pd.id, pd.version);
+                    DEFINITIONS.put(id, pd);
                 }
-            } else {
-                log.warn("P6 process directory '{}' does not exists.", dir);
+            } catch (IOException ex) {
+                throw new UncheckedIOException("Error deploy the process", ex);
             }
-        return result;
+        } else {
+            log.warn("P6 process directory '{}' does not exists.", dir);
+        }
     }
 
     public ProcessDefinitionRuntime getProcessDefinition(String processId, String processVersion) {
