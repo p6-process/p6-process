@@ -13,8 +13,10 @@ import org.lorislab.p6.process.dao.ProcessInstanceDAO;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.Message;
 import org.lorislab.p6.process.dao.model.MessageCmd;
+import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.deployment.DeploymentService;
+import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -59,7 +61,6 @@ public class ProcessExecutor {
         return Multi.createFrom().emitter(emitter -> {
             PgSubscriber subscriber = PgSubscriber.subscriber(vertx, pgConnectOptions);
             subscriber.connect().subscribe().with(c -> {
-                System.out.println("##############-################## -> process_msg");
                 subscriber.channel("process_msg").handler(emitter::emit);
             }, Throwable::printStackTrace);
         });
@@ -83,7 +84,7 @@ public class ProcessExecutor {
         log.info("Process message: {}", m);
         if (MessageCmd.START_PROCESS.equals(m.cmd)) {
             return createTokens(tx, m.ref).onItem()
-                    .apply(t -> processTokenDAO.create(tx, t).and(messageDAO.createMessages(tx, t)).map(x -> m))
+                    .apply(t -> processTokenDAO.create(tx, t).and(messageDAO.createTokenMessages(tx, t)).map(x -> m))
                     .flatMap(x -> x);
         } else {
             log.error("Not supported command type: {} of the message {}", m.cmd, m);
@@ -95,21 +96,23 @@ public class ProcessExecutor {
         return processInstanceDAO.findById(tx, ref)
                 .onItem().produceUni(pi -> {
                     ProcessDefinitionRuntime pdr = deploymentService.getProcessDefinition(pi.processId, pi.processVersion);
-                    List<ProcessToken> items = pdr.startNodes.values().stream()
-                            .map(node -> {
-                                ProcessToken token = new ProcessToken();
-                                token.id = UUID.randomUUID().toString();
-                                token.processId = pi.processId;
-                                token.processVersion = pi.processVersion;
-                                token.processInstance = pi.id;
-                                token.nodeName = node.name;
-                                token.status = ProcessToken.Status.CREATED;
-                                token.type = ProcessToken.Type.valueOf(node);
-                                token.data = pi.data;
-                                return token;
-                            }).collect(Collectors.toList());
-                    return Uni.createFrom().item(items);
+                    return Uni.createFrom().item(
+                            pdr.startNodes.values().stream()
+                            .map(node -> createToken(pi, node)).collect(Collectors.toList())
+                    );
                 });
     }
 
+    private static ProcessToken createToken(ProcessInstance pi, Node node) {
+        ProcessToken token = new ProcessToken();
+        token.id = UUID.randomUUID().toString();
+        token.processId = pi.processId;
+        token.processVersion = pi.processVersion;
+        token.processInstance = pi.id;
+        token.nodeName = node.name;
+        token.status = ProcessToken.Status.CREATED;
+        token.type = ProcessToken.Type.valueOf(node);
+        token.data = pi.data;
+        return token;
+    }
 }

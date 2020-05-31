@@ -6,6 +6,7 @@ import io.vertx.mutiny.sqlclient.Row;
 import io.vertx.mutiny.sqlclient.RowSet;
 import io.vertx.mutiny.sqlclient.Transaction;
 import io.vertx.mutiny.sqlclient.Tuple;
+import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.dao.model.ProcessTokenMapperImpl;
 
@@ -29,13 +30,23 @@ public class ProcessTokenDAO {
         ));
     }
 
-    public Uni<String> create(Transaction tx, List<ProcessToken> m) {
-        List<Tuple> tuples = m.stream().map(this::tuple).collect(Collectors.toList());
+    private List<Tuple> tuple(List<ProcessToken> tokens) {
+        return tokens.stream().map(this::tuple).collect(Collectors.toList());
+    }
+
+    public Uni<String> create(Transaction tx, List<ProcessToken> tokens) {
         return tx.preparedQuery(
                 "INSERT INTO PROCESS_TOKEN (id,processinstance,processid,processversion,nodename,status,type,executionId,parent,reference,createdfrom,data) " +
                     "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING (id)")
-                .executeBatch(tuples)
+                .executeBatch(tuple(tokens))
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getString("id"));
+    }
+
+    public Uni<ProcessToken> findById(Transaction tx, String id) {
+        return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE id = $1")
+                .execute(Tuple.of(id))
+                .map(RowSet::iterator)
+                .map(iterator -> iterator.hasNext() ? ProcessTokenMapperImpl.mapS(iterator.next()) : null);
     }
 
     public Uni<ProcessToken> findById(String id) {
@@ -62,5 +73,23 @@ public class ProcessTokenDAO {
                     }
                     return list;
                 });
+    }
+
+    public Uni<String> update(Transaction tx, ProcessToken tokens) {
+        return tx.preparedQuery(
+                "UPDATE PROCESS_TOKEN SET processinstance=$2,processid=$3,processversion=$4,nodename=$5," +
+                        "status=$6,type=$7,executionId=$8,parent=$9,reference=$10,createdfrom=$11,data=$12 " +
+                        " WHERE id=$1 RETURNING (id)")
+                .execute(tuple(tokens))
+                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getString(0));
+    }
+
+    public Uni<String> update(Transaction tx, List<ProcessToken> tokens) {
+        return tx.preparedQuery(
+                "UPDATE PROCESS_TOKEN SET processinstance=$2,processid=$3,processversion=$4,nodename=$5," +
+                        "status=$6,type=$7,executionId=$8,parent=$9,reference=$10,createdfrom=$11,data=$12 " +
+                        " WHERE id=$1 RETURNING (id)")
+                .executeBatch(tuple(tokens))
+                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getString(0));
     }
 }

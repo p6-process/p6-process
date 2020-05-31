@@ -85,41 +85,41 @@ public class ProcessToken {
 
     }
 
-    private static final String ROUTE_DEFAULT = "token-execute";
-
-    private static final String ROUTE_SINGLETON = "token-singleton";
-
-    private static final String ROUTE_SERVICE_TASK = "service-task";
-
     public enum Type {
 
-        START_EVENT(ROUTE_DEFAULT, 1),
+        START_EVENT(Type.ROUTE_DEFAULT, 1),
 
-        END_EVENT(ROUTE_SINGLETON, 0),
+        END_EVENT(Type.ROUTE_SINGLETON, 0),
 
-        SERVICE_TASK(ROUTE_DEFAULT, 1),
+        SERVICE_TASK(Type.ROUTE_DEFAULT, 1),
 
-        SERVICE_TASK_COMPLETE(ROUTE_SERVICE_TASK, 1),
+        SERVICE_TASK_COMPLETE(Type.ROUTE_SERVICE_TASK, 1),
 
-        PARALLEL_GATEWAY_DIVERGING(ROUTE_DEFAULT, -1),
+        PARALLEL_GATEWAY_DIVERGING(Type.ROUTE_DEFAULT, -1),
 
-        PARALLEL_GATEWAY_CONVERGING(ROUTE_SINGLETON, 1),
+        PARALLEL_GATEWAY_CONVERGING(Type.ROUTE_SINGLETON, 1),
 
-        EXCLUSIVE_GATEWAY_DIVERGING(ROUTE_DEFAULT, -1),
+        EXCLUSIVE_GATEWAY_DIVERGING(Type.ROUTE_DEFAULT, -1),
 
-        EXCLUSIVE_GATEWAY_CONVERGING(ROUTE_DEFAULT, 1),
+        EXCLUSIVE_GATEWAY_CONVERGING(Type.ROUTE_DEFAULT, 1),
 
-        INCLUSIVE_GATEWAY_DIVERGING(ROUTE_DEFAULT, -1),
+        INCLUSIVE_GATEWAY_DIVERGING(Type.ROUTE_DEFAULT, -1),
 
-        INCLUSIVE_GATEWAY_CONVERGING(ROUTE_SINGLETON, 1),
+        INCLUSIVE_GATEWAY_CONVERGING(Type.ROUTE_SINGLETON, 1),
         ;
 
         public final String route;
 
-        public final int nextNodeCount;
+        public final int next;
 
-        Type(String route, int nextNodeCount) {
-            this.nextNodeCount = nextNodeCount;
+        public static final String ROUTE_DEFAULT = "TOKEN_MSG";
+
+        public static final String ROUTE_SINGLETON = "SINGLETON_MSG";
+
+        public static final String ROUTE_SERVICE_TASK = "service-task";
+
+        Type(String route, int next) {
+            this.next = next;
             this.route = route;
         }
 

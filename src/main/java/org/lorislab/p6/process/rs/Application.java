@@ -17,12 +17,11 @@
 package org.lorislab.p6.process.rs;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.smallrye.mutiny.infrastructure.UniInterceptor;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.mutiny.sqlclient.Transaction;
 import org.apache.http.HttpHeaders;
-import org.lorislab.quarkus.jel.log.interceptor.LoggerParam;
+import org.lorislab.quarkus.log.cdi.LogParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,12 +67,12 @@ public class Application {
         };
     }
 
-    @LoggerParam(classes = {Transaction.class})
+    @LogParam(classes = {Transaction.class})
     public static String logMessage(Object message) {
         return "~t~";
     }
 
-    @LoggerParam(assignableFrom = {RoutingContext.class})
+    @LogParam(assignableFrom = {RoutingContext.class})
     public static String logRoutingContext(Object message) {
         RoutingContext r = (RoutingContext) message;
         return r.normalisedPath();
