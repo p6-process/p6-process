@@ -67,8 +67,7 @@ public class ProcessInstanceRestControllerTest extends AbstractTest {
                 .statusCode(HttpResponseStatus.ACCEPTED.code())
                 .extract().body().as(ProcessInstance.class);
 
-        Thread.sleep(5000L);
-//        waitProcessFinished(pi.id);
+        waitProcessFinished(pi.id);
     }
 
     protected void waitProcessFinished(String pi) {

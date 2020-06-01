@@ -79,16 +79,17 @@ public class TokenService {
     }
 
     private boolean checkToken(ExecutorItem item) {
-        log.info("Check token: {} {} - {} - {}", item.end, item.token.type, item.token.type.route, item);
+        log.info("Check token: {} - {} - {}", item.end, item.token.type, item);
+        item.check = item.node == null
+                || item.token.type == ProcessToken.Type.NULL
+                || ProcessToken.Type.ROUTE_SINGLETON.equals(item.token.type.route);
         return item.end;
     }
 
     private Uni<ExecutorItem> executeToken(ExecutorItem item) {
-        item.end = item.token.type == null
-                || ProcessToken.Type.ROUTE_SINGLETON.equals(item.token.type.route);
 
-        // TODO: FIX check!!!
-        if (item.end) {
+        if (item.check) {
+            item.end = true;
             return Uni.createFrom().item(item);
         }
 
@@ -132,7 +133,7 @@ public class TokenService {
         List<Uni<?>> items = new ArrayList<>();
         if (item.token != null) {
             items.add(processTokenDAO.update(item.tx, item.token));
-            if (item.token.type != null) {
+            if (item.token.type != ProcessToken.Type.NULL) {
                 items.add(messageDAO.createMessage(item.tx, item.token));
             }
         }

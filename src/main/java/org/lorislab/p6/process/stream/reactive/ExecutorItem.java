@@ -23,13 +23,15 @@ public class ExecutorItem {
 
     public boolean end;
 
+    public boolean check;
+
     public void moveToNextItem(String next) {
         token.nodeName = next;
         if (token.nodeName != null) {
             node = pd.nodes.get(token.nodeName);
             token.type = ProcessToken.Type.valueOf(pd.nodes.get(token.nodeName));
         } else {
-            token.type = null;
+            token.type = ProcessToken.Type.NULL;
             node = null;
         }
     }

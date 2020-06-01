@@ -26,7 +26,8 @@ public class ProcessTokenDAO {
     private Tuple tuple(ProcessToken m) {
         return Tuple.tuple(Arrays.asList(
                 m.id, m.processInstance, m.processId, m.processVersion, m.nodeName, m.status.name(),
-                m.type.name(), m.executionId, m.parent, m.reference, m.createdFrom.toArray(new String[]{}), m.data
+                m.type.name(), m.executionId, m.parent, m.reference,
+                m.createdFrom.toArray(new String[]{}), m.data
         ));
     }
 

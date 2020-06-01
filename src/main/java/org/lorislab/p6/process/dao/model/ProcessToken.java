@@ -87,6 +87,8 @@ public class ProcessToken {
 
     public enum Type {
 
+        NULL(null, 9),
+
         START_EVENT(Type.ROUTE_DEFAULT, 1),
 
         END_EVENT(Type.ROUTE_SINGLETON, 0),
