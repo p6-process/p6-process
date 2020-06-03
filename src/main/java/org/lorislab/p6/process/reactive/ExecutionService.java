@@ -1,4 +1,4 @@
-package org.lorislab.p6.process.stream.reactive;
+package org.lorislab.p6.process.reactive;
 
 import io.smallrye.mutiny.Uni;
 import lombok.extern.slf4j.Slf4j;

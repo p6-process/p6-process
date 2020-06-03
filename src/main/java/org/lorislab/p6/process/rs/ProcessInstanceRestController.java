@@ -7,7 +7,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
-import org.lorislab.p6.process.stream.ProcessService;
+import org.lorislab.p6.process.reactive.ProcessService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;

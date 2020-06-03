@@ -24,8 +24,15 @@ public class MessageDAO {
     PgPool client;
 
     public Uni<Long> createMessage(Transaction tx, ProcessToken token) {
-        return tx.preparedQuery("INSERT INTO " + token.type.route + " (ref) VALUES ($1) RETURNING (id)")
-                .execute(Tuple.of(token.id))
+        return tx.preparedQuery("INSERT INTO $1 (ref) VALUES ($2) RETURNING (id)")
+                .execute(Tuple.of(token.type.route, token.id))
+                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong(0));
+    }
+
+    public Uni<Long> createMessages(Transaction tx, List<ProcessToken> tokens) {
+        List<Tuple> tuples = tokens.stream().map(x -> Tuple.of(x.type.route, x.id)).collect(Collectors.toList());
+        return tx.preparedQuery("INSERT INTO $1 (ref) VALUES ($2) RETURNING (id)")
+                .executeBatch(tuples)
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong(0));
     }
 
@@ -33,13 +40,13 @@ public class MessageDAO {
         List<Tuple> tuples = tokens.stream().map(x -> Tuple.of(x.id)).collect(Collectors.toList());
         return tx.preparedQuery("INSERT INTO TOKEN_MSG (ref) VALUES ($1) RETURNING (id)")
                 .executeBatch(tuples)
-                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong("id"));
+                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong(0));
     }
 
     public Uni<Long> createProcessMessage(Transaction tx, String ref, String cmd) {
         return tx.preparedQuery("INSERT INTO PROCESS_MSG (ref, cmd) VALUES ($1,$2) RETURNING (id)")
                 .execute(Tuple.of(ref, cmd))
-                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong("id"));
+                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong(0));
     }
 
     public Uni<Message> nextProcessMessage(Transaction tx) {

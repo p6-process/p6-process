@@ -11,8 +11,8 @@ import javax.enterprise.context.ApplicationScoped;
 @Slf4j
 @Unremovable
 @ApplicationScoped
-@EventType(ProcessToken.Type.START_EVENT)
-public class StartEvent implements EventService {
+@EventType(ProcessToken.Type.SERVICE_TASK)
+public class ServiceTask implements EventService {
 
     @Override
     public Uni<ExecutorItem> execute(ExecutorItem item) {

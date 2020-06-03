@@ -1,7 +1,7 @@
 package org.lorislab.p6.process.events;
 
 import io.smallrye.mutiny.Uni;
-import org.lorislab.p6.process.stream.reactive.ExecutorItem;
+import org.lorislab.p6.process.reactive.ExecutorItem;
 
 public interface EventService {
 

@@ -1,4 +1,4 @@
-package org.lorislab.p6.process.stream;
+package org.lorislab.p6.process.reactive;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;

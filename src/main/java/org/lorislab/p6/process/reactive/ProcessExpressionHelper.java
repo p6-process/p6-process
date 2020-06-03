@@ -1,11 +1,9 @@
-package org.lorislab.p6.process.stream.reactive;
+package org.lorislab.p6.process.reactive;
 
 import io.quarkus.qute.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 /**

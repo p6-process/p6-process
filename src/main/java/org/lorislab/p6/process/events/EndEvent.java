@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.dao.model.ProcessToken;
-import org.lorislab.p6.process.stream.reactive.ExecutorItem;
+import org.lorislab.p6.process.reactive.ExecutorItem;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;

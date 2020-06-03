@@ -1,11 +1,10 @@
-package org.lorislab.p6.process.stream;
+package org.lorislab.p6.process.reactive;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.pgclient.PgPool;
 import io.vertx.mutiny.pgclient.pubsub.PgSubscriber;
-import io.vertx.mutiny.sqlclient.Transaction;
 import io.vertx.pgclient.PgConnectOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.dao.MessageDAO;

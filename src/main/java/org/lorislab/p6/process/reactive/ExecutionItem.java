@@ -1,4 +1,4 @@
-package org.lorislab.p6.process.stream.reactive;
+package org.lorislab.p6.process.reactive;
 
 import org.lorislab.p6.process.dao.model.Message;
 import org.lorislab.p6.process.dao.model.ProcessToken;

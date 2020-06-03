@@ -1,4 +1,4 @@
-package org.lorislab.p6.process.stream.reactive;
+package org.lorislab.p6.process.reactive;
 
 import io.vertx.mutiny.sqlclient.Transaction;
 import org.lorislab.p6.process.dao.model.Message;
@@ -6,6 +6,9 @@ import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ExecutorItem {
 
@@ -24,6 +27,26 @@ public class ExecutorItem {
     public boolean end;
 
     public boolean check;
+
+    public List<ProcessToken> createTokens = new ArrayList<>();
+
+    public ProcessToken updateToken;
+
+    public List<ProcessToken> messages = new ArrayList<>();
+
+    public ExecutorItem copy() {
+        ExecutorItem result = new ExecutorItem();
+        result.end = end;
+        result.check = check;
+        result.msg = msg;
+        result.node = node;
+        result.pd = pd;
+        result.token = token;
+        result.tx = tx;
+        result.updateProcessInstance = updateProcessInstance;
+        result.messages = messages;
+        return result;
+    }
 
     public void moveToNextItem(String next) {
         token.nodeName = next;

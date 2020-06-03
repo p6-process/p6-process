@@ -1,4 +1,4 @@
-package org.lorislab.p6.process.stream;
+package org.lorislab.p6.process.reactive;
 
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.InstanceHandle;
@@ -15,7 +15,6 @@ import org.lorislab.p6.process.events.EventService;
 import org.lorislab.p6.process.events.EventType;
 import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
-import org.lorislab.p6.process.stream.reactive.ExecutorItem;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -43,14 +42,6 @@ public class TokenService {
         return processTokenDAO.findById(tx, m.ref)
                 .map(t -> executeToken(tx, m, t)).flatMap(x -> x);
     }
-
-//    private Uni<Message> execute(Transaction tx, Message m, ProcessToken t) {
-//        return createExecutionToken(tx, m, t)
-//                .onItem().produceUni(this::executeToken)
-//                .repeat().until(this::checkToken)
-//                .collectItems().last()
-//                .onItem().produceUni(this::saveToken);
-//    }
 
     private Uni<Message> executeToken(Transaction tx, Message m, ProcessToken pt) {
         if (pt == null) {
@@ -133,13 +124,26 @@ public class TokenService {
         List<Uni<?>> items = new ArrayList<>();
         if (item.token != null) {
             items.add(processTokenDAO.update(item.tx, item.token));
+            // create message for the token
             if (item.token.type != ProcessToken.Type.NULL) {
                 items.add(messageDAO.createMessage(item.tx, item.token));
             }
         }
-        // update process instances
+        // update process instance
         if (item.updateProcessInstance != null) {
             items.add(processInstanceDAO.update(item.tx, item.updateProcessInstance));
+        }
+        // update token
+        if (item.updateToken != null) {
+            items.add(processTokenDAO.update(item.tx, item.updateToken));
+        }
+        // create process tokens
+        if (!item.createTokens.isEmpty()) {
+            items.add(processTokenDAO.create(item.tx, item.createTokens));
+        }
+        // create process tokens messages
+        if (!item.messages.isEmpty()) {
+            items.add(messageDAO.createMessages(item.tx, item.messages));
         }
         return Uni.combine().all().unis(items).combinedWith(x -> item.msg);
     }
