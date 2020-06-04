@@ -21,10 +21,11 @@ public class ParallelGatewayDiverging implements EventService {
     @Override
     public Uni<ExecutorItem> execute(ExecutorItem item) {
 
-        item.token.status = ProcessToken.Status.FINISHED;
-        item.moveToNextItem(null);
         item.createTokens = createChildTokens(item.token, item.pd, item.node.next);
         item.messages = item.createTokens;
+
+        item.token.status = ProcessToken.Status.FINISHED;
+        item.moveToNextItem(null);
         return Uni.createFrom().item(item);
 
     }

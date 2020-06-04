@@ -4,6 +4,7 @@ import io.quarkus.arc.Arc;
 import io.quarkus.arc.InstanceHandle;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.sqlclient.Transaction;
+import io.vertx.mutiny.sqlclient.Tuple;
 import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.dao.MessageDAO;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
@@ -20,6 +21,8 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @ApplicationScoped
@@ -94,7 +97,7 @@ public class TokenService {
 
         int nc = type.next;
         int size = 0;
-        List<String> next = item.node.next;
+        List<String> next = node.next;
         if (next != null ) {
             size = next.size();
         }
@@ -143,7 +146,10 @@ public class TokenService {
         }
         // create process tokens messages
         if (!item.messages.isEmpty()) {
-            items.add(messageDAO.createMessages(item.tx, item.messages));
+            Map<ProcessToken.Type, List<ProcessToken>> tmp = item.messages.stream().collect(Collectors.groupingBy(d -> d.type));
+            for (Map.Entry<ProcessToken.Type, List<ProcessToken>> e : tmp.entrySet()) {
+                items.add(messageDAO.createMessages(item.tx, item.messages, e.getKey().route));
+            }
         }
         return Uni.combine().all().unis(items).combinedWith(x -> item.msg);
     }

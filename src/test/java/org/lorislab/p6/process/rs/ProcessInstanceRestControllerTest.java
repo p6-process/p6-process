@@ -70,11 +70,32 @@ public class ProcessInstanceRestControllerTest extends AbstractTest {
         waitProcessFinished(pi.id);
     }
 
+    @Test
+    public void parallelGatewayProcessTest() throws Exception {
+        StartProcessRequestDTO r = new StartProcessRequestDTO();
+        r.id = UUID.randomUUID().toString();
+        r.processId = "parallelGateway";
+        r.processVersion = "1.0.0";
+        r.data = new HashMap<>();
+
+        ProcessInstance pi = given()
+                .when()
+                .contentType(APPLICATION_JSON)
+                .body(r)
+                .post("/instances/")
+                .prettyPeek()
+                .then()
+                .statusCode(HttpResponseStatus.ACCEPTED.code())
+                .extract().body().as(ProcessInstance.class);
+
+        waitProcessFinished(pi.id);
+    }
+
     protected void waitProcessFinished(String pi) {
 
         log.info("Wait for the process instance '{}; to finished", pi);
         await()
-                .atMost(5, SECONDS)
+                .atMost(2, SECONDS)
                 .untilAsserted(() -> given()
                         .when()
                         .contentType(APPLICATION_JSON)

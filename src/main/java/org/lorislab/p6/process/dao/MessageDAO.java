@@ -29,9 +29,11 @@ public class MessageDAO {
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong(0));
     }
 
-    public Uni<Long> createMessages(Transaction tx, List<ProcessToken> tokens) {
-        List<Tuple> tuples = tokens.stream().map(x -> Tuple.of(x.type.route, x.id)).collect(Collectors.toList());
-        return tx.preparedQuery("INSERT INTO $1 (ref) VALUES ($2) RETURNING (id)")
+    public Uni<Long> createMessages(Transaction tx, List<ProcessToken> tokens, String table) {
+        List<Tuple> tuples = tokens.stream().map(x -> Tuple.of(x.id))
+                .collect(Collectors.toList());
+
+        return tx.preparedQuery("INSERT INTO " + table + " (ref) VALUES ($1) RETURNING (id)")
                 .executeBatch(tuples)
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong(0));
     }
