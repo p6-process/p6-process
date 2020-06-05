@@ -4,12 +4,12 @@ import io.quarkus.arc.Arc;
 import io.quarkus.arc.InstanceHandle;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.sqlclient.Transaction;
-import io.vertx.mutiny.sqlclient.Tuple;
 import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.dao.MessageDAO;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.dao.model.Message;
+import org.lorislab.p6.process.dao.model.MessageType;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 import org.lorislab.p6.process.deployment.DeploymentService;
 import org.lorislab.p6.process.events.EventService;
@@ -76,7 +76,7 @@ public class TokenService {
         log.info("Check token: {} - {} - {}", item.end, item.token.type, item);
         item.check = item.node == null
                 || item.token.type == ProcessToken.Type.NULL
-                || ProcessToken.Type.ROUTE_SINGLETON.equals(item.token.type.route);
+                || item.token.type.message == MessageType.SINGLETON_MSG;
         return item.end;
     }
 
@@ -146,9 +146,9 @@ public class TokenService {
         }
         // create process tokens messages
         if (!item.messages.isEmpty()) {
-            Map<ProcessToken.Type, List<ProcessToken>> tmp = item.messages.stream().collect(Collectors.groupingBy(d -> d.type));
-            for (Map.Entry<ProcessToken.Type, List<ProcessToken>> e : tmp.entrySet()) {
-                items.add(messageDAO.createMessages(item.tx, item.messages, e.getKey().route));
+            Map<MessageType, List<ProcessToken>> tmp = item.messages.stream().collect(Collectors.groupingBy(d -> d.type.message));
+            for (Map.Entry<MessageType, List<ProcessToken>> e : tmp.entrySet()) {
+                items.add(messageDAO.createMessages(item.tx, item.messages, e.getKey()));
             }
         }
         return Uni.combine().all().unis(items).combinedWith(x -> item.msg);

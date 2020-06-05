@@ -11,10 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.dao.MessageDAO;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
-import org.lorislab.p6.process.dao.model.Message;
-import org.lorislab.p6.process.dao.model.MessageCmd;
-import org.lorislab.p6.process.dao.model.ProcessInstance;
-import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.dao.model.*;
 import org.lorislab.p6.process.deployment.DeploymentService;
 import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
@@ -51,7 +48,7 @@ public class ProcessExecutor {
     Vertx vertx;
 
     public void start() {
-        Multi.createBy().merging().streams(messageDAO.findAllProcessMessages(), subscriber())
+        Multi.createBy().merging().streams(messageDAO.findAllMessages(MessageType.PROCESS_MSG), subscriber())
                 .onItem().produceUni(x -> execute())
                 .concatenate()
                 .subscribe().with(m -> log.info("Executed message {} ", m), Throwable::printStackTrace);
@@ -61,7 +58,7 @@ public class ProcessExecutor {
         return Multi.createFrom().emitter(emitter -> {
             PgSubscriber subscriber = PgSubscriber.subscriber(vertx, pgConnectOptions);
             subscriber.connect().subscribe().with(c -> {
-                subscriber.channel("process_msg").handler(emitter::emit);
+                subscriber.channel(MessageType.PROCESS_MSG.channel).handler(emitter::emit);
             }, Throwable::printStackTrace);
         });
     }

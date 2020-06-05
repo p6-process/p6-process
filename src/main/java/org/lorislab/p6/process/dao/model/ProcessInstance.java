@@ -16,12 +16,17 @@
 
 package org.lorislab.p6.process.dao.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
 import lombok.ToString;
 import org.lorislab.vertx.sql.mapper.SqlColumn;
 
+import java.util.Map;
+
 @RegisterForReflection
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProcessInstance {
 
     @SqlColumn(ignore = true)
@@ -39,6 +44,7 @@ public class ProcessInstance {
 
     public Status status;
 
+    @JsonDeserialize(using = JsonObjectDeserializer.class)
     public JsonObject data = new JsonObject();
 
     @Override

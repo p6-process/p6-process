@@ -6,10 +6,7 @@ import io.vertx.mutiny.pgclient.PgPool;
 import io.vertx.mutiny.sqlclient.RowSet;
 import io.vertx.mutiny.sqlclient.Transaction;
 import io.vertx.mutiny.sqlclient.Tuple;
-import org.lorislab.p6.process.dao.model.Message;
-import org.lorislab.p6.process.dao.model.MessageMapperImpl;
-import org.lorislab.p6.process.dao.model.ProcessInstance;
-import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.dao.model.*;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -25,15 +22,15 @@ public class MessageDAO {
 
     public Uni<Long> createMessage(Transaction tx, ProcessToken token) {
         return tx.preparedQuery("INSERT INTO $1 (ref) VALUES ($2) RETURNING (id)")
-                .execute(Tuple.of(token.type.route, token.id))
+                .execute(Tuple.of(token.type.message.table, token.id))
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong(0));
     }
 
-    public Uni<Long> createMessages(Transaction tx, List<ProcessToken> tokens, String table) {
+    public Uni<Long> createMessages(Transaction tx, List<ProcessToken> tokens, MessageType type) {
         List<Tuple> tuples = tokens.stream().map(x -> Tuple.of(x.id))
                 .collect(Collectors.toList());
 
-        return tx.preparedQuery("INSERT INTO " + table + " (ref) VALUES ($1) RETURNING (id)")
+        return tx.preparedQuery("INSERT INTO " + type.table + " (ref) VALUES ($1) RETURNING (id)")
                 .executeBatch(tuples)
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong(0));
     }
@@ -72,34 +69,8 @@ public class MessageDAO {
                 .map(it -> it.hasNext() ? MessageMapperImpl.mapS(it.next()) : null);
     }
 
-    public Multi<String> findAllTokenMessages() {
-        return client.query("SELECT count(id) FROM TOKEN_MSG")
-                .execute()
-                .map(RowSet::iterator)
-                .map(r -> r.hasNext() ? r.next().getLong(0) : null)
-                .onItem().produceMulti(i -> {
-                    if (i == null || i == 0) {
-                        return Multi.createFrom().nothing();
-                    }
-                    return Multi.createFrom().iterable(() -> LongStream.range(0, i).iterator()).map(Object::toString);
-                });
-    }
-
-    public Multi<String> findAllSingletonMessages() {
-        return client.query("SELECT count(id) FROM SINGLETON_MSG")
-                .execute()
-                .map(RowSet::iterator)
-                .map(r -> r.hasNext() ? r.next().getLong(0) : null)
-                .onItem().produceMulti(i -> {
-                    if (i == null || i == 0) {
-                        return Multi.createFrom().nothing();
-                    }
-                    return Multi.createFrom().iterable(() -> LongStream.range(0, i).iterator()).map(Object::toString);
-                });
-    }
-
-    public Multi<String> findAllProcessMessages() {
-        return client.query("SELECT count(id) FROM PROCESS_MSG")
+    public Multi<String> findAllMessages(MessageType type) {
+        return client.query("SELECT count(id) FROM " + type.table)
                 .execute()
                 .map(RowSet::iterator)
                 .map(r -> r.hasNext() ? r.next().getLong(0) : null)

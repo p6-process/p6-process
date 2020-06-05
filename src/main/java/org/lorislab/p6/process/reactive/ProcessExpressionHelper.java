@@ -1,9 +1,11 @@
 package org.lorislab.p6.process.reactive;
 
 import io.quarkus.qute.*;
+import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -37,7 +39,7 @@ public class ProcessExpressionHelper {
      * @param data       the context data.
      * @return {@code true} if the expression is validate to true.
      */
-    public static boolean ifExpression(String expression, Object data) {
+    public static boolean ifExpression(String expression, Map<String, Object> data) {
         String tmp = null;
         try {
             log.debug("If expression: {} data: {}", expression, data);

@@ -9,6 +9,7 @@ import io.vertx.pgclient.PgConnectOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.dao.MessageDAO;
 import org.lorislab.p6.process.dao.model.Message;
+import org.lorislab.p6.process.dao.model.MessageType;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -16,8 +17,6 @@ import javax.inject.Inject;
 @Slf4j
 @ApplicationScoped
 public class TokenExecutor {
-
-    public final static String CHANNEL = "token_msg";
 
     @Inject
     PgPool client;
@@ -35,7 +34,7 @@ public class TokenExecutor {
     Vertx vertx;
 
     public void start() {
-        Multi.createBy().merging().streams(messageDAO.findAllTokenMessages(), subscriber())
+        Multi.createBy().merging().streams(messageDAO.findAllMessages(MessageType.TOKEN_MSG), subscriber())
                 .onItem().produceUni(x -> execute())
                 .concatenate()
                 .subscribe().with(m -> log.info("Executed message {} ", m), Throwable::printStackTrace);
@@ -45,7 +44,7 @@ public class TokenExecutor {
         return Multi.createFrom().emitter(emitter -> {
             PgSubscriber subscriber = PgSubscriber.subscriber(vertx, pgConnectOptions);
             subscriber.connect().subscribe().with(c -> {
-                subscriber.channel(CHANNEL).handler(emitter::emit);
+                subscriber.channel(MessageType.TOKEN_MSG.channel).handler(emitter::emit);
             }, Throwable::printStackTrace);
         });
     }

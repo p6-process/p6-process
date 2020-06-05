@@ -18,13 +18,10 @@ package org.lorislab.p6.process.dao.model;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
-import io.vertx.mutiny.sqlclient.Tuple;
-import lombok.ToString;
 import org.lorislab.p6.process.model.Gateway;
 import org.lorislab.p6.process.model.Node;
 import org.lorislab.vertx.sql.mapper.SqlColumn;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -89,40 +86,34 @@ public class ProcessToken {
 
         NULL(null, 9),
 
-        START_EVENT(Type.ROUTE_DEFAULT, 1),
+        START_EVENT(MessageType.TOKEN_MSG, 1),
 
-        END_EVENT(Type.ROUTE_SINGLETON, 0),
+        END_EVENT(MessageType.SINGLETON_MSG, 0),
 
-        SERVICE_TASK(Type.ROUTE_DEFAULT, 1),
+        SERVICE_TASK(MessageType.TOKEN_MSG, 1),
 
-        SERVICE_TASK_COMPLETE(Type.ROUTE_SERVICE_TASK, 1),
+        SERVICE_TASK_COMPLETE(MessageType.SERVICE_TASK_MSG, 1),
 
-        PARALLEL_GATEWAY_DIVERGING(Type.ROUTE_DEFAULT, -1),
+        PARALLEL_GATEWAY_DIVERGING(MessageType.TOKEN_MSG, -1),
 
-        PARALLEL_GATEWAY_CONVERGING(Type.ROUTE_SINGLETON, 1),
+        PARALLEL_GATEWAY_CONVERGING(MessageType.SINGLETON_MSG, 1),
 
-        EXCLUSIVE_GATEWAY_DIVERGING(Type.ROUTE_DEFAULT, -1),
+        EXCLUSIVE_GATEWAY_DIVERGING(MessageType.TOKEN_MSG, -1),
 
-        EXCLUSIVE_GATEWAY_CONVERGING(Type.ROUTE_DEFAULT, 1),
+        EXCLUSIVE_GATEWAY_CONVERGING(MessageType.TOKEN_MSG, 1),
 
-        INCLUSIVE_GATEWAY_DIVERGING(Type.ROUTE_DEFAULT, -1),
+        INCLUSIVE_GATEWAY_DIVERGING(MessageType.TOKEN_MSG, -1),
 
-        INCLUSIVE_GATEWAY_CONVERGING(Type.ROUTE_SINGLETON, 1),
+        INCLUSIVE_GATEWAY_CONVERGING(MessageType.SINGLETON_MSG, 1),
         ;
 
-        public final String route;
+        public final MessageType message;
 
         public final int next;
 
-        public static final String ROUTE_DEFAULT = "TOKEN_MSG";
-
-        public static final String ROUTE_SINGLETON = "SINGLETON_MSG";
-
-        public static final String ROUTE_SERVICE_TASK = "service-task";
-
-        Type(String route, int next) {
+        Type(MessageType message, int next) {
             this.next = next;
-            this.route = route;
+            this.message = message;
         }
 
         public static Type valueOf(Node node) {
