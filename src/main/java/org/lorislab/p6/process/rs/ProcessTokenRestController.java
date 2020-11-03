@@ -4,7 +4,6 @@ import io.quarkus.vertx.web.Route;
 import io.quarkus.vertx.web.RouteBase;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.mutiny.pgclient.PgPool;
 import org.lorislab.p6.process.dao.ProcessTokenDAO;
 
 import javax.enterprise.context.ApplicationScoped;

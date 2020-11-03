@@ -27,16 +27,16 @@ import static io.restassured.RestAssured.given;
 @QuarkusTest
 public class ProcessTokenRestControllerTest extends AbstractTest {
 
-    @Test
-    public void getNotFoundTest() {
-        given()
-                .when()
-                .contentType(ContentType.APPLICATION_JSON.getMimeType())
-                .pathParam("id", "123456")
-                .get("/tokens/{id}")
-                .prettyPeek()
-                .then()
-                .statusCode(HttpResponseStatus.NOT_FOUND.code());
-    }
+//    @Test
+//    public void getNotFoundTest() {
+//        given()
+//                .when()
+//                .contentType(ContentType.APPLICATION_JSON.getMimeType())
+//                .pathParam("id", "123456")
+//                .get("/tokens/{id}")
+//                .prettyPeek()
+//                .then()
+//                .statusCode(HttpResponseStatus.NOT_FOUND.code());
+//    }
 
 }

@@ -6,6 +6,7 @@ import org.lorislab.p6.process.model.runtime.ProcessDefinitionLoader;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
@@ -16,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
-@ApplicationScoped
+@Singleton
 public class DeploymentService {
 
     @ConfigProperty(name = "p6.deployment.enabled", defaultValue = "true")

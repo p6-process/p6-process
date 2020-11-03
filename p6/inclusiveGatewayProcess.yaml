@@ -1,0 +1,41 @@
+id: inclusiveGatewayProcess
+version: 1.0.0
+labels:
+  application: test
+  module: module
+nodes:
+  start:
+    type: START_EVENT
+    next:
+      - gateway1
+  gateway1:
+    type: INCLUSIVE_GATEWAY
+    sequence: DIVERGING
+    next:
+      - service1
+      - service2
+      - service3
+    defaultNext: service2
+    condition:
+      service1: "count < 10 && result"
+      service2: "count >= 10 || result"
+      service3: "count >= 10 || result"
+  service1:
+    type: SERVICE_TASK
+    next:
+      - gateway2
+  service2:
+    type: SERVICE_TASK
+    next:
+      - gateway2
+  service3:
+    type: SERVICE_TASK
+    next:
+      - gateway2
+  gateway2:
+    type: INCLUSIVE_GATEWAY
+    sequence: CONVERGING
+    next:
+      - end
+  end:
+    type: END_EVENT

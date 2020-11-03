@@ -22,24 +22,24 @@ public class EndEvent implements EventService {
 
     @Override
     public Uni<ExecutorItem> execute(ExecutorItem item) {
-        if (item.token.status != ProcessToken.Status.FINISHED) {
-
-            // load process instance
-            return processInstanceDAO.findById(item.tx,item.token.processInstance)
-                    .onItem().apply(p -> {
-
-                        // FINISHED process instance
-                        p.status = ProcessInstance.Status.FINISHED;
-                        p.data.mergeIn(item.token.data);
-                        item.updateProcessInstance = p;
-
-                        item.token.status = ProcessToken.Status.FINISHED;
-                        item.moveToNextItem(null);
-                        return item;
-                    });
-        } else {
-            log.warn("Token {} is already finished.", item.token);
-        }
+//        if (item.token.status != ProcessToken.Status.FINISHED) {
+//
+//            // load process instance
+//            return processInstanceDAO.findById(item.tx,item.token.processInstance)
+//                    .onItem().apply(p -> {
+//
+//                        // FINISHED process instance
+//                        p.status = ProcessInstance.Status.FINISHED;
+//                        p.data.putAll(item.token.data);
+//                        item.updateProcessInstance = p;
+//
+//                        item.token.status = ProcessToken.Status.FINISHED;
+//                        item.moveToNextItem(null);
+//                        return item;
+//                    });
+//        } else {
+//            log.warn("Token {} is already finished.", item.token);
+//        }
         return Uni.createFrom().item(item);
     }
 }

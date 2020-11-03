@@ -33,7 +33,6 @@ public class ParallelGatewayDiverging implements EventService {
     protected List<ProcessToken> createChildTokens(ProcessToken token, ProcessDefinitionRuntime pd, List<String> items) {
         return items.stream().map(item -> {
             ProcessToken child = new ProcessToken();
-            child.created = true;
             child.id = UUID.randomUUID().toString();
             child.nodeName = item;
             child.processId = token.processId;
@@ -43,7 +42,6 @@ public class ParallelGatewayDiverging implements EventService {
             child.processInstance = token.processInstance;
             child.data = token.data;
             child.status= ProcessToken.Status.IN_EXECUTION;
-            child.executionId = UUID.randomUUID().toString();
             return child;
         }).collect(Collectors.toList());
     }

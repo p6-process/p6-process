@@ -45,6 +45,9 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <infinispan.version>11.0.0.Final</infinispan.version>
+        <infinispan.protostream.version>4.3.3.Final</infinispan.protostream.version>
     </properties>
     
     <dependencyManagement>
@@ -61,6 +64,12 @@
     
     <dependencies>
         <dependency>
+            <groupId>io.etcd</groupId>
+            <artifactId>jetcd-core</artifactId>
+            <version>0.5.3</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.lorislab.p6</groupId>
             <artifactId>p6-process-model</artifactId>
             <version>0.2.2</version>
@@ -69,23 +78,18 @@
         <!-- LORISLAB -->
         <dependency>
             <groupId>org.lorislab.quarkus</groupId>
-            <artifactId>barn-pg-client</artifactId>
-            <version>0.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.lorislab.quarkus</groupId>
             <artifactId>log-cdi</artifactId>
-            <version>0.1.0</version>
+            <version>0.2.0</version>
         </dependency>
 
         <!-- QUARKUS -->
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-arc</artifactId>
+            <artifactId>quarkus-infinispan-client</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-reactive-pg-client</artifactId>
+            <artifactId>quarkus-arc</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -101,12 +105,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.10</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.lorislab.vertx</groupId>
-            <artifactId>vertx-sql-mapper</artifactId>
-            <version>0.1.4</version>
             <scope>provided</scope>
         </dependency>
 

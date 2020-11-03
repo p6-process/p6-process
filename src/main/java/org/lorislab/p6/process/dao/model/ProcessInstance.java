@@ -16,41 +16,27 @@
 
 package org.lorislab.p6.process.dao.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import io.vertx.core.json.JsonObject;
 import lombok.ToString;
-import org.lorislab.vertx.sql.mapper.SqlColumn;
 
+import java.util.HashMap;
 import java.util.Map;
 
+@ToString
 @RegisterForReflection
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProcessInstance {
-
-    @SqlColumn(ignore = true)
-    public boolean created;
 
     public String id;
 
     public String parent;
 
-    @SqlColumn("processid")
     public String processId;
 
-    @SqlColumn("processversion")
     public String processVersion;
 
     public Status status;
 
-    @JsonDeserialize(using = JsonObjectDeserializer.class)
-    public JsonObject data = new JsonObject();
-
-    @Override
-    public String toString() {
-        return "ProcessInstance:" + id;
-    }
+    public Map<String, Object> data = new HashMap<>();
 
     public enum Status {
 

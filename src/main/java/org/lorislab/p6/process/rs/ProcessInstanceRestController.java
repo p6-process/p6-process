@@ -33,6 +33,12 @@ public class ProcessInstanceRestController {
         processInstanceDAO.findById(id).subscribe().with(ok(rc), error(rc));
     }
 
+    @Route(path = "test/:id", methods = HttpMethod.GET)
+    public void test(RoutingContext rc) {
+        String id = rc.pathParam("id");
+        processStream.find(id).subscribe().with(ok(rc), error(rc));
+    }
+
     @Route(path = "", methods = HttpMethod.POST, consumes = APPLICATION_JSON)
     public void startProcess(RoutingContext rc) {
         StartProcessRequestDTO request = rc.getBodyAsJson().mapTo(StartProcessRequestDTO.class);

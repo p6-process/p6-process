@@ -19,7 +19,6 @@ package org.lorislab.p6.process.rs;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.mutiny.sqlclient.Transaction;
 import org.apache.http.HttpHeaders;
 import org.lorislab.quarkus.log.cdi.LogParam;
 import org.slf4j.Logger;
@@ -36,10 +35,6 @@ public class Application {
      */
     public static final String APPLICATION_JSON = "application/json";
 
-    @Produces
-    public Logger produceLogger(InjectionPoint injectionPoint) {
-        return LoggerFactory.getLogger(injectionPoint.getMember().getDeclaringClass().getName());
-    }
 
     public static <T> Consumer<T> accepted(RoutingContext rc) {
         return response(rc, HttpResponseStatus.ACCEPTED.code());
@@ -65,11 +60,6 @@ public class Application {
             failure.printStackTrace();
             rc.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(failure.getMessage());
         };
-    }
-
-    @LogParam(classes = {Transaction.class})
-    public static String logMessage(Object message) {
-        return "~t~";
     }
 
     @LogParam(assignableFrom = {RoutingContext.class})

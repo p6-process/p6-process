@@ -3,7 +3,6 @@ package org.lorislab.p6.process.reactive;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.InstanceHandle;
 import io.smallrye.mutiny.Uni;
-import io.vertx.mutiny.sqlclient.Transaction;
 import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.dao.MessageDAO;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
@@ -19,10 +18,7 @@ import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @ApplicationScoped
@@ -40,13 +36,13 @@ public class TokenService {
     @Inject
     MessageDAO messageDAO;
 
-    public Uni<Message> executeMessage(Transaction tx, Message m) {
+    public Uni<Message> executeMessage(Message m) {
         log.info("Token message: {}", m);
-        return processTokenDAO.findById(tx, m.ref)
-                .map(t -> executeToken(tx, m, t)).flatMap(x -> x);
+        return processTokenDAO.findById(m.ref)
+                .map(t -> executeToken(m, t)).flatMap(x -> x);
     }
 
-    private Uni<Message> executeToken(Transaction tx, Message m, ProcessToken pt) {
+    private Uni<Message> executeToken(Message m, ProcessToken pt) {
         if (pt == null) {
             log.warn("No token found for the message token: {}", m);
             return Uni.createFrom().item(m);
@@ -60,13 +56,12 @@ public class TokenService {
 
         ExecutorItem token = new ExecutorItem();
         token.pd = pd;
-        token.tx = tx;
         token.msg = m;
         token.token = pt;
         token.node = token.pd.nodes.get(token.token.nodeName);
 
         return Uni.createFrom().item(token)
-                .onItem().produceUni(this::executeToken)
+                .onItem().produceUni(x -> this.executeToken(x))
                 .repeat().until(this::checkToken)
                 .collectItems().last()
                 .onItem().produceUni(this::saveToken);
@@ -98,7 +93,7 @@ public class TokenService {
         int nc = type.next;
         int size = 0;
         List<String> next = node.next;
-        if (next != null ) {
+        if (next != null) {
             size = next.size();
         }
 
@@ -123,35 +118,35 @@ public class TokenService {
 
     private Uni<Message> saveToken(ExecutorItem item) {
         log.info("Save token {}", item);
-
-        List<Uni<?>> items = new ArrayList<>();
-        if (item.token != null) {
-            items.add(processTokenDAO.update(item.tx, item.token));
-            // create message for the token
-            if (item.token.type != ProcessToken.Type.NULL) {
-                items.add(messageDAO.createMessage(item.tx, item.token));
-            }
-        }
-        // update process instance
-        if (item.updateProcessInstance != null) {
-            items.add(processInstanceDAO.update(item.tx, item.updateProcessInstance));
-        }
-        // update token
-        if (item.updateToken != null) {
-            items.add(processTokenDAO.update(item.tx, item.updateToken));
-        }
-        // create process tokens
-        if (!item.createTokens.isEmpty()) {
-            items.add(processTokenDAO.create(item.tx, item.createTokens));
-        }
-        // create process tokens messages
-        if (!item.messages.isEmpty()) {
-            Map<MessageType, List<ProcessToken>> tmp = item.messages.stream().collect(Collectors.groupingBy(d -> d.type.message));
-            for (Map.Entry<MessageType, List<ProcessToken>> e : tmp.entrySet()) {
-                items.add(messageDAO.createMessages(item.tx, item.messages, e.getKey()));
-            }
-        }
-        return Uni.combine().all().unis(items).combinedWith(x -> item.msg);
+        return Uni.createFrom().nullItem();
+//        List<Uni<?>> items = new ArrayList<>();
+//        if (item.token != null) {
+//            items.add(processTokenDAO.update(item.tx, item.token));
+//            // create message for the token
+//            if (item.token.type != ProcessToken.Type.NULL) {
+//                items.add(messageDAO.createMessage(item.tx, item.token));
+//            }
+//        }
+//        // update process instance
+//        if (item.updateProcessInstance != null) {
+//            items.add(processInstanceDAO.update(item.tx, item.updateProcessInstance));
+//        }
+//        // update token
+//        if (item.updateToken != null) {
+//            items.add(processTokenDAO.update(item.tx, item.updateToken));
+//        }
+//        // create process tokens
+//        if (!item.createTokens.isEmpty()) {
+//            items.add(processTokenDAO.create(item.tx, item.createTokens));
+//        }
+//        // create process tokens messages
+//        if (!item.messages.isEmpty()) {
+//            Map<MessageType, List<ProcessToken>> tmp = item.messages.stream().collect(Collectors.groupingBy(d -> d.type.message));
+//            for (Map.Entry<MessageType, List<ProcessToken>> e : tmp.entrySet()) {
+//                items.add(messageDAO.createMessages(item.tx, item.messages, e.getKey()));
+//            }
+//        }
+//        return Uni.combine().all().unis(items).combinedWith(x -> item.msg);
     }
 
 }

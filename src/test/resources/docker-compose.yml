@@ -2,21 +2,18 @@ version: "2"
 
 services:
 
-  p6-db:
-    container_name: p6-db
-    image: bitnami/postgresql:12.2.0
+  p6-etcd:
+    image: bitnami/etcd:3.4.9
     environment:
-      POSTGRES_DB: "p6"
-      POSTGRES_USER: "p6"
-      POSTGRES_PASSWORD: "p6"
-      DISABLE_WELCOME_MESSAGE: "true"
+      ALLOW_NONE_AUTHENTICATION: "yes"
     labels:
-      - "test.Wait.forLogMessage.regex=.*database system is ready to accept connections.*\\s"
+      - "test.Wait.forLogMessage.regex=.*ready to serve client requests.*\\s"
       - "test.Wait.forLogMessage.times=1"
       - "test.log=true"
-      - "test.property.quarkus.datasource.reactive.url=postgresql://$${host:p6-db}:$${port:p6-db:5432}/p6?sslmode=disable"
+      - "test.property.quarkus.grpc.clients.etcd.port=$${port:p6-etcd:2379}"
+      - "test.property.quarkus.grpc.clients.etcd.host=$${host:p6-etcd}"
     ports:
-      - "5432:5432"
+      - "2379:2379"
     networks:
       - "test"
 
@@ -26,9 +23,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      QUARKUS_DATASOURCE_REACTIVE_URL: "postgresql://p6-db:5432/postgres?sslmode=disable"
-      QUARKUS_DATASOURCE_USERNAME: "p6"
-      QUARKUS_DATASOURCE_PASSWORD: "p6"
+      QUARKUS_GRPC_CLIENTS_ETCD_PORT: 2379
+      QUARKUS_GRPC_CLIENTS_ETCD_HOST: p6-etcd
     labels:
       - "test.unit=false"
       - "test.priority=101"

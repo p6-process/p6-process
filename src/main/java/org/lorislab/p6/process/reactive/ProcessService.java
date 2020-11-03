@@ -1,9 +1,18 @@
 package org.lorislab.p6.process.reactive;
 
+import io.etcd.jetcd.*;
+import io.etcd.jetcd.kv.GetResponse;
+import io.etcd.jetcd.lock.LockResponse;
+import io.etcd.jetcd.op.Cmp;
+import io.etcd.jetcd.op.CmpTarget;
+import io.etcd.jetcd.op.Op;
+import io.etcd.jetcd.options.GetOption;
+import io.etcd.jetcd.options.PutOption;
+import io.quarkus.infinispan.client.Remote;
 import io.smallrye.mutiny.Uni;
-import io.vertx.core.json.JsonObject;
-import io.vertx.mutiny.pgclient.PgPool;
+import io.vertx.core.json.Json;
 import lombok.extern.slf4j.Slf4j;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.lorislab.p6.process.dao.MessageDAO;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
 import org.lorislab.p6.process.dao.model.MessageCmd;
@@ -14,6 +23,8 @@ import org.lorislab.p6.process.rs.StartProcessRequestDTO;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.UUID;
 
 @Slf4j
@@ -24,23 +35,123 @@ public class ProcessService {
     DeploymentService deploymentService;
 
     @Inject
+    KV client;
+
+    @Inject
+    Lease lease;
+
+    @Inject
+    Lock lock;
+
+    @Inject
     ProcessInstanceDAO processInstanceDAO;
 
     @Inject
     MessageDAO messageDAO;
 
-    @Inject
-    PgPool client;
+    private static LockResponse RESPONSE = null;
 
+    public Uni<String> find(String id) {
+
+        String tmpId = "/p6/pi/queue/" + id + "/lock";
+        ByteSequence lockId = ByteSequence.from(tmpId.getBytes());
+
+        String tmpKey = "/p6/pi/data/" + id + "/json";
+        ByteSequence key = ByteSequence.from(tmpKey.getBytes());
+
+
+        return Uni.createFrom().completionStage(lease.grant(10L))
+                .onItem().produceUni(r ->
+                    Uni.createFrom().completionStage(client.txn()
+                    .If(
+                            new Cmp(key, Cmp.Op.GREATER, CmpTarget.version(0)),
+                            new Cmp(lockId, Cmp.Op.EQUAL, CmpTarget.version(0))
+                    )
+                    .Then(
+                            Op.put(lockId, ByteSequence.from("true".getBytes()), PutOption.newBuilder().withLeaseId(r.getID()).build())
+                    ).commit())
+
+        )
+                .map(x -> {
+                    System.out.println("FIND2 " + x);
+                    return "OK";
+                });
+
+    }
+
+    public Uni<String> find2(String id) {
+        ByteSequence kk = ByteSequence.from(id.getBytes());
+        String tmp = "/p6/pi/lock/" + id;
+        ByteSequence key = ByteSequence.from(tmp.getBytes());
+
+//        GetResponse r = Uni.createFrom().completionStage(client.get(key, GetOption.DEFAULT))
+//                .await().indefinitely();
+        GetOption option = GetOption.newBuilder()
+                .withRange(ByteSequence.from(("/p6/pi/lock0").getBytes())).build();
+        return Uni.createFrom().completionStage(client.get(key, option))
+                .onItem().produceUni(r -> {
+                    System.out.println("### " + r);
+                    System.out.println("### " + r.getCount());
+                    System.out.println("### " + r.getKvs());
+                if (r.getCount() > 0) {
+                    System.out.println("LOCK EXISTS! " + tmp);
+                    return Uni.createFrom().nullItem();
+                }
+                return lock(key);
+
+        });
+//        return Uni.createFrom().completionStage(lease.grant(60L))
+//                .onItem().produceUni(x -> {
+//                    System.out.println("ID " + x.getID());
+//                    return Uni.createFrom().completionStage(lock.lock(key, x.getID()))
+//                            .ifNoItem().after(Duration.ofMillis(500L))
+//                            .recoverWithUni(() ->
+//                                    Uni.createFrom().completionStage(lease.revoke(x.getID()))
+//                                    .map(rt -> RESPONSE)
+//                            )
+//                            .onItem().ifNotNull().apply(r -> {
+//                                System.out.println("### " + r.getKey().toString(StandardCharsets.UTF_8));
+//                                return "OK";
+//                            });
+//        });
+
+//        String tmp = "/p6/pi";
+//        GetOption option = GetOption.newBuilder()
+//                .withRange(ByteSequence.from((tmp + "0").getBytes()))
+//                .withSerializable(true)
+//                .build();
+//        return Uni.createFrom().completionStage(client.get(ByteSequence.from(tmp.getBytes()), option))
+//                .map(x -> {
+//                    System.out.println("GET " + x);
+//                    return "OK";
+//                });
+    }
+
+    private Uni<String> lock(ByteSequence key) {
+        return Uni.createFrom().completionStage(lease.grant(60L))
+                .onItem().produceUni(x -> {
+            System.out.println("ID " + x.getID());
+            return Uni.createFrom().completionStage(lock.lock(key, x.getID()))
+                    .ifNoItem().after(Duration.ofMillis(500L))
+                    .recoverWithUni(() ->
+                            Uni.createFrom().completionStage(lease.revoke(x.getID()))
+                                    .map(rt -> RESPONSE)
+                    )
+                    .onItem().ifNotNull().apply(r -> {
+                        System.out.println("### " + r.getKey().toString(StandardCharsets.UTF_8));
+                        return "OK";
+                    });
+        });
+    }
     public Uni<ProcessInstance> startProcess(StartProcessRequestDTO request) {
         ProcessInstance pi = createProcessInstance(request);
-        if (pi == null) return Uni.createFrom().nullItem();
-        return client.begin()
-                .flatMap(tx -> processInstanceDAO.create(tx, pi).and(messageDAO.createProcessMessage(tx, pi.id, MessageCmd.START_PROCESS))
-                                .onItem().ignore().andContinueWithNull()
-                                .onItem().produceUni(x -> tx.commit())
-                                .onFailure().recoverWithUni(tx::rollback)
-                ).map(x -> pi);
+        if (pi == null) {
+            return Uni.createFrom().nullItem();
+        }
+        Txn txn = client.txn();
+        processInstanceDAO.create(txn, pi);
+        messageDAO.createProcessMessage(txn, pi.id, MessageCmd.START_PROCESS);
+        return Uni.createFrom().completionStage(txn.commit()).map(x -> pi);
     }
 
     private ProcessInstance createProcessInstance(StartProcessRequestDTO request) {
@@ -57,39 +168,10 @@ public class ProcessService {
         pi.processId = request.processId;
         pi.processVersion = request.processVersion;
         if (request.data != null) {
-            pi.data = new JsonObject(request.data);
-        } else {
-            pi.data = new JsonObject();
+            pi.data.putAll(request.data);
         }
         log.info("Create ProcessInstance {}", pi);
         return pi;
     }
 
-//
-//    @Inject
-//    TokenExecutor executor;
-//
-//    @Incoming("process-start-in")
-//    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-//    public CompletionStage<Void> processStart(IncomingJmsTxMessage<StartProcessRequest> message) {
-//        try {
-//            log.info("Start process {}", message.getPayload());
-//            IncomingJmsMessageMetadata metadata = message.getJmsMetadata();
-//            List<ProcessToken> tokens = executor.createTokens(metadata.getCorrelationId(), message.getPayload());
-//            message.send(tokens.stream().map(TokenExecutor::createMessage));
-//            return message.ack();
-//        } catch (Exception wex) {
-//            log.error("Error start process", wex);
-//            log.error("Error process start message. Message {}", message);
-//            return message.rollback();
-//        }
-//    }
-//
-//    @RegisterForReflection
-//    public static class StartProcessRequest {
-//        public String processId;
-//        public String processInstanceId;
-//        public String processVersion;
-//        public Map<String, Object> data;
-//    }
 }

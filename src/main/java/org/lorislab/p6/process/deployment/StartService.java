@@ -31,10 +31,10 @@ public class StartService {
         deploymentService.start();
         // start process executor
         processExecutor.start();
-        // start token executor
-        tokenExecutor.start();
-        // start singleton executor
-        singletonExecutor.start();
+//        // start token executor
+//        tokenExecutor.start();
+//        // start singleton executor
+//        singletonExecutor.start();
     }
 
 }

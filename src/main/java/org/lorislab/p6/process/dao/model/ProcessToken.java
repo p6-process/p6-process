@@ -17,58 +17,40 @@
 package org.lorislab.p6.process.dao.model;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 import org.lorislab.p6.process.model.Gateway;
 import org.lorislab.p6.process.model.Node;
-import org.lorislab.vertx.sql.mapper.SqlColumn;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+@ToString
 @RegisterForReflection
 public class ProcessToken {
 
-    @SqlColumn(ignore = true)
-    public boolean created;
-
     public String id;
 
-    @SqlColumn("processinstance")
     public String processInstance;
 
-    @SqlColumn("processid")
     public String processId;
 
-    @SqlColumn("processversion")
     public String processVersion;
 
-    @SqlColumn("nodename")
     public String nodeName;
 
     public Status status;
 
     public Type type;
 
-    @SqlColumn("executionid")
-    public String executionId;
-
     public String parent;
 
     public String reference;
 
-    @SqlColumn("createdfrom")
     public Set<String> createdFrom = new HashSet<>();
 
-    public JsonObject data = new JsonObject();
-
-    public ProcessToken copy() {
-        return this;
-    }
-
-    @Override
-    public String toString() {
-        return "ProcessToken:"+id;
-    }
+    public Map<String, Object> data = new HashMap<>();
 
     public enum Status {
 

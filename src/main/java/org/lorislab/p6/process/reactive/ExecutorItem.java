@@ -1,6 +1,5 @@
 package org.lorislab.p6.process.reactive;
 
-import io.vertx.mutiny.sqlclient.Transaction;
 import org.lorislab.p6.process.dao.model.Message;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.dao.model.ProcessToken;
@@ -17,8 +16,6 @@ public class ExecutorItem {
     public ProcessDefinitionRuntime pd;
 
     public ProcessToken token;
-
-    public Transaction tx;
 
     public Node node;
 
@@ -42,7 +39,6 @@ public class ExecutorItem {
         result.node = node;
         result.pd = pd;
         result.token = token;
-        result.tx = tx;
         result.updateProcessInstance = updateProcessInstance;
         result.messages = messages;
         return result;
