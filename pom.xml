@@ -40,14 +40,11 @@
     </developers>
 
     <properties>
-        <quarkus.version>1.5.0.Final</quarkus.version>
+        <quarkus.version>1.9.1.Final</quarkus.version>
         <surefire-plugin.version>3.0.0-M4</surefire-plugin.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <infinispan.version>11.0.0.Final</infinispan.version>
-        <infinispan.protostream.version>4.3.3.Final</infinispan.protostream.version>
     </properties>
     
     <dependencyManagement>
@@ -64,12 +61,6 @@
     
     <dependencies>
         <dependency>
-            <groupId>io.etcd</groupId>
-            <artifactId>jetcd-core</artifactId>
-            <version>0.5.3</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.lorislab.p6</groupId>
             <artifactId>p6-process-model</artifactId>
             <version>0.2.2</version>
@@ -85,10 +76,6 @@
         <!-- QUARKUS -->
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-infinispan-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
         </dependency>
         <dependency>
@@ -98,6 +85,10 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-vertx-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-redis-client</artifactId>
         </dependency>
 
         <!-- BUILD -->

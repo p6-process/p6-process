@@ -1,18 +1,9 @@
 package org.lorislab.p6.process.dao;
 
-import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.KV;
-import io.etcd.jetcd.Txn;
-import io.etcd.jetcd.op.Cmp;
-import io.etcd.jetcd.op.CmpTarget;
-import io.etcd.jetcd.op.Op;
-import io.etcd.jetcd.options.PutOption;
 import io.smallrye.mutiny.Uni;
-import io.vertx.core.json.Json;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 
 @ApplicationScoped
 public class ProcessInstanceDAO {
@@ -24,21 +15,21 @@ public class ProcessInstanceDAO {
 //        return processInstances.stream().map(this::tuple).collect(Collectors.toList());
 //    }
 //
-    public void create(Txn txn, ProcessInstance pi) {
-
-        String tmp = "/p6/pi/data/" + pi.id;
-        ByteSequence key = ByteSequence.from(tmp.getBytes());
-        ByteSequence value = ByteSequence.from(Json.encode(pi).getBytes());
-
-        ByteSequence json = ByteSequence.from((tmp + "/json").getBytes());
-        txn
-                .If(new Cmp(key, Cmp.Op.EQUAL, CmpTarget.version(0)))
-                .Then(
-                        Op.put(json, value, PutOption.DEFAULT),
-                        Op.put(ByteSequence.from((tmp + "/processVersion").getBytes()),
-                                ByteSequence.from(pi.processVersion.getBytes()), PutOption.DEFAULT)
-                );
-    }
+//    public void create(Txn txn, ProcessInstance pi) {
+//
+//        String tmp = "/p6/pi/data/" + pi.id;
+//        ByteSequence key = ByteSequence.from(tmp.getBytes());
+//        ByteSequence value = ByteSequence.from(Json.encode(pi).getBytes());
+//
+//        ByteSequence json = ByteSequence.from((tmp + "/json").getBytes());
+//        txn
+//                .If(new Cmp(key, Cmp.Op.EQUAL, CmpTarget.version(0)))
+//                .Then(
+//                        Op.put(json, value, PutOption.DEFAULT),
+//                        Op.put(ByteSequence.from((tmp + "/processVersion").getBytes()),
+//                                ByteSequence.from(pi.processVersion.getBytes()), PutOption.DEFAULT)
+//                );
+//    }
 
     public Uni<ProcessInstance> findById(String id) {
         return Uni.createFrom().nullItem();

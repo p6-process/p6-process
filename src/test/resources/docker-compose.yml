@@ -2,20 +2,20 @@ version: "2"
 
 services:
 
-  p6-etcd:
-    image: bitnami/etcd:3.4.9
-    environment:
-      ALLOW_NONE_AUTHENTICATION: "yes"
-    labels:
-      - "test.Wait.forLogMessage.regex=.*ready to serve client requests.*\\s"
-      - "test.Wait.forLogMessage.times=1"
-      - "test.log=true"
-      - "test.property.quarkus.grpc.clients.etcd.port=$${port:p6-etcd:2379}"
-      - "test.property.quarkus.grpc.clients.etcd.host=$${host:p6-etcd}"
-    ports:
-      - "2379:2379"
-    networks:
-      - "test"
+#  p6-redis:
+#    image: bitnami/etcd:3.4.9
+#    environment:
+#      ALLOW_NONE_AUTHENTICATION: "yes"
+#    labels:
+#      - "test.Wait.forLogMessage.regex=.*ready to serve client requests.*\\s"
+#      - "test.Wait.forLogMessage.times=1"
+#      - "test.log=true"
+#      - "test.property.quarkus.grpc.clients.etcd.port=$${port:p6-etcd:2379}"
+#      - "test.property.quarkus.grpc.clients.etcd.host=$${host:p6-etcd}"
+#    ports:
+#      - "2379:2379"
+#    networks:
+#      - "test"
 
   p6-process:
     container_name: p6-process

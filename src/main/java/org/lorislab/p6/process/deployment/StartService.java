@@ -20,21 +20,11 @@ public class StartService {
     @Inject
     DeploymentService deploymentService;
 
-    @Inject
-    TokenExecutor tokenExecutor;
-
-    @Inject
-    SingletonExecutor singletonExecutor;
-
     void onStart(@Observes StartupEvent ev) {
         // load processes
         deploymentService.start();
         // start process executor
         processExecutor.start();
-//        // start token executor
-//        tokenExecutor.start();
-//        // start singleton executor
-//        singletonExecutor.start();
     }
 
 }

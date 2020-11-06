@@ -1,22 +1,11 @@
 package org.lorislab.p6.process.dao;
 
-import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.KV;
-import io.etcd.jetcd.KeyValue;
-import io.etcd.jetcd.Txn;
-import io.etcd.jetcd.kv.GetResponse;
-import io.etcd.jetcd.op.Op;
-import io.etcd.jetcd.options.GetOption;
-import io.etcd.jetcd.options.PutOption;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import io.vertx.core.json.Json;
-import org.lorislab.p6.process.dao.model.Message;
 import org.lorislab.p6.process.dao.model.MessageType;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.UUID;
 
 @ApplicationScoped
 public class MessageDAO {
@@ -43,14 +32,14 @@ public class MessageDAO {
 //                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong(0));
 //    }
 //
-    public void createProcessMessage(Txn txn, String ref, String cmd) {
-        Message msg = Message.create("/p6/pi/data/" + ref);
-        msg.cmd = cmd;
-
-        ByteSequence value = ByteSequence.from(Json.encode(msg).getBytes());
-        txn.Then(Op.put(ByteSequence.from(("/p6/pi/pending/" + ref).getBytes()), value, PutOption.DEFAULT));
-        txn.Then(Op.put(ByteSequence.from(("/p6/pi/queue/" + ref).getBytes()), value, PutOption.DEFAULT));
-    }
+//    public void createProcessMessage(Txn txn, String ref, String cmd) {
+//        Message msg = Message.create("/p6/pi/data/" + ref);
+//        msg.cmd = cmd;
+//
+//        ByteSequence value = ByteSequence.from(Json.encode(msg).getBytes());
+//        txn.Then(Op.put(ByteSequence.from(("/p6/pi/pending/" + ref).getBytes()), value, PutOption.DEFAULT));
+//        txn.Then(Op.put(ByteSequence.from(("/p6/pi/queue/" + ref).getBytes()), value, PutOption.DEFAULT));
+//    }
 //
 //    public Uni<Message> nextProcessMessage(Transaction tx) {
 //        return tx.query("DELETE FROM PROCESS_MSG WHERE id = (SELECT id FROM PROCESS_MSG ORDER BY id  FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING id, created, ref, cmd")
@@ -86,25 +75,22 @@ public class MessageDAO {
 //                });
 //}
 
-    @Inject
-    KV client;
-
-    public Multi<KeyValue> findAllMessages(MessageType type) {
-
-        String tmp = "/p6/pi/pending";
-        GetOption option = GetOption.newBuilder()
-                .withRange(ByteSequence.from((tmp + "0").getBytes()))
-                .withSortField(GetOption.SortTarget.CREATE)
-                .withSortOrder(GetOption.SortOrder.DESCEND)
-                .build();
-
-        return Uni.createFrom().completionStage(client.get(ByteSequence.from(tmp.getBytes()), option))
-                .map(GetResponse::getKvs)
-                .onItem().produceMulti(r -> {
-                    if (r == null || r.isEmpty()) {
-                        return Multi.createFrom().nothing();
-                    }
-                    return Multi.createFrom().iterable(r);
-                });
-    }
+//    public Multi<KeyValue> findAllMessages(MessageType type) {
+//
+//        String tmp = "/p6/pi/pending";
+//        GetOption option = GetOption.newBuilder()
+//                .withRange(ByteSequence.from((tmp + "0").getBytes()))
+//                .withSortField(GetOption.SortTarget.CREATE)
+//                .withSortOrder(GetOption.SortOrder.DESCEND)
+//                .build();
+//
+//        return Uni.createFrom().completionStage(client.get(ByteSequence.from(tmp.getBytes()), option))
+//                .map(GetResponse::getKvs)
+//                .onItem().produceMulti(r -> {
+//                    if (r == null || r.isEmpty()) {
+//                        return Multi.createFrom().nothing();
+//                    }
+//                    return Multi.createFrom().iterable(r);
+//                });
+//    }
 }
