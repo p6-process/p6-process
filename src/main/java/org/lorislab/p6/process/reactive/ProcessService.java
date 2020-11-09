@@ -1,11 +1,11 @@
 package org.lorislab.p6.process.reactive;
 
-import io.quarkus.redis.client.reactive.ReactiveRedisClient;
 import io.smallrye.mutiny.Uni;
+import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.dao.MessageDAO;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
-import org.lorislab.p6.process.dao.model.MessageCmd;
+import org.lorislab.p6.process.dao.ProcessQueueDAO;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.deployment.DeploymentService;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
@@ -31,7 +31,7 @@ public class ProcessService {
     MessageDAO messageDAO;
 
     @Inject
-    ReactiveRedisClient client;
+    ProcessQueueDAO processQueueDAO;
 
 //    public Uni<String> find(String id) {
 //
@@ -125,33 +125,40 @@ public class ProcessService {
 //                    });
 //        });
 //    }
-    public Uni<ProcessInstance> startProcess(StartProcessRequestDTO request) {
-        ProcessInstance pi = createProcessInstance(request);
-        if (pi == null) {
-            return Uni.createFrom().nullItem();
-        }
-        return client.xadd(List.of("stream1", "*", request.id, UUID.randomUUID().toString()))
-                .onItem().transform(x -> pi);
-    }
 
-    private ProcessInstance createProcessInstance(StartProcessRequestDTO request) {
+      public Uni<Long> createRequest(JsonObject data) {
+          return processQueueDAO.create(data);
+      }
 
-        ProcessDefinitionRuntime pd = deploymentService.getProcessDefinition(request.processId, request.processVersion);
-        if (pd == null) {
-            log.error("No process definition found for the {}/{}/{}", request.id, request.processId, request.processVersion);
-            return null;
-        }
+//    public Uni<ProcessInstance> startProcess(StartProcessRequestDTO request) {
+//
+//        ProcessInstance pi = createProcessInstance(request);
+//        if (pi == null) {
+//            return Uni.createFrom().nullItem();
+//        }
+//        return Uni.createFrom().nullItem();
+////        return client.xadd(List.of("stream1", "*", request.id, UUID.randomUUID().toString()))
+////                .onItem().transform(x -> pi);
+//    }
 
-        ProcessInstance pi = new ProcessInstance();
-        pi.id = UUID.randomUUID().toString();
-        pi.status = ProcessInstance.Status.CREATED;
-        pi.processId = request.processId;
-        pi.processVersion = request.processVersion;
-        if (request.data != null) {
-            pi.data.putAll(request.data);
-        }
-        log.info("Create ProcessInstance {}", pi);
-        return pi;
-    }
+//    private ProcessInstance createProcessInstance(StartProcessRequestDTO request) {
+//
+//        ProcessDefinitionRuntime pd = deploymentService.getProcessDefinition(request.processId, request.processVersion);
+//        if (pd == null) {
+//            log.error("No process definition found for the {}/{}/{}", request.id, request.processId, request.processVersion);
+//            return null;
+//        }
+//
+//        ProcessInstance pi = new ProcessInstance();
+//        pi.id = UUID.randomUUID().toString();
+//        pi.status = ProcessInstance.Status.CREATED;
+//        pi.processId = request.processId;
+//        pi.processVersion = request.processVersion;
+//        if (request.data != null) {
+//            pi.data.putAll(request.data);
+//        }
+//        log.info("Create ProcessInstance {}", pi);
+//        return pi;
+//    }
 
 }

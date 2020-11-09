@@ -11,5 +11,6 @@ public class StartProcessRequestDTO {
     public String id;
     public String processId;
     public String processVersion;
+    public String reference;
     public Map<String, Object> data;
 }

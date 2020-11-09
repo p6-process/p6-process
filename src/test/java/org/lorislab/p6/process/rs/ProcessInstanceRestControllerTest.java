@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.test.AbstractTest;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -52,26 +53,26 @@ public class ProcessInstanceRestControllerTest extends AbstractTest {
 //                .statusCode(HttpResponseStatus.NOT_FOUND.code());
 //    }
 //
-//    @Test
-//    public void startProcessTest() throws Exception {
-//        StartProcessRequestDTO r = new StartProcessRequestDTO();
-//        r.id = UUID.randomUUID().toString();
-//        r.processId = "startEndProcess";
-//        r.processVersion = "1.2.3";
-//        r.data = new HashMap<>();
-//
-//        ProcessInstance pi = given()
-//                .when()
-//                .contentType(APPLICATION_JSON)
-//                .body(r)
-//                .post("/instances/")
-//                .prettyPeek()
-//                .then()
-//                .statusCode(HttpResponseStatus.ACCEPTED.code())
-//                .extract().body().as(ProcessInstance.class);
-//
-//        waitProcessFinished(pi.id);
-//    }
+    @Test
+    public void startProcessTest() throws Exception {
+        StartProcessRequestDTO r = new StartProcessRequestDTO();
+        r.id = UUID.randomUUID().toString();
+        r.processId = "startEndProcess";
+        r.processVersion = "1.2.3";
+        r.data = new HashMap<>();
+
+        Long pi = given()
+                .when()
+                .contentType(APPLICATION_JSON)
+                .body(r)
+                .post("/instances/")
+                .prettyPeek()
+                .then()
+                .statusCode(HttpResponseStatus.ACCEPTED.code())
+                .extract().body().as(Long.class);
+
+        await().during(Duration.ofSeconds(10));
+    }
 //
 //    @Test
 //    public void parallelGatewayProcessTest() throws Exception {

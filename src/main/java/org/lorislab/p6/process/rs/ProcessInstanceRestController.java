@@ -5,8 +5,6 @@ import io.quarkus.vertx.web.Route;
 import io.quarkus.vertx.web.RouteBase;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
-import org.lorislab.p6.process.dao.ProcessInstanceDAO;
-import org.lorislab.p6.process.dao.ProcessTokenDAO;
 import org.lorislab.p6.process.reactive.ProcessService;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -44,7 +42,7 @@ public class ProcessInstanceRestController {
         if (request == null) {
             rc.response().setStatusCode(ResponseStatus.BAD_REQUEST).end("Start process request not found!");
         }
-        processStream.startProcess(request).subscribe().with(accepted(rc), error(rc));
+        processStream.createRequest(rc.getBodyAsJson()).subscribe().with(accepted(rc), error(rc));
     }
 
 //    @Route(path = ":id/tokens", methods = HttpMethod.GET)

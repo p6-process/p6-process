@@ -1,18 +1,20 @@
 package org.lorislab.p6.process.reactive;
 
-import io.quarkus.redis.client.reactive.ReactiveRedisClient;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.subscription.BackPressureStrategy;
-import io.vertx.mutiny.redis.client.Response;
+
+import io.vertx.mutiny.core.Vertx;
+import io.vertx.mutiny.pgclient.PgPool;
+import io.vertx.mutiny.pgclient.pubsub.PgSubscriber;
+import io.vertx.mutiny.sqlclient.Transaction;
+import io.vertx.pgclient.PgConnectOptions;
 import lombok.extern.slf4j.Slf4j;
+import org.lorislab.p6.process.dao.ProcessQueueDAO;
 import org.lorislab.p6.process.dao.model.Message;
-import org.lorislab.p6.process.dao.model.MessageType;
+import org.lorislab.p6.process.dao.model.ProcessQueue;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.List;
-import java.util.stream.Stream;
 
 @Slf4j
 @ApplicationScoped
@@ -27,58 +29,86 @@ public class ProcessExecutor {
 //    @Inject
 //    MessageDAO messageDAO;
 //
-//    @Inject
-//    ProcessTokenDAO processTokenDAO;
-//
-//    @Inject
-//    Vertx vertx;
+    @Inject
+    PgConnectOptions pgConnectOptions;
 
     @Inject
-    ReactiveRedisClient client;
+    Vertx vertx;
+
+    @Inject
+    ProcessQueueDAO processQueueDAO;
+
+    @Inject
+    PgPool pool;
 
     public void start() {
-//        Response s = client.xgroupAndAwait(List.of("CREATE", "stream1", "group1", "0", "MKSTREAM"));
-//        System.out.println("_--------- " + s);
-//        s = client.xgroupAndAwait(List.of("CREATECONSUMER","stream1", "group1", "client1"));
-//        System.out.println("_--------- " + s);
-        Multi.createBy().merging().streams(subscribe())
-                .onItem().transformToUni(this::execute)
+        Multi.createBy().merging().streams(processQueueDAO.findAllMessages(), subscriber())
+                .onItem().transformToUni(x -> execute())
                 .concatenate()
                 .subscribe().with(m -> log.info("Executed message {} ", m), Throwable::printStackTrace);
     }
 
-    public Multi<Response> subscribe() {
-        System.out.println("_--------- client to group test");
+    private Multi<String> subscriber() {
         return Multi.createFrom().emitter(emitter -> {
+            PgSubscriber subscriber = PgSubscriber.subscriber(vertx, pgConnectOptions);
+            subscriber.connect().subscribe().with(c -> {
+                subscriber.channel(ProcessQueueDAO.REQUEST_CHANNEL).handler(emitter::emit);
+            }, Throwable::printStackTrace);
+        });
+    }
 
-            client.xreadgroup(List.of("GROUP", "group1", "client1", "COUNT", "1", "STREAMS", "stream1", ">"))
-//                    .call(s -> s.getKeys().forEach(i -> emitter.emit(i));
-                    .onItem().invoke(c -> {
-//                    .subscribe().with(c -> {
-                        if (c == null || c.size() == 0) {
-                            return;
-                        }
+    public Uni<Long> execute() {
+        return pool.begin().flatMap(tx -> processQueueDAO.nextProcessMessage(tx)
+                .onItem().transform(m -> {
+                    if (m == null) {
+                        tx.close();
+                        return Uni.createFrom().item((Long) null);
+                    }
+                    return executeMessage(tx, m)
+                            .onItem()
+                            .transform(u -> tx.commit().onItem().transform(x -> u))
+                            .flatMap(x -> x);
+                }).flatMap(x -> x)
+        );
+    }
 
-                        System.out.println("# " + c);
-//                        String tmp = c.get(0).get(1).get(0).get(0).toString();
-//                        System.out.println("# " + tmp);
-                        int size = c.get(0).get(1).size();
-                        for (int i=0; i<size; i++) {
-                            Response a = c.get(0).get(1).get(i);
-                            System.out.println("Emitter: " + a);
-                            emitter.emit(a);
-                        }
-            });
+    private Uni<Long> executeMessage(Transaction tx, ProcessQueue m) {
+        log.info("Process message: {}", m);
+        return Uni.createFrom().item(m.id);
+    }
 
-//                    .transformToMulti(i -> {
-//                    if (i == null || i.size() == 0) {
-//                        return null;
-//                    }
-//                    return i.getKeys().stream();
-//                }
-//                    .call(emitter::emit);
-            }, BackPressureStrategy.ERROR);
-        }
+//    public Multi<Response> subscribe() {
+//        System.out.println("_--------- client to group test");
+//        return Multi.createFrom().emitter(emitter -> {
+//
+//            client.xreadgroup(List.of("GROUP", "group1", "client1", "COUNT", "1", "STREAMS", "stream1", ">"))
+////                    .call(s -> s.getKeys().forEach(i -> emitter.emit(i));
+//                    .onItem().invoke(c -> {
+////                    .subscribe().with(c -> {
+//                        if (c == null || c.size() == 0) {
+//                            return;
+//                        }
+//
+//                        System.out.println("# " + c);
+////                        String tmp = c.get(0).get(1).get(0).get(0).toString();
+////                        System.out.println("# " + tmp);
+//                        int size = c.get(0).get(1).size();
+//                        for (int i=0; i<size; i++) {
+//                            Response a = c.get(0).get(1).get(i);
+//                            System.out.println("Emitter: " + a);
+//                            emitter.emit(a);
+//                        }
+//            });
+//
+////                    .transformToMulti(i -> {
+////                    if (i == null || i.size() == 0) {
+////                        return null;
+////                    }
+////                    return i.getKeys().stream();
+////                }
+////                    .call(emitter::emit);
+//            }, BackPressureStrategy.ERROR);
+//        }
 
 //        return client.xread(List.of("COUNT", "1", "STREAMS", "stream1", "0"))
 //                .onItem().transformToMulti(i -> {
@@ -89,12 +119,12 @@ public class ProcessExecutor {
 //                });
 //    }
 
-    public Uni<Message> execute(Response response) {
-        Message m = new Message();
-        m.id = response.get(0).toString();
-        System.out.println("########## " + m.id);
-        return client.xack(List.of("stream1","group1",m.id)).onItem().transform(r -> m);
-    }
+//    public Uni<Message> execute(Response response) {
+//        Message m = new Message();
+//        m.id = response.get(0).toString();
+//        System.out.println("########## " + m.id);
+//        return client.xack(List.of("stream1","group1",m.id)).onItem().transform(r -> m);
+//    }
 
 //    public Uni<String> execute(KeyValue value) {
 //
