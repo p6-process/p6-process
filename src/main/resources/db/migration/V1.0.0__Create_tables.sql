@@ -1,15 +1,18 @@
 CREATE TABLE REQUEST_PROCESS_QUEUE (
      id SERIAL PRIMARY KEY,
      date timestamp DEFAULT now(),
+     modification timestamp DEFAULT now(),
      count bigint DEFAULT 0,
-     data jsonb
+     label varchar,
+     data jsonb,
+     header jsonb
 );
 
 -- create pub-sub process function
 CREATE OR REPLACE FUNCTION process_msg_pub() RETURNS trigger AS
 $$
 BEGIN
-    PERFORM pg_notify('request_process_queue', NEW.id::text);
+    PERFORM pg_notify('REQUEST_PROCESS_QUEUE', NEW.id::text);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

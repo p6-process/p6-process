@@ -5,16 +5,10 @@ import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.dao.MessageDAO;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
-import org.lorislab.p6.process.dao.ProcessQueueDAO;
-import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.deployment.DeploymentService;
-import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
-import org.lorislab.p6.process.rs.StartProcessRequestDTO;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @ApplicationScoped
@@ -30,8 +24,6 @@ public class ProcessService {
     @Inject
     MessageDAO messageDAO;
 
-    @Inject
-    ProcessQueueDAO processQueueDAO;
 
 //    public Uni<String> find(String id) {
 //
@@ -126,9 +118,9 @@ public class ProcessService {
 //        });
 //    }
 
-      public Uni<Long> createRequest(JsonObject data) {
-          return processQueueDAO.create(data);
-      }
+//      public Uni<Long> createRequest(JsonObject data) {
+//          return processQueueDAO.create(data);
+//      }
 
 //    public Uni<ProcessInstance> startProcess(StartProcessRequestDTO request) {
 //

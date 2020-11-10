@@ -5,7 +5,9 @@ import io.quarkus.vertx.web.Route;
 import io.quarkus.vertx.web.RouteBase;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
-import org.lorislab.p6.process.reactive.ProcessService;
+import org.lorislab.p6.process.message.Message;
+import org.lorislab.p6.process.message.MessageProducer;
+import org.lorislab.p6.process.message.Queues;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -16,8 +18,11 @@ import static org.lorislab.p6.process.rs.Application.*;
 @RouteBase(path = "instances", produces = APPLICATION_JSON)
 public class ProcessInstanceRestController {
 
+//    @Inject
+//    ProcessService processStream;
+
     @Inject
-    ProcessService processStream;
+    MessageProducer messageProducer;
 
 //    @Inject
 //    ProcessInstanceDAO processInstanceDAO;
@@ -42,7 +47,12 @@ public class ProcessInstanceRestController {
         if (request == null) {
             rc.response().setStatusCode(ResponseStatus.BAD_REQUEST).end("Start process request not found!");
         }
-        processStream.createRequest(rc.getBodyAsJson()).subscribe().with(accepted(rc), error(rc));
+
+        Message message = Message.create(Queues.PROCESS_REQUEST)
+                .data(rc.getBodyAsJson())
+                .header("CMD", "START_PROCESS");
+
+        messageProducer.send(message).subscribe().with(accepted(rc), error(rc));
     }
 
 //    @Route(path = ":id/tokens", methods = HttpMethod.GET)

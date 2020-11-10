@@ -1,4 +1,4 @@
-package org.lorislab.p6.process.dao;
+package org.lorislab.p6.process.message;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -8,40 +8,40 @@ import io.vertx.mutiny.sqlclient.RowSet;
 import io.vertx.mutiny.sqlclient.SqlClient;
 import io.vertx.mutiny.sqlclient.Transaction;
 import io.vertx.mutiny.sqlclient.Tuple;
-import org.lorislab.p6.process.dao.model.ProcessQueue;
-import org.lorislab.p6.process.dao.model.ProcessQueueMapperImpl;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.stream.LongStream;
 
 @ApplicationScoped
-public class ProcessQueueDAO {
-
-    public static String REQUEST_CHANNEL = "request_process_queue";
+public class MessageRepository {
 
     @Inject
     PgPool pool;
 
-    public Uni<Long> create(JsonObject data) {
-        return create(pool, data);
+    @Inject
+    MessageMapper mapper;
+
+    public Uni<Long> create(String queue, JsonObject header, JsonObject data)  {
+        return create(pool, queue, header, data);
     }
 
-    public Uni<Long> create(SqlClient client, JsonObject data) {
-        return client.preparedQuery("INSERT INTO REQUEST_PROCESS_QUEUE (data) VALUES ($1) RETURNING (id)")
-                .execute(Tuple.of(data))
+    public Uni<Long> create(SqlClient client, String queue, JsonObject header, JsonObject data) {
+        return client.preparedQuery("INSERT INTO " + queue + " (data, header) VALUES ($1, $2) RETURNING (id)")
+                .execute(Tuple.of(data, header))
                 .onItem().transform(pgRowSet -> pgRowSet.iterator().next().getLong(0));
     }
 
-    public Uni<ProcessQueue> nextProcessMessage(Transaction tx) {
-        return tx.query("DELETE FROM REQUEST_PROCESS_QUEUE WHERE id = (SELECT id FROM REQUEST_PROCESS_QUEUE ORDER BY id  FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING id, date, count, data")
+    public Uni<Message> nextProcessMessage(Transaction tx, String queue) {
+        return tx.query("DELETE FROM " + queue + " WHERE id = (SELECT id FROM " + queue + " ORDER BY id  FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING id, date, count, data, label, header, '" + queue
+         + "' as queue")
                 .execute()
                 .map(RowSet::iterator)
-                .map(it -> it.hasNext() ? ProcessQueueMapperImpl.mapS(it.next()) : null);
+                .map(it -> it.hasNext() ? mapper.map(it.next()) : null);
     }
 
-    public Multi<String> findAllMessages() {
-        return pool.query("SELECT count(id) FROM REQUEST_PROCESS_QUEUE")
+    public Multi<String> findAllMessages(String queue) {
+        return pool.query("SELECT count(id) FROM " + queue)
                 .execute()
                 .map(RowSet::iterator)
                 .map(r -> r.hasNext() ? r.next().getLong(0) : null)

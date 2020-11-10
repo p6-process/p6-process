@@ -1,24 +1,18 @@
 package org.lorislab.p6.process.reactive;
 
-import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 
-import io.vertx.mutiny.core.Vertx;
-import io.vertx.mutiny.pgclient.PgPool;
-import io.vertx.mutiny.pgclient.pubsub.PgSubscriber;
 import io.vertx.mutiny.sqlclient.Transaction;
-import io.vertx.pgclient.PgConnectOptions;
 import lombok.extern.slf4j.Slf4j;
-import org.lorislab.p6.process.dao.ProcessQueueDAO;
-import org.lorislab.p6.process.dao.model.Message;
-import org.lorislab.p6.process.dao.model.ProcessQueue;
+import org.lorislab.p6.process.message.Message;
+import org.lorislab.p6.process.message.MessageListener;
+import org.lorislab.p6.process.message.Queues;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 
 @Slf4j
 @ApplicationScoped
-public class ProcessExecutor {
+public class ProcessExecutor extends MessageListener {
 
 //    @Inject
 //    DeploymentService deploymentService;
@@ -29,52 +23,16 @@ public class ProcessExecutor {
 //    @Inject
 //    MessageDAO messageDAO;
 //
-    @Inject
-    PgConnectOptions pgConnectOptions;
 
-    @Inject
-    Vertx vertx;
-
-    @Inject
-    ProcessQueueDAO processQueueDAO;
-
-    @Inject
-    PgPool pool;
-
-    public void start() {
-        Multi.createBy().merging().streams(processQueueDAO.findAllMessages(), subscriber())
-                .onItem().transformToUni(x -> execute())
-                .concatenate()
-                .subscribe().with(m -> log.info("Executed message {} ", m), Throwable::printStackTrace);
+    @Override
+    public String name() {
+        return Queues.PROCESS_REQUEST;
     }
 
-    private Multi<String> subscriber() {
-        return Multi.createFrom().emitter(emitter -> {
-            PgSubscriber subscriber = PgSubscriber.subscriber(vertx, pgConnectOptions);
-            subscriber.connect().subscribe().with(c -> {
-                subscriber.channel(ProcessQueueDAO.REQUEST_CHANNEL).handler(emitter::emit);
-            }, Throwable::printStackTrace);
-        });
-    }
-
-    public Uni<Long> execute() {
-        return pool.begin().flatMap(tx -> processQueueDAO.nextProcessMessage(tx)
-                .onItem().transform(m -> {
-                    if (m == null) {
-                        tx.close();
-                        return Uni.createFrom().item((Long) null);
-                    }
-                    return executeMessage(tx, m)
-                            .onItem()
-                            .transform(u -> tx.commit().onItem().transform(x -> u))
-                            .flatMap(x -> x);
-                }).flatMap(x -> x)
-        );
-    }
-
-    private Uni<Long> executeMessage(Transaction tx, ProcessQueue m) {
-        log.info("Process message: {}", m);
-        return Uni.createFrom().item(m.id);
+    @Override
+    protected Uni<Long> onMessage(Transaction tx, Message message) {
+        log.info("Queue {} message: {}", message.queue, message);
+        return Uni.createFrom().item(message.id);
     }
 
 //    public Multi<Response> subscribe() {
