@@ -20,6 +20,8 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
 
+import io.vertx.mutiny.sqlclient.Row;
+import io.vertx.mutiny.sqlclient.Transaction;
 import org.lorislab.quarkus.log.cdi.LogParam;
 
 import java.util.function.Consumer;
@@ -72,4 +74,13 @@ public class Application {
         return r.normalisedPath();
     }
 
+    @LogParam(assignableFrom = {Transaction.class})
+    public static String logTransaction(Object object) {
+        return "tx:" + object.hashCode();
+    }
+
+    @LogParam(assignableFrom = {Row.class})
+    public static String logRow(Object object) {
+        return "row:" + object.hashCode();
+    }
 }

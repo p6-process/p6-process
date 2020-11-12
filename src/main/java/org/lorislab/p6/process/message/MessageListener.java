@@ -26,7 +26,7 @@ public abstract class MessageListener {
     @Inject
     PgPool pool;
 
-    public abstract String name();
+    protected abstract String name();
 
     protected abstract Uni<Long> onMessage(Transaction tx, Message message);
 

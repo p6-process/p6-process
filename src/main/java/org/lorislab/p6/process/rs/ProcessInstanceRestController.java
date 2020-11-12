@@ -6,8 +6,10 @@ import io.quarkus.vertx.web.RouteBase;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
 import org.lorislab.p6.process.message.Message;
+import org.lorislab.p6.process.message.MessageBuilder;
 import org.lorislab.p6.process.message.MessageProducer;
 import org.lorislab.p6.process.message.Queues;
+import org.lorislab.p6.process.pi.ProcessMessageHeader;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -48,9 +50,14 @@ public class ProcessInstanceRestController {
             rc.response().setStatusCode(ResponseStatus.BAD_REQUEST).end("Start process request not found!");
         }
 
-        Message message = Message.create(Queues.PROCESS_REQUEST)
+        ProcessMessageHeader header = new ProcessMessageHeader();
+        header.command = ProcessMessageHeader.Command.START_PROCESS;
+
+        Message message = MessageBuilder.builder()
+                .queue(Queues.PROCESS_REQUEST)
                 .data(rc.getBodyAsJson())
-                .header("CMD", "START_PROCESS");
+                .header(header)
+                .build();
 
         messageProducer.send(message).subscribe().with(accepted(rc), error(rc));
     }

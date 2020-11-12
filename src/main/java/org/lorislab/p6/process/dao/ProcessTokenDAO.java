@@ -1,34 +1,38 @@
 package org.lorislab.p6.process.dao;
 
 import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.sqlclient.SqlResult;
+import io.vertx.mutiny.sqlclient.Transaction;
+import io.vertx.mutiny.sqlclient.Tuple;
 import org.lorislab.p6.process.dao.model.ProcessToken;
 
 import javax.enterprise.context.ApplicationScoped;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ProcessTokenDAO {
 
-//
-//    private Tuple tuple(ProcessToken m) {
-//        return Tuple.tuple(Arrays.asList(
-//                m.id, m.processInstance, m.processId, m.processVersion, m.nodeName, m.status.name(),
-//                m.type.name(), m.executionId, m.parent, m.reference,
-//                m.createdFrom.toArray(new String[]{}), m.data
-//        ));
-//    }
-//
-//    private List<Tuple> tuple(List<ProcessToken> tokens) {
-//        return tokens.stream().map(this::tuple).collect(Collectors.toList());
-//    }
-//
-//    public Uni<String> create(Transaction tx, List<ProcessToken> tokens) {
-//        return tx.preparedQuery(
-//                "INSERT INTO PROCESS_TOKEN (id,processinstance,processid,processversion,nodename,status,type,executionId,parent,reference,createdfrom,data) " +
-//                    "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING (id)")
-//                .executeBatch(tuple(tokens))
-//                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getString("id"));
-//    }
+    private Tuple tuple(ProcessToken m) {
+        return Tuple.tuple(Arrays.asList(
+                m.id, m.processInstance, m.processId, m.processVersion, m.nodeName, m.status.name(),
+                m.type.name(), m.parent, m.reference,
+                m.createdFrom.toArray(new String[]{}), m.data
+        ));
+    }
+
+    private List<Tuple> tuple(List<ProcessToken> tokens) {
+        return tokens.stream().map(this::tuple).collect(Collectors.toList());
+    }
+
+    public Uni<Integer> create(Transaction tx, List<ProcessToken> tokens) {
+        return tx.preparedQuery(
+                "INSERT INTO PROCESS_TOKEN (id,processinstance,processid,processversion,nodename,status,type,parent,reference,createdfrom,data) " +
+                    "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING (id)")
+                .executeBatch(tuple(tokens))
+                .onItem().transform(SqlResult::size);
+    }
 //
 //    public Uni<ProcessToken> findById(Transaction tx, String id) {
 //        return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE id = $1")

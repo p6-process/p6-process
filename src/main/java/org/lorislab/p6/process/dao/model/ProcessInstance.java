@@ -17,16 +17,18 @@
 package org.lorislab.p6.process.dao.model;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import io.vertx.core.json.JsonObject;
 import lombok.ToString;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @ToString
 @RegisterForReflection
 public class ProcessInstance {
 
-    public String id;
+    public String id = UUID.randomUUID().toString();
 
     public String parent;
 
@@ -34,9 +36,9 @@ public class ProcessInstance {
 
     public String processVersion;
 
-    public Status status;
+    public Status status = Status.CREATED;
 
-    public Map<String, Object> data = new HashMap<>();
+    public JsonObject data = new JsonObject();
 
     public enum Status {
 

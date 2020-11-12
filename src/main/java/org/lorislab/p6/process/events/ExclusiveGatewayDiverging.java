@@ -28,7 +28,7 @@ public class ExclusiveGatewayDiverging implements EventService {
         Iterator<String> keys = condition.keySet().iterator();
         while (next == null && keys.hasNext()) {
             String key = keys.next();
-            boolean tmp = ProcessExpressionHelper.ifExpression(condition.get(key), item.token.data);
+            boolean tmp = ProcessExpressionHelper.ifExpression(condition.get(key), item.token.data.getMap());
             if (tmp) {
                 next = key;
             }

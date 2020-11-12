@@ -22,24 +22,12 @@ public class Message {
 
     public String queue;
 
-    public static Message create(String queue) {
-        Message m = new Message();
-        m.queue = queue;
-        return m;
+    public <T> T header(Class<T> clazz) {
+        return this.header.mapTo(clazz);
     }
 
-    public Message data(JsonObject data) {
-        this.data = data;
-        return this;
+    public <T> T data(Class<T> clazz) {
+        return this.data.mapTo(clazz);
     }
 
-    public Message header(JsonObject header) {
-        this.header = header;
-        return this;
-    }
-
-    public Message header(String key, Object data) {
-        this.header.put(key, data);
-        return this;
-    }
 }

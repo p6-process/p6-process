@@ -1,6 +1,8 @@
 package org.lorislab.p6.process.dao;
 
 import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.sqlclient.Transaction;
+import io.vertx.mutiny.sqlclient.Tuple;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -8,28 +10,18 @@ import javax.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class ProcessInstanceDAO {
 
-//    private Tuple tuple(ProcessInstance m) {
-//        return Tuple.of(m.id, m.parent, m.processId, m.processVersion, m.status.name(), m.data);
-//    }
+    private Tuple tuple(ProcessInstance m) {
+        return Tuple.of(m.id, m.parent, m.processId, m.processVersion, m.status.name(), m.data);
+    }
 //    private List<Tuple> tuple(List<ProcessInstance> processInstances) {
 //        return processInstances.stream().map(this::tuple).collect(Collectors.toList());
 //    }
 //
-//    public void create(Txn txn, ProcessInstance pi) {
-//
-//        String tmp = "/p6/pi/data/" + pi.id;
-//        ByteSequence key = ByteSequence.from(tmp.getBytes());
-//        ByteSequence value = ByteSequence.from(Json.encode(pi).getBytes());
-//
-//        ByteSequence json = ByteSequence.from((tmp + "/json").getBytes());
-//        txn
-//                .If(new Cmp(key, Cmp.Op.EQUAL, CmpTarget.version(0)))
-//                .Then(
-//                        Op.put(json, value, PutOption.DEFAULT),
-//                        Op.put(ByteSequence.from((tmp + "/processVersion").getBytes()),
-//                                ByteSequence.from(pi.processVersion.getBytes()), PutOption.DEFAULT)
-//                );
-//    }
+    public Uni<String> create(Transaction tx, ProcessInstance m) {
+        return tx.preparedQuery("INSERT INTO PROCESS_INSTANCE (id,parent,processId,processVersion,status,data) VALUES ($1,$2,$3,$4,$5,$6) RETURNING (id)")
+                .execute(tuple(m))
+                .onItem().transform(pgRowSet -> pgRowSet.iterator().next().getString(0));
+    }
 
     public Uni<ProcessInstance> findById(String id) {
         return Uni.createFrom().nullItem();
