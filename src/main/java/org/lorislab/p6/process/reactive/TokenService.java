@@ -76,44 +76,44 @@ public class TokenService {
     }
 
     private Uni<ExecutorItem> executeToken(ExecutorItem item) {
-
-        if (item.check) {
-            item.end = true;
-            return Uni.createFrom().item(item);
-        }
-
-        Node node = item.node;
-        if (node == null) {
-            log.error("No node found in the process definition. The task will be ignored. Token: {}", item);
-            return Uni.createFrom().nullItem();
-        }
-
-        ProcessToken.Type type = item.token.type;
-
-        int nc = type.next;
-        int size = 0;
-        List<String> next = node.next;
-        if (next != null) {
-            size = next.size();
-        }
-
-        // next > 0
-        if (nc == -1) {
-            if (size == 0) {
-                log.error("The node type {} fo token {} has wrong number of next tokens. Expected {} > 0.", type, node.name, size);
-                return Uni.createFrom().nullItem();
-            }
-        } else if (size != nc) {
-            log.error("The node type {} fo token {} has wrong number of next tokens. Expected {} == {}.", type, node.name, nc, size);
-            return Uni.createFrom().nullItem();
-        }
-
-        log.info("Execute node: {} Next: {} Type: {}", node.name, next, type);
-        InstanceHandle<EventService> w = Arc.container().instance(EventService.class, EventType.Literal.create(type));
-        if (!w.isAvailable()) {
-            throw new UnsupportedOperationException("Not supported token type '" + type + "'");
-        }
-        return w.get().execute(item);
+        return Uni.createFrom().nullItem();
+//        if (item.check) {
+//            item.end = true;
+//            return Uni.createFrom().item(item);
+//        }
+//
+//        Node node = item.node;
+//        if (node == null) {
+//            log.error("No node found in the process definition. The task will be ignored. Token: {}", item);
+//            return Uni.createFrom().nullItem();
+//        }
+//
+//        ProcessToken.Type type = item.token.type;
+//
+//        int nc = type.next;
+//        int size = 0;
+//        List<String> next = node.next;
+//        if (next != null) {
+//            size = next.size();
+//        }
+//
+//        // next > 0
+//        if (nc == -1) {
+//            if (size == 0) {
+//                log.error("The node type {} fo token {} has wrong number of next tokens. Expected {} > 0.", type, node.name, size);
+//                return Uni.createFrom().nullItem();
+//            }
+//        } else if (size != nc) {
+//            log.error("The node type {} fo token {} has wrong number of next tokens. Expected {} == {}.", type, node.name, nc, size);
+//            return Uni.createFrom().nullItem();
+//        }
+//
+//        log.info("Execute node: {} Next: {} Type: {}", node.name, next, type);
+//        InstanceHandle<EventService> w = Arc.container().instance(EventService.class, EventType.Literal.create(type));
+//        if (!w.isAvailable()) {
+//            throw new UnsupportedOperationException("Not supported token type '" + type + "'");
+//        }
+//        return w.get().execute(item);
     }
 
     private Uni<Message> saveToken(ExecutorItem item) {

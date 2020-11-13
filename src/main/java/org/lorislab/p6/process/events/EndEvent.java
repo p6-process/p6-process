@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.dao.ProcessInstanceDAO;
 import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.dao.model.ProcessToken;
-import org.lorislab.p6.process.reactive.ExecutorItem;
+import org.lorislab.p6.process.token.RuntimeToken;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -21,25 +21,27 @@ public class EndEvent implements EventService {
     ProcessInstanceDAO processInstanceDAO;
 
     @Override
-    public Uni<ExecutorItem> execute(ExecutorItem item) {
-//        if (item.token.status != ProcessToken.Status.FINISHED) {
-//
-//            // load process instance
-//            return processInstanceDAO.findById(item.tx,item.token.processInstance)
-//                    .onItem().apply(p -> {
-//
-//                        // FINISHED process instance
-//                        p.status = ProcessInstance.Status.FINISHED;
-//                        p.data.putAll(item.token.data);
-//                        item.updateProcessInstance = p;
-//
-//                        item.token.status = ProcessToken.Status.FINISHED;
-//                        item.moveToNextItem(null);
-//                        return item;
-//                    });
-//        } else {
-//            log.warn("Token {} is already finished.", item.token);
-//        }
+    public Uni<RuntimeToken> execute(RuntimeToken item) {
+        if (item.token.status != ProcessToken.Status.FINISHED) {
+
+            // load process instance
+            return processInstanceDAO.findById(item.tx,item.token.processInstance)
+                    .onItem().transform(p -> {
+
+                        // FINISHED process instance
+                        p.status = ProcessInstance.Status.FINISHED;
+                        p.data.getMap().putAll(item.token.data.getMap());
+                        item.token.status = ProcessToken.Status.FINISHED;
+                        item.moveTo(null);
+
+                        item.changeLog.updateProcessInstance = p;
+                        item.changeLog.updateToken = item.token;
+
+                        return item;
+                    });
+        } else {
+            log.warn("Token {} is already finished.", item.token);
+        }
         return Uni.createFrom().item(item);
     }
 }
