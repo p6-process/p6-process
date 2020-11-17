@@ -1,44 +1,34 @@
 package org.lorislab.p6.process.reactive;
 
-import io.quarkus.arc.Arc;
-import io.quarkus.arc.InstanceHandle;
 import io.smallrye.mutiny.Uni;
 import lombok.extern.slf4j.Slf4j;
-import org.lorislab.p6.process.dao.MessageDAO;
-import org.lorislab.p6.process.dao.ProcessInstanceDAO;
-import org.lorislab.p6.process.dao.ProcessTokenDAO;
-import org.lorislab.p6.process.dao.model.Message;
-import org.lorislab.p6.process.dao.model.MessageType;
-import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.model.ProcessInstanceRepository;
+import org.lorislab.p6.process.model.ProcessTokenRepository;
+import org.lorislab.p6.process.model.Message;
+import org.lorislab.p6.process.model.MessageType;
+import org.lorislab.p6.process.model.ProcessToken;
 import org.lorislab.p6.process.deployment.DeploymentService;
-import org.lorislab.p6.process.events.EventService;
-import org.lorislab.p6.process.events.EventType;
-import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.List;
 
 @Slf4j
 @ApplicationScoped
 public class TokenService {
 
     @Inject
-    ProcessInstanceDAO processInstanceDAO;
+    ProcessInstanceRepository processInstanceRepository;
 
     @Inject
-    ProcessTokenDAO processTokenDAO;
+    ProcessTokenRepository processTokenRepository;
 
     @Inject
     DeploymentService deploymentService;
 
-    @Inject
-    MessageDAO messageDAO;
-
     public Uni<Message> executeMessage(Message m) {
         log.info("Token message: {}", m);
-        return processTokenDAO.findById(m.ref)
+        return processTokenRepository.findById(m.ref)
                 .map(t -> executeToken(m, t)).flatMap(x -> x);
     }
 
@@ -56,7 +46,7 @@ public class TokenService {
 
         ExecutorItem token = new ExecutorItem();
         token.pd = pd;
-        token.msg = m;
+//        token.msg = m;
         token.token = pt;
         token.node = token.pd.nodes.get(token.token.nodeName);
 

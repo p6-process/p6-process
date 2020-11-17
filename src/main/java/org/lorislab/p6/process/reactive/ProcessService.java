@@ -1,10 +1,7 @@
 package org.lorislab.p6.process.reactive;
 
-import io.smallrye.mutiny.Uni;
-import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import org.lorislab.p6.process.dao.MessageDAO;
-import org.lorislab.p6.process.dao.ProcessInstanceDAO;
+import org.lorislab.p6.process.model.ProcessInstanceRepository;
 import org.lorislab.p6.process.deployment.DeploymentService;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -19,11 +16,7 @@ public class ProcessService {
 
 
     @Inject
-    ProcessInstanceDAO processInstanceDAO;
-
-    @Inject
-    MessageDAO messageDAO;
-
+    ProcessInstanceRepository processInstanceRepository;
 
 //    public Uni<String> find(String id) {
 //

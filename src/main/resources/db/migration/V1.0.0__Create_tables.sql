@@ -1,6 +1,7 @@
 CREATE TABLE PROCESS_INSTANCE (
    id varchar(255) NOT NULL PRIMARY KEY,
    data jsonb,
+   cmdId varchar(255),
    parent varchar(255),
    processId varchar(255),
    processVersion varchar(255),

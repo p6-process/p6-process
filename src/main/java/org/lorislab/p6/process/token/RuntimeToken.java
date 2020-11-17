@@ -1,9 +1,8 @@
 package org.lorislab.p6.process.token;
 
 import io.vertx.mutiny.sqlclient.Transaction;
-import org.lorislab.p6.process.dao.model.ProcessInstance;
-import org.lorislab.p6.process.dao.model.ProcessToken;
-import org.lorislab.p6.process.message.Message;
+import org.lorislab.p6.process.model.ProcessInstance;
+import org.lorislab.p6.process.model.ProcessToken;
 import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.ProcessDefinition;
 

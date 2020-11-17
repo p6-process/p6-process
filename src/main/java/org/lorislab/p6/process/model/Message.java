@@ -1,9 +1,8 @@
-package org.lorislab.p6.process.dao.model;
+package org.lorislab.p6.process.model;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 

@@ -3,7 +3,7 @@ package org.lorislab.p6.process.token;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.sqlclient.Transaction;
 import lombok.extern.slf4j.Slf4j;
-import org.lorislab.p6.process.dao.ProcessTokenDAO;
+import org.lorislab.p6.process.model.ProcessTokenRepository;
 import org.lorislab.p6.process.message.Message;
 import org.lorislab.p6.process.message.MessageListener;
 import org.lorislab.p6.process.message.Queues;
@@ -17,7 +17,7 @@ import javax.inject.Inject;
 public class TokenExecutionMessageListener extends MessageListener {
 
     @Inject
-    ProcessTokenDAO processTokenDAO;
+    ProcessTokenRepository processTokenRepository;
 
     @Inject
     ProcessTokenService processTokenService;
@@ -32,7 +32,7 @@ public class TokenExecutionMessageListener extends MessageListener {
     protected Uni<Long> onMessage(Transaction tx, Message message) {
         log.info("Queue {} message: {}", message.queue, message);
         TokenMessageHeader header = message.header(TokenMessageHeader.class);
-        return processTokenDAO.findById(tx, header.tokenId)
+        return processTokenRepository.findById(tx, header.tokenId)
                 .onItem().transformToUni(token -> processTokenService.executeToken(tx, token, message.id));
     }
 

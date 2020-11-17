@@ -1,6 +1,6 @@
 package org.lorislab.p6.process.events;
 
-import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.model.ProcessToken;
 
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Qualifier;

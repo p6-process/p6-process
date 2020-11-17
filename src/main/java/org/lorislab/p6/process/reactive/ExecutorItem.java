@@ -1,8 +1,8 @@
 package org.lorislab.p6.process.reactive;
 
-import org.lorislab.p6.process.dao.model.Message;
-import org.lorislab.p6.process.dao.model.ProcessInstance;
-import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.model.Message;
+import org.lorislab.p6.process.model.ProcessInstance;
+import org.lorislab.p6.process.model.ProcessToken;
 import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
@@ -11,7 +11,7 @@ import java.util.List;
 
 public class ExecutorItem {
 
-    public Message msg;
+//    public Message msg;
 
     public ProcessDefinitionRuntime pd;
 
@@ -35,7 +35,7 @@ public class ExecutorItem {
         ExecutorItem result = new ExecutorItem();
         result.end = end;
         result.check = check;
-        result.msg = msg;
+//        result.msg = msg;
         result.node = node;
         result.pd = pd;
         result.token = token;

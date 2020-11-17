@@ -2,7 +2,7 @@ package org.lorislab.p6.process.deployment;
 
 import io.quarkus.runtime.StartupEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.lorislab.p6.process.pi.ProcessRequestMessageListener;
+import org.lorislab.p6.process.pi.ProcessCommandMessageListener;
 import org.lorislab.p6.process.token.TokenExecutionMessageListener;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -14,7 +14,7 @@ import javax.inject.Inject;
 public class StartService {
 
     @Inject
-    ProcessRequestMessageListener processRequestMessageListener;
+    ProcessCommandMessageListener processRequestMessageListener;
 
     @Inject
     DeploymentService deploymentService;

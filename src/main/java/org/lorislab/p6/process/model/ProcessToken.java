@@ -1,10 +1,8 @@
-package org.lorislab.p6.process.dao.model;
+package org.lorislab.p6.process.model;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
 import lombok.ToString;
-import org.lorislab.p6.process.model.Gateway;
-import org.lorislab.p6.process.model.Node;
 
 import java.util.*;
 

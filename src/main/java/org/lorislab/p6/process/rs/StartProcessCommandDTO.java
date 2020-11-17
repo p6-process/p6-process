@@ -7,7 +7,7 @@ import java.util.Map;
 
 @ToString
 @RegisterForReflection
-public class StartProcessRequestDTO {
+public class StartProcessCommandDTO {
     public String id;
     public String processId;
     public String processVersion;

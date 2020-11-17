@@ -14,7 +14,7 @@ import javax.inject.Inject;
 
 @Slf4j
 @ApplicationScoped
-public class ProcessRequestMessageListener extends MessageListener {
+public class ProcessCommandMessageListener extends MessageListener {
 
     @Inject
     ProcessInstanceService processInstanceService;
@@ -32,7 +32,7 @@ public class ProcessRequestMessageListener extends MessageListener {
 
         // execute start process request
         if (header.command == ProcessMessageHeader.Command.START_PROCESS) {
-            StartProcessRequest request = message.data(StartProcessRequest.class);
+            StartProcessCommand request = message.data(StartProcessCommand.class);
             return processInstanceService.createProcessInstance(tx, request)
                     .onItem().transform(pi -> message.id);
         }

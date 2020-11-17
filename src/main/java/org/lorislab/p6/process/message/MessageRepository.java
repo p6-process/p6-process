@@ -2,13 +2,11 @@ package org.lorislab.p6.process.message;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import io.vertx.core.json.JsonObject;
 import io.vertx.mutiny.pgclient.PgPool;
 import io.vertx.mutiny.sqlclient.RowSet;
 import io.vertx.mutiny.sqlclient.SqlClient;
 import io.vertx.mutiny.sqlclient.Transaction;
 import io.vertx.mutiny.sqlclient.Tuple;
-import org.lorislab.p6.process.dao.model.ProcessToken;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;

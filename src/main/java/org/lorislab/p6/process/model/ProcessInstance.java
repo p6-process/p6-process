@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.lorislab.p6.process.dao.model;
+package org.lorislab.p6.process.model;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
@@ -29,6 +29,8 @@ import java.util.UUID;
 public class ProcessInstance {
 
     public String id = UUID.randomUUID().toString();
+
+    public String cmdId;
 
     public String parent;
 

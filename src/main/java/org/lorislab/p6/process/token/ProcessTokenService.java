@@ -5,17 +5,15 @@ import io.quarkus.arc.InstanceHandle;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.sqlclient.Transaction;
 import lombok.extern.slf4j.Slf4j;
-import org.lorislab.p6.process.dao.ProcessInstanceDAO;
-import org.lorislab.p6.process.dao.ProcessTokenDAO;
-import org.lorislab.p6.process.dao.model.MessageType;
-import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.model.ProcessInstanceRepository;
+import org.lorislab.p6.process.model.ProcessTokenRepository;
+import org.lorislab.p6.process.model.ProcessToken;
 import org.lorislab.p6.process.deployment.DeploymentService;
 import org.lorislab.p6.process.events.EventService;
 import org.lorislab.p6.process.events.EventType;
 import org.lorislab.p6.process.message.Message;
 import org.lorislab.p6.process.message.MessageBuilder;
 import org.lorislab.p6.process.message.MessageProducer;
-import org.lorislab.p6.process.message.Queues;
 import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
 
@@ -34,10 +32,10 @@ public class ProcessTokenService {
     DeploymentService deploymentService;
 
     @Inject
-    ProcessInstanceDAO processInstanceDAO;
+    ProcessInstanceRepository processInstanceRepository;
 
     @Inject
-    ProcessTokenDAO processTokenDAO;
+    ProcessTokenRepository processTokenRepository;
 
     @Inject
     MessageProducer messageProducer;
@@ -71,10 +69,11 @@ public class ProcessTokenService {
 
     private boolean checkToken(RuntimeToken item) {
         log.info("Check token: {} - {} - {}", item.savePoint, item.token.type, item);
-        return !item.savePoint;
+        return item.savePoint;
     }
 
     private Uni<RuntimeToken> executeToken(RuntimeToken item) {
+        log.info("Execute token {} /  {}", item, item.token);
         Node node = item.node;
         if (node == null) {
             log.error("No node found in the process definition. The task will be ignored. Token: {}", item);
@@ -110,14 +109,14 @@ public class ProcessTokenService {
     }
 
     private Uni<Long> saveToken(RuntimeToken item) {
-        log.info("Save token {}", item);
+        log.info("Save messageId: {} token: {}", item.messageId, item.token);
 
         RuntimeToken.ChangeLog changeLog = item.changeLog;
         List<Uni<?>> items = new ArrayList<>();
 
         // update executed token
         if (item.token != null) {
-            items.add(processTokenDAO.update(item.tx, item.token));
+            items.add(processTokenRepository.update(item.tx, item.token));
 
             // create message for the token
             Message message = createMessage(item.token);
@@ -128,12 +127,12 @@ public class ProcessTokenService {
 
         // update process instance
         if (changeLog.updateProcessInstance != null) {
-            items.add(processInstanceDAO.update(item.tx, changeLog.updateProcessInstance));
+            items.add(processInstanceRepository.update(item.tx, changeLog.updateProcessInstance));
         }
 
         // create process tokens
         if (!changeLog.tokens.isEmpty()) {
-            items.add(processTokenDAO.create(item.tx, changeLog.tokens));
+            items.add(processTokenRepository.create(item.tx, changeLog.tokens));
         }
 
         // create process tokens messages

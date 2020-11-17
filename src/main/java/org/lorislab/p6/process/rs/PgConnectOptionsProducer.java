@@ -1,4 +1,4 @@
-package org.lorislab.p6.process.dao;
+package org.lorislab.p6.process.rs;
 
 import io.vertx.pgclient.PgConnectOptions;
 import org.eclipse.microprofile.config.inject.ConfigProperty;

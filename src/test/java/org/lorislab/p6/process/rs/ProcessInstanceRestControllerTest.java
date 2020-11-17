@@ -18,14 +18,10 @@ package org.lorislab.p6.process.rs;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.mapper.ObjectMapperType;
 import org.junit.jupiter.api.Test;
-import org.lorislab.p6.process.dao.model.ProcessInstance;
 import org.lorislab.p6.process.test.AbstractTest;
 
-import java.time.Duration;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -37,10 +33,7 @@ import static org.lorislab.p6.process.rs.Application.APPLICATION_JSON;
 @QuarkusTest
 public class ProcessInstanceRestControllerTest extends AbstractTest {
 
-    @Test
-    public void test() {
-        System.out.println("###############TEST##############");
-    }
+
 //    @Test
 //    public void getNotFoundTest() {
 //        given()
@@ -55,23 +48,23 @@ public class ProcessInstanceRestControllerTest extends AbstractTest {
 //
     @Test
     public void startProcessTest() throws Exception {
-        StartProcessRequestDTO r = new StartProcessRequestDTO();
+        StartProcessCommandDTO r = new StartProcessCommandDTO();
         r.id = UUID.randomUUID().toString();
         r.processId = "startEndProcess";
         r.processVersion = "1.2.3";
         r.data = new HashMap<>();
 
-        Long pi = given()
+        given()
                 .when()
                 .contentType(APPLICATION_JSON)
                 .body(r)
-                .post("/instances/")
+                .post("/command/start-process")
                 .prettyPeek()
                 .then()
                 .statusCode(HttpResponseStatus.ACCEPTED.code())
                 .extract().body().as(Long.class);
 
-        await().during(Duration.ofSeconds(10));
+        waitProcessFinished(r.id);
     }
 //
 //    @Test
@@ -158,20 +151,20 @@ public class ProcessInstanceRestControllerTest extends AbstractTest {
 //        waitProcessFinished(pi.id);
 //    }
 //
-//    protected void waitProcessFinished(String pi) {
-//
-//        log.info("Wait for the process instance '{}; to finished", pi);
-//        await()
-//                .atMost(5, SECONDS)
-//                .untilAsserted(() -> given()
-//                        .when()
-//                        .contentType(APPLICATION_JSON)
-//                        .pathParam("id", pi)
-//                        .get("/instances/{id}")
-//                        .then()
-//                        .statusCode(HttpResponseStatus.OK.code())
-//                        .body("status", equalTo("FINISHED"))
-//                );
-//    }
+    protected void waitProcessFinished(String commandId) {
+
+        log.info("Wait for the process commandId '{}; to finished", commandId);
+        await()
+                .atMost(5, SECONDS)
+                .untilAsserted(() -> given()
+                        .when()
+                        .contentType(APPLICATION_JSON)
+                        .pathParam("commandId", commandId)
+                        .get("/processes/command/{commandId}")
+                        .then()
+                        .statusCode(HttpResponseStatus.OK.code())
+                        .body("status", equalTo("FINISHED"))
+                );
+    }
 
 }

@@ -6,7 +6,7 @@ import lombok.ToString;
 
 @ToString
 @RegisterForReflection
-public class StartProcessRequest {
+public class StartProcessCommand {
     public String id;
     public String processId;
     public String processVersion;

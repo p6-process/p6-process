@@ -4,11 +4,11 @@ import io.smallrye.mutiny.Uni;
 
 import io.vertx.mutiny.sqlclient.Transaction;
 import lombok.extern.slf4j.Slf4j;
-import org.lorislab.p6.process.dao.ProcessInstanceDAO;
-import org.lorislab.p6.process.dao.ProcessTokenDAO;
+import org.lorislab.p6.process.model.ProcessInstanceRepository;
+import org.lorislab.p6.process.model.ProcessTokenRepository;
 
-import org.lorislab.p6.process.dao.model.ProcessInstance;
-import org.lorislab.p6.process.dao.model.ProcessToken;
+import org.lorislab.p6.process.model.ProcessInstance;
+import org.lorislab.p6.process.model.ProcessToken;
 import org.lorislab.p6.process.deployment.DeploymentService;
 import org.lorislab.p6.process.message.Message;
 import org.lorislab.p6.process.message.MessageBuilder;
@@ -31,23 +31,23 @@ public class ProcessInstanceService {
     DeploymentService deploymentService;
 
     @Inject
-    ProcessInstanceDAO processInstanceDAO;
+    ProcessInstanceRepository processInstanceRepository;
 
     @Inject
-    ProcessTokenDAO processTokenDAO;
+    ProcessTokenRepository processTokenRepository;
 
     @Inject
     MessageProducer messageProducer;
 
-    public Uni<ProcessInstance> createProcessInstance(Transaction tx, StartProcessRequest request) {
-        ProcessDefinitionRuntime pd = deploymentService.getProcessDefinition(request.processId, request.processVersion);
+    public Uni<ProcessInstance> createProcessInstance(Transaction tx, StartProcessCommand task) {
+        ProcessDefinitionRuntime pd = deploymentService.getProcessDefinition(task.processId, task.processVersion);
         if (pd == null) {
-            log.error("No process definition found for the {}/{}/{}", request.id, request.processId, request.processVersion);
+            log.error("No process definition found for the {}/{}/{}", task.id, task.processId, task.processVersion);
             return Uni.createFrom().nullItem();
         }
 
         // create process instance
-        ProcessInstance pi = create(request);
+        ProcessInstance pi = create(task);
 
         // create tokens for the start node
         List<ProcessToken> tokens = pd.startNodes.values().stream().map(node -> createToken(pi, node)).collect(Collectors.toList());
@@ -58,19 +58,20 @@ public class ProcessInstanceService {
         // save to database
         return Uni.combine().all()
                 .unis(
-                    processInstanceDAO.create(tx, pi),
-                    processTokenDAO.create(tx, tokens),
+                    processInstanceRepository.create(tx, pi),
+                    processTokenRepository.create(tx, tokens),
                     messageProducer.send(tx, Queues.TOKEN_EXECUTE_QUEUE, messages)
                 )
                 .combinedWith(x -> pi);
     }
 
-    private static ProcessInstance create(StartProcessRequest request) {
+    private static ProcessInstance create(StartProcessCommand cmd) {
         ProcessInstance pi = new ProcessInstance();
-        pi.processId = request.processId;
-        pi.processVersion = request.processVersion;
-        if (request.data != null) {
-            pi.data = request.data;
+        pi.processId = cmd.processId;
+        pi.processVersion = cmd.processVersion;
+        pi.cmdId = cmd.id;
+        if (cmd.data != null) {
+            pi.data = cmd.data;
         }
         return pi;
     }

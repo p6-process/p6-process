@@ -1,4 +1,4 @@
-package org.lorislab.p6.process.dao.model;
+package org.lorislab.p6.process.model;
 
 public class MessageCmd {
 
