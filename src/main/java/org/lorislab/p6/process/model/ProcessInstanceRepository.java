@@ -15,17 +15,17 @@ public class ProcessInstanceRepository {
 
     private static final String TABLE = "PROCESS_INSTANCE";
 
-    private static final String SELECT_BY_CMD_ID = Sql.select(TABLE).from().where(ProcessInstance_.CMD_ID);
+    private static final String SELECT_BY_CMD_ID = SQL.select(TABLE).from().where(ProcessInstance_.CMD_ID);
 
-    private static final String SELECT_BY_ID = Sql.select(TABLE).from().where(ProcessInstance_.ID);
+    private static final String SELECT_BY_ID = SQL.select(TABLE).from().where(ProcessInstance_.ID);
 
-    private static final String CREATE_PI = Sql.insert(TABLE).columns(
+    private static final String CREATE_PI = SQL.insert(TABLE).columns(
             ProcessInstance_.ID, ProcessInstance_.PARENT, ProcessInstance_.PROCESS_ID,
             ProcessInstance_.PROCESS_VERSION, ProcessInstance_.STATUS,
             ProcessInstance_.DATA, ProcessInstance_.CMD_ID
     ).returning(ProcessInstance_.ID);
 
-    private static final String UPDATE_PI =  Sql.update(TABLE)
+    private static final String UPDATE_PI =  SQL.update(TABLE)
             .columns(ProcessInstance_.PARENT, ProcessInstance_.STATUS, ProcessInstance_.DATA)
             .where(ProcessInstance_.ID)
             .returning(ProcessInstance_.ID);
@@ -38,7 +38,7 @@ public class ProcessInstanceRepository {
 
     public Uni<String> create(Transaction tx, ProcessInstance m) {
         return tx.preparedQuery(CREATE_PI)
-                .execute(Sql.tuple(m.id, m.parent, m.processId, m.processVersion, m.status.name(), m.data, m.cmdId))
+                .execute(SQL.tuple(m.id, m.parent, m.processId, m.processVersion, m.status.name(), m.data, m.cmdId))
                 .onItem().transform(pgRowSet -> pgRowSet.iterator().next().getString(0));
     }
 

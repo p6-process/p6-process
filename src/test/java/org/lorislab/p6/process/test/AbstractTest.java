@@ -16,12 +16,22 @@
 
 package org.lorislab.p6.process.test;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import org.lorislab.p6.process.model.ProcessInstance;
+import org.lorislab.p6.process.rs.StartProcessCommandDTO;
 import org.lorislab.quarkus.testcontainers.DockerComposeTestResource;
 import org.lorislab.quarkus.testcontainers.QuarkusTestcontainers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static io.restassured.RestAssured.given;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.lorislab.p6.process.rs.Application.APPLICATION_JSON;
 
 /**
  * The abstract test
@@ -189,4 +199,37 @@ public abstract class AbstractTest {
 //        Map<String, Object> execute(ServiceTaskData data);
 //    }
 
+    protected void startProcess(StartProcessCommandDTO cmd) {
+        given()
+                .when()
+                .contentType(APPLICATION_JSON)
+                .body(cmd)
+                .post("/command/start-process")
+                .then()
+                .statusCode(HttpResponseStatus.ACCEPTED.code());
+    }
+
+    protected ProcessInstance waitProcessFinished(String commandId) {
+        final WaitResult result = new WaitResult();
+        log.info("Wait for the process commandId '{}; to finished", commandId);
+        await()
+                .atMost(5, SECONDS)
+                .untilAsserted(() -> {
+                    Response response = given()
+                            .when()
+                            .contentType(APPLICATION_JSON)
+                            .pathParam("commandId", commandId)
+                            .get("/processes/command/{commandId}");
+
+                            response.then().statusCode(HttpResponseStatus.OK.code())
+                                    .body("status", equalTo("FINISHED"));
+
+                    result.processInstance = response.as(ProcessInstance.class);
+                });
+        return result.processInstance;
+    }
+
+    public static final class WaitResult {
+        ProcessInstance processInstance;
+    }
 }

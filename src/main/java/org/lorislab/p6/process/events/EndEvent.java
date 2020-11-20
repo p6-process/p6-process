@@ -32,12 +32,12 @@ public class EndEvent implements EventService {
                         p.status = ProcessInstance.Status.FINISHED;
                         p.data.getMap().putAll(item.token.data.getMap());
                         item.token.status = ProcessToken.Status.FINISHED;
-                        item.moveTo(null);
 
                         item.changeLog.updateProcessInstance = p;
                         item.changeLog.updateToken = item.token;
 
                         item.savePoint = true;
+                        item.moveToNull();
                         return uni(item);
                     });
         } else {

@@ -1,4 +1,4 @@
-package org.lorislab.p6.process.stream.events;
+package org.lorislab.p6.process.events;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Assertions;

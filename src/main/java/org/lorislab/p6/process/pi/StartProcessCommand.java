@@ -4,7 +4,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
 import lombok.ToString;
 
-@ToString
 @RegisterForReflection
 public class StartProcessCommand {
     public String id;
@@ -12,4 +11,9 @@ public class StartProcessCommand {
     public String processVersion;
     public String reference;
     public JsonObject data;
+
+    @Override
+    public String toString() {
+        return "StartProcessCommand:"+id;
+    }
 }

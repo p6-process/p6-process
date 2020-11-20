@@ -1,7 +1,6 @@
-package org.lorislab.p6.process.reactive;
+package org.lorislab.p6.process.events;
 
 import io.quarkus.qute.*;
-import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

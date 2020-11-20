@@ -25,7 +25,7 @@ public class ProcessInstanceRestController {
     }
 
     @Route(path = "command/:id", methods = HttpMethod.GET)
-    public void getByTaskId(RoutingContext rc) {
+    public void getByCmdId(RoutingContext rc) {
         String commandId = rc.pathParam("id");
         processInstanceRepository.findByCmdId(commandId).subscribe().with(ok(rc), error(rc));
     }

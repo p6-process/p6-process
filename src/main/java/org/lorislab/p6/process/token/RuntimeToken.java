@@ -29,27 +29,21 @@ public class RuntimeToken {
         moveTo(node.next.get(0));
     }
 
-    public void moveTo(String nodeName) {
-        token.nodeName = nodeName;
-        if (token.nodeName != null) {
-            node = pd.nodes.get(token.nodeName);
-            token.type = ProcessToken.Type.valueOf(pd.nodes.get(token.nodeName));
-        } else {
-            token.type = ProcessToken.Type.NULL;
-            node = null;
-        }
+    public void moveToNull() {
+        token.nodeName = null;
+        token.type = ProcessToken.Type.NULL;
+        node = null;
     }
 
-    public RuntimeToken copy() {
-        RuntimeToken e = new RuntimeToken();
-        e.messageId = messageId;
-        e.token = token;
-        e.pd = pd;
-        e.tx = tx;
-        e.node = node;
-        e.savePoint = savePoint;
-        e.changeLog = changeLog;
-        return e;
+    private void moveTo(String nodeName) {
+        token.nodeName = nodeName;
+        node = pd.nodes.get(token.nodeName);
+        token.type = ProcessToken.Type.valueOf(pd.nodes.get(token.nodeName));
+    }
+
+    @Override
+    public String toString() {
+        return "RuntimeToken:" + messageId;
     }
 
     public static class ChangeLog {

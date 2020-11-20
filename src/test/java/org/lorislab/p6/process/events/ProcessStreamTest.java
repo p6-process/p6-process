@@ -1,4 +1,4 @@
-package org.lorislab.p6.process.stream;
+package org.lorislab.p6.process.events;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.DisplayName;
@@ -13,28 +13,7 @@ import static org.hamcrest.Matchers.equalTo;
 @QuarkusTest
 @DisplayName("Process stream tests")
 public class ProcessStreamTest extends AbstractTest {
-//
-//    @Test
-//    @DisplayName("Start-end process test")
-//    public void startProcessTest() {
-//        String processId = "startEndProcess";
-//        String processVersion = "1.2.3";
-//        // start process
-//        String processInstanceId = startProcess(processId, processVersion, Map.of("key","value"));
-//        // wait to finished process
-//        waitProcessFinished(processId, processInstanceId);
-//        // check the process parameters
-//        given()
-//                .when()
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .pathParam("guid", processInstanceId)
-//                .get("/v1/instance/{guid}/parameters")
-//                .prettyPeek()
-//                .then()
-//                .statusCode(Response.Status.OK.getStatusCode())
-//                .body("key", equalTo("value"));
-//    }
-//
+
 //    @Test
 //    @DisplayName("Service task process test")
 //    public void serviceTaskProcessTest() {

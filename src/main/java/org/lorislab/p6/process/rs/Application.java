@@ -16,17 +16,26 @@
 
 package org.lorislab.p6.process.rs;
 
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.ext.web.RoutingContext;
 
 import io.vertx.mutiny.sqlclient.Row;
-import io.vertx.mutiny.sqlclient.Transaction;
+import io.vertx.mutiny.sqlclient.SqlClient;
 import org.lorislab.quarkus.log.cdi.LogParam;
 
 import java.util.function.Consumer;
 
 public class Application {
+
+    static {
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(JsonObject.class, new JsonObjectDeserializer());
+        DatabindCodec.mapper().registerModule(module);
+    }
 
     /**
      * {@code "application/json"}
@@ -74,7 +83,7 @@ public class Application {
         return r.normalisedPath();
     }
 
-    @LogParam(assignableFrom = {Transaction.class})
+    @LogParam(assignableFrom = {SqlClient.class})
     public static String logTransaction(Object object) {
         return "tx:" + object.hashCode();
     }

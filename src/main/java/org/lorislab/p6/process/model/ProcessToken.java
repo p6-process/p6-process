@@ -1,12 +1,12 @@
 package org.lorislab.p6.process.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
-import lombok.ToString;
+import org.lorislab.p6.process.rs.JsonObjectDeserializer;
 
 import java.util.*;
 
-@ToString
 @RegisterForReflection
 public class ProcessToken {
 
@@ -30,7 +30,13 @@ public class ProcessToken {
 
     public Set<String> createdFrom = new HashSet<>();
 
+    @JsonDeserialize(using = JsonObjectDeserializer.class)
     public JsonObject data = new JsonObject();
+
+    @Override
+    public String toString() {
+        return "ProcessToken:" + id;
+    }
 
     public enum Status {
 

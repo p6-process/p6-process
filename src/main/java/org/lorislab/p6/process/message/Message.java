@@ -6,7 +6,6 @@ import lombok.ToString;
 
 import java.time.LocalDateTime;
 
-@ToString
 @RegisterForReflection
 public class Message {
 
@@ -30,4 +29,8 @@ public class Message {
         return this.data.mapTo(clazz);
     }
 
+    @Override
+    public String toString() {
+        return "Message:" + id;
+    }
 }

@@ -16,15 +16,13 @@
 
 package org.lorislab.p6.process.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
-import lombok.ToString;
+import org.lorislab.p6.process.rs.JsonObjectDeserializer;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
-@ToString
 @RegisterForReflection
 public class ProcessInstance {
 
@@ -40,7 +38,14 @@ public class ProcessInstance {
 
     public Status status = Status.CREATED;
 
+    @JsonDeserialize(using = JsonObjectDeserializer.class)
     public JsonObject data = new JsonObject();
+
+    @Override
+    public String toString() {
+        return "ProcessInstance:" + id;
+    }
+
 
     public enum Status {
 

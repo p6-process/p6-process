@@ -4,9 +4,9 @@ public enum MessageType {
 
     PROCESS_MSG("PROCESS_MSG", "process_msg"),
 
-    TOKEN_MSG("TOKEN_MSG", "token_msg"),
+    TOKEN_MSG("TOKEN_EXECUTE_QUEUE", "token_msg"),
 
-    SINGLETON_MSG("SINGLETON_MSG","singleton_msg"),
+    SINGLETON_MSG("TOKEN_SINGLETON_QUEUE","singleton_msg"),
 
     SERVICE_TASK_MSG("SERVICE_TASK_MSG", "service_task_msg");
 

@@ -14,22 +14,25 @@ public class ProcessTokenRepository {
 
     private static final String TABLE = "PROCESS_TOKEN";
 
-    private static final String SELECT_BY_ID = Sql.select(TABLE).from().where(ProcessToken_.ID);
+    private static final String SELECT_BY_ID = SQL.select(TABLE).from().where(ProcessToken_.ID);
 
-    private static final String CREATE_TOKEN = Sql.insert(TABLE).columns(
+    private static final String CREATE_TOKEN = SQL.insert(TABLE).columns(
                 ProcessToken_.ID, ProcessToken_.PROCESS_INSTANCE, ProcessToken_.PROCESS_ID,
                 ProcessToken_.PROCESS_VERSION, ProcessToken_.NODE_NAME, ProcessToken_.STATUS,
                 ProcessToken_.TYPE, ProcessToken_.PARENT, ProcessToken_.REFERENCE,
                 ProcessToken_.CREATED_FROM, ProcessToken_.DATA
             ).returning(ProcessToken_.ID);
 
-    private static final String UPDATE_TOKEN =  Sql.update(TABLE).columns(
+    private static final String UPDATE_TOKEN =  SQL.update(TABLE).columns(
                 ProcessToken_.PROCESS_INSTANCE, ProcessToken_.PROCESS_ID,
                 ProcessToken_.PROCESS_VERSION, ProcessToken_.NODE_NAME, ProcessToken_.STATUS,
                 ProcessToken_.TYPE, ProcessToken_.PARENT, ProcessToken_.REFERENCE,
                 ProcessToken_.CREATED_FROM, ProcessToken_.DATA
             ).where(ProcessToken_.ID)
             .returning(ProcessToken_.ID);
+
+    private static final String SELECT_BY_REF_NODE_NAME = SQL.select(TABLE)
+            .from().where(ProcessToken_.REFERENCE, ProcessToken_.NODE_NAME);
 
     @Inject
     PgPool pool;
@@ -39,14 +42,14 @@ public class ProcessTokenRepository {
 
 
     private Tuple update(ProcessToken m) {
-        return Sql.tuple(m.processInstance, m.processId, m.processVersion, m.nodeName, m.status.name(),
+        return SQL.tuple(m.processInstance, m.processId, m.processVersion, m.nodeName, m.status.name(),
                 m.type.name(), m.parent, m.reference,
                 m.createdFrom.toArray(new String[]{}), m.data, m.id
         );
     }
 
     private Tuple create(ProcessToken m) {
-        return Sql.tuple(
+        return SQL.tuple(
                 m.id, m.processInstance, m.processId, m.processVersion, m.nodeName, m.status.name(),
                 m.type.name(), m.parent, m.reference,
                 m.createdFrom.toArray(new String[]{}), m.data
@@ -72,12 +75,12 @@ public class ProcessTokenRepository {
         return findById(pool, id);
     }
 
-//    public Uni<ProcessToken> findByReferenceAndNodeName(Transaction tx, String ref, String nn) {
-//        return tx.preparedQuery("SELECT * FROM PROCESS_TOKEN WHERE reference = $1 and nodename = $2")
-//                .execute(Tuple.of(ref, nn))
-//                .onItem().apply(RowSet::iterator)
-//                .onItem().apply(i -> i.hasNext() ? ProcessTokenMapperImpl.mapS(i.next()) : null);
-//    }
+    public Uni<ProcessToken> findByReferenceAndNodeName(Transaction tx, String ref, String nn) {
+        return tx.preparedQuery(SELECT_BY_REF_NODE_NAME)
+                .execute(Tuple.of(ref, nn))
+                .map(RowSet::iterator)
+                .map(i -> i.hasNext() ? processTokenMapper.map(i.next()) : null);
+    }
 
     public Uni<String> update(Transaction tx, ProcessToken token) {
         return tx.preparedQuery(UPDATE_TOKEN).execute(update(token))

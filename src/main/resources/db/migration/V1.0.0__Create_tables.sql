@@ -79,3 +79,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 CREATE TRIGGER token_execute_queue_trigger AFTER INSERT ON TOKEN_EXECUTE_QUEUE FOR EACH ROW EXECUTE PROCEDURE token_execute_queue_pub();
+
+-- TOKEN_SINGLETON_QUEUE
+CREATE TABLE TOKEN_SINGLETON_QUEUE (
+     id SERIAL PRIMARY KEY,
+     date timestamp DEFAULT now(),
+     modification timestamp DEFAULT now(),
+     count bigint DEFAULT 0,
+     label varchar,
+     data jsonb,
+     header jsonb
+);
+CREATE OR REPLACE FUNCTION token_singleton_queue_pub() RETURNS trigger AS
+$$
+BEGIN
+    PERFORM pg_notify('TOKEN_SINGLETON_QUEUE', NEW.id::text);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER token_singleton_queue_trigger AFTER INSERT ON TOKEN_SINGLETON_QUEUE FOR EACH ROW EXECUTE PROCEDURE token_singleton_queue_pub();

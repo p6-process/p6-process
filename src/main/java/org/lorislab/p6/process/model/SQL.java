@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class Sql {
+public class SQL {
 
     public static Tuple tuple(Object ...data) {
         return Tuple.tuple(Arrays.asList(data));
@@ -49,7 +49,7 @@ public class Sql {
             sql += IntStream.rangeClosed(1, columns.length)
                     .boxed()
                     .map(x -> columns[x-1] +"=$" + x)
-                    .collect(Collectors.joining(","));
+                    .collect(Collectors.joining(" AND "));
             return sql;
         }
 
@@ -79,7 +79,7 @@ public class Sql {
             sql += IntStream.rangeClosed(begin, count)
                     .boxed()
                     .map(x -> columns[x-begin] +"=$" + x)
-                    .collect(Collectors.joining(","));
+                    .collect(Collectors.joining(" AND "));
             return this;
         }
 

@@ -6,7 +6,7 @@
 //import org.lorislab.p6.process.dao.model.ProcessToken;
 //import org.lorislab.p6.process.model.ExclusiveGateway;
 //import org.lorislab.p6.process.reactive.ExecutorItem;
-//import org.lorislab.p6.process.reactive.ProcessExpressionHelper;
+//import org.lorislab.p6.process.events.ProcessExpressionHelper;
 //
 //import javax.enterprise.context.ApplicationScoped;
 //import java.util.Iterator;

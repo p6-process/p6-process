@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
@@ -38,14 +39,14 @@ public class DeploymentService {
 
     private void loadProcesses() {
         if (Files.exists(Paths.get(dir))) {
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(dir), path -> path.toString().endsWith(".yaml"))) {
-                for (Path path : directoryStream) {
+            try (Stream<Path> files = Files.find(Paths.get(dir), 3, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().endsWith(".yaml"))) {
+                files.forEach(path -> {
                     log.info("Deploy process {}.", path);
 
                     ProcessDefinitionRuntime pd = ProcessDefinitionLoader.loadRuntime(path.toFile());
                     String id = getCacheId(pd.id, pd.version);
                     DEFINITIONS.put(id, pd);
-                }
+                });
             } catch (IOException ex) {
                 throw new UncheckedIOException("Error deploy the process", ex);
             }
@@ -68,5 +69,12 @@ public class DeploymentService {
     private static String getCacheId(String processId, String processVersion) {
         return processId + ":" + processVersion;
     }
+
+
+    private static void search ()  {
+
+
+    }
+
 
 }

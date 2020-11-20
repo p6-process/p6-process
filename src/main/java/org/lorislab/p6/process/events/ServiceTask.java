@@ -17,6 +17,6 @@ public class ServiceTask implements EventService {
     @Override
     public Uni<RuntimeToken> execute(RuntimeToken item) {
         item.moveToNext();
-        return Uni.createFrom().item(item.copy());
+        return uni(item);
     }
 }
