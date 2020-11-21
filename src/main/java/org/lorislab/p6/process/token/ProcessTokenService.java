@@ -119,9 +119,12 @@ public class ProcessTokenService {
             items.add(processTokenRepository.update(item.tx, item.token));
 
             // create message for the token
-            Message message = createMessage(item.token);
+            Message message = RuntimeToken.ChangeLog.createMessage(item.token);
             if (message != null) {
-                messageProducer.send(item.tx, message);
+                if (log.isDebugEnabled()) {
+                    log.debug("Token type: {} -> {}", item.token.type, message.queue);
+                }
+                items.add(messageProducer.send(item.tx, message));
             }
         }
 
@@ -137,8 +140,7 @@ public class ProcessTokenService {
 
         // create process tokens messages
         if (!changeLog.messages.isEmpty()) {
-            Map<String, List<Message>> messages = changeLog.messages.stream().map(ProcessTokenService::createMessage).collect(Collectors.groupingBy(d -> d.queue));
-            for (Map.Entry<String, List<Message>> e : messages.entrySet()) {
+            for (Map.Entry<String, List<Message>> e : changeLog.messages.entrySet()) {
                 items.add(messageProducer.send(item.tx, e.getKey(), e.getValue()));
             }
         }
@@ -146,19 +148,4 @@ public class ProcessTokenService {
         return Uni.combine().all().unis(items).combinedWith(x -> item.messageId);
     }
 
-    private static Message createMessage(ProcessToken token) {
-        if (token == null) {
-            return null;
-        }
-        if (token.type == ProcessToken.Type.NULL) {
-            return null;
-        }
-
-        TokenMessageHeader header = new TokenMessageHeader();
-        header.tokenId = token.id;
-        return MessageBuilder.builder()
-                .queue(token.type.message.table)
-                .header(header)
-                .build();
-    }
 }

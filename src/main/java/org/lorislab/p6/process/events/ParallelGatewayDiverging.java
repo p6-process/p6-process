@@ -20,26 +20,27 @@ public class ParallelGatewayDiverging implements EventService {
 
     @Override
     public Uni<RuntimeToken> execute(RuntimeToken item) {
-        item.changeLog.tokens = createChildTokens(item.token, item.pd, item.node.next);
-        item.changeLog.messages = item.changeLog.tokens;
+        item.node.next.forEach(next -> {
+            ProcessToken tmp = createToken(next, item.token, item.pd);
+            item.changeLog.addMessage(tmp);
+            item.changeLog.tokens.add(tmp);
+        });
         item.token.status = ProcessToken.Status.FINISHED;
         item.savePoint = true;
         item.moveToNull();
         return uni(item);
     }
 
-    protected List<ProcessToken> createChildTokens(ProcessToken token, ProcessDefinition pd, List<String> items) {
-        return items.stream().map(item -> {
-            ProcessToken child = new ProcessToken();
-            child.nodeName = item;
-            child.processId = token.processId;
-            child.processVersion = token.processVersion;
-            child.parent = token.id;
-            child.type = ProcessToken.Type.valueOf(pd.nodes.get(item));
-            child.processInstance = token.processInstance;
-            child.data = token.data;
-            child.status= ProcessToken.Status.IN_EXECUTION;
-            return child;
-        }).collect(Collectors.toList());
+    private static ProcessToken createToken(String item, ProcessToken token, ProcessDefinition pd) {
+        ProcessToken child = new ProcessToken();
+        child.nodeName = item;
+        child.processId = token.processId;
+        child.processVersion = token.processVersion;
+        child.parent = token.id;
+        child.type = ProcessToken.Type.valueOf(pd.nodes.get(item));
+        child.processInstance = token.processInstance;
+        child.data = token.data;
+        child.status= ProcessToken.Status.IN_EXECUTION;
+        return child;
     }
 }

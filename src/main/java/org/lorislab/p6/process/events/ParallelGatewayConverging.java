@@ -41,7 +41,7 @@ public class ParallelGatewayConverging implements EventService {
                     log.info("Token finished {} node parents {}. Result {}>={}, {}", token.createdFrom, item.node.previous, size1, size2, size1 >= size2);
                     if (size1 >= size2) {
                         log.info("Parallel gateway finished Token:{}", token);
-                        item.changeLog.messages.add(token);
+                        item.changeLog.addMessage(token);
                     }
 
                     // finished current token

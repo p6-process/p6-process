@@ -20,12 +20,27 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import io.smallrye.mutiny.Uni;
+import io.vertx.core.json.JsonObject;
+import io.vertx.mutiny.pgclient.PgPool;
+import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.sqlclient.PoolOptions;
+import org.junit.jupiter.api.Assertions;
+import org.lorislab.p6.process.message.Message;
+import org.lorislab.p6.process.message.MessageMapperImpl;
+import org.lorislab.p6.process.message.MessageRepository;
+import org.lorislab.p6.process.message.Queues;
 import org.lorislab.p6.process.model.ProcessInstance;
 import org.lorislab.p6.process.rs.StartProcessCommandDTO;
+import org.lorislab.p6.process.token.TokenMessageHeader;
 import org.lorislab.quarkus.testcontainers.DockerComposeTestResource;
 import org.lorislab.quarkus.testcontainers.QuarkusTestcontainers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.util.Map;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -40,19 +55,61 @@ import static org.lorislab.p6.process.rs.Application.APPLICATION_JSON;
 @QuarkusTestResource(DockerComposeTestResource.class)
 public abstract class AbstractTest {
 
-    static String ADDRESS_START_PROCESS = "process-start";
-
-    static String ADDRESS_SERVICE_TASK = "service-task";
-
-    static String ADDRESS_TOKEN_EXECUTE = "token-execute";
-
     protected Logger log = LoggerFactory.getLogger(this.getClass());
 
-    /**
-     * Starts the containers before the tests
-     */
+    private static final PgPool PG_POOL;
+
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+        PG_POOL = createPgPool();
+    }
+
+    private static PgPool createPgPool() {
+        PoolOptions poolOptions = new PoolOptions();
+        PgConnectOptions con = new PgConnectOptions();
+        con.setHost(System.getProperty("pg.host", "localhost"));
+        con.setUser(System.getProperty("pg.user", "p6"));
+        con.setPassword(System.getProperty("pg.password", "p6"));
+        con.setDatabase(System.getProperty("pg.database", "p6"));
+        con.setPort(Integer.parseInt(System.getProperty("pg.port", "5432")));
+        return new PgPool(io.vertx.pgclient.PgPool.pool(con, poolOptions));
+    }
+
+    protected Long sendMessage(Message message) {
+        return MessageRepository.createMessage(PG_POOL, message).await().indefinitely();
+    }
+
+    protected Message getNextMessage(String queue) {
+        return MessageRepository.nextProcessMessage(PG_POOL, queue, new MessageMapperImpl())
+                .await().indefinitely();
+    }
+
+    protected Message waitForNextMessage(String queue) {
+        final WaitMessage result = new WaitMessage();
+        log.info("Wait for the next message from '{}'", queue);
+        await()
+                .atMost(5, SECONDS)
+                .untilAsserted(() -> {
+                    result.message = getNextMessage(queue);
+                    Assertions.assertNotNull(result.message);
+                });
+        return result.message;
+    }
+
+    public static final class WaitMessage {
+        Message message;
+    }
+
+    protected void processServiceTask(ExecuteServiceTask execute) {
+        Message message = waitForNextMessage(Queues.SERVICE_TASK_REQUEST_QUEUE);
+        TokenMessageHeader header = message.header(TokenMessageHeader.class);
+        Map<String, Object> data = execute.execute(header, message.data);
+        if (data != null && !data.isEmpty()) {
+            message.data.getMap().putAll(data);
+        }
+        message.queue = Queues.SERVICE_TASK_RESPONSE_QUEUE;
+        Long id = sendMessage(message);
+        log.info("ResponseId: {} of messageId: {}", id, message.id);
     }
 
 //    @DockerService("p6-process")
@@ -194,10 +251,10 @@ public abstract class AbstractTest {
 //        void update(Message message, T item);
 //    }
 //
-//    public interface ExecuteServiceTask {
-//
-//        Map<String, Object> execute(ServiceTaskData data);
-//    }
+    public interface ExecuteServiceTask {
+
+        Map<String, Object> execute(TokenMessageHeader header, JsonObject data);
+    }
 
     protected void startProcess(StartProcessCommandDTO cmd) {
         given()

@@ -54,32 +54,32 @@ public class ProcessToken {
 
         NULL(null, 9),
 
-        START_EVENT(MessageType.TOKEN_MSG, 1),
+        START_EVENT(ProcessTokenMessageType.TOKEN_MSG, 1),
 
-        END_EVENT(MessageType.SINGLETON_MSG, 0),
+        END_EVENT(ProcessTokenMessageType.SINGLETON_MSG, 0),
 
-        SERVICE_TASK(MessageType.TOKEN_MSG, 1),
+        SERVICE_TASK(ProcessTokenMessageType.SERVICE_TASK_MSG, 1),
 
-        SERVICE_TASK_COMPLETE(MessageType.SERVICE_TASK_MSG, 1),
+        SERVICE_TASK_COMPLETE(ProcessTokenMessageType.TOKEN_MSG, 1),
 
-        PARALLEL_GATEWAY_DIVERGING(MessageType.TOKEN_MSG, -1),
+        PARALLEL_GATEWAY_DIVERGING(ProcessTokenMessageType.TOKEN_MSG, -1),
 
-        PARALLEL_GATEWAY_CONVERGING(MessageType.SINGLETON_MSG, 1),
+        PARALLEL_GATEWAY_CONVERGING(ProcessTokenMessageType.SINGLETON_MSG, 1),
 
-        EXCLUSIVE_GATEWAY_DIVERGING(MessageType.TOKEN_MSG, -1),
+        EXCLUSIVE_GATEWAY_DIVERGING(ProcessTokenMessageType.TOKEN_MSG, -1),
 
-        EXCLUSIVE_GATEWAY_CONVERGING(MessageType.TOKEN_MSG, 1),
+        EXCLUSIVE_GATEWAY_CONVERGING(ProcessTokenMessageType.TOKEN_MSG, 1),
 
-        INCLUSIVE_GATEWAY_DIVERGING(MessageType.TOKEN_MSG, -1),
+        INCLUSIVE_GATEWAY_DIVERGING(ProcessTokenMessageType.TOKEN_MSG, -1),
 
-        INCLUSIVE_GATEWAY_CONVERGING(MessageType.SINGLETON_MSG, 1),
+        INCLUSIVE_GATEWAY_CONVERGING(ProcessTokenMessageType.SINGLETON_MSG, 1),
         ;
 
-        public final MessageType message;
+        public final ProcessTokenMessageType message;
 
         public final int next;
 
-        Type(MessageType message, int next) {
+        Type(ProcessTokenMessageType message, int next) {
             this.next = next;
             this.message = message;
         }

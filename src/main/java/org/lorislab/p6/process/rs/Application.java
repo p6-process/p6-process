@@ -16,6 +16,7 @@
 
 package org.lorislab.p6.process.rs;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.Json;
@@ -35,6 +36,7 @@ public class Application {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(JsonObject.class, new JsonObjectDeserializer());
         DatabindCodec.mapper().registerModule(module);
+        DatabindCodec.mapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
     /**

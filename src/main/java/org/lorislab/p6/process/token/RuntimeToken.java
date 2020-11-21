@@ -1,13 +1,17 @@
 package org.lorislab.p6.process.token;
 
 import io.vertx.mutiny.sqlclient.Transaction;
+import org.lorislab.p6.process.message.Message;
+import org.lorislab.p6.process.message.MessageBuilder;
 import org.lorislab.p6.process.model.ProcessInstance;
 import org.lorislab.p6.process.model.ProcessToken;
 import org.lorislab.p6.process.model.Node;
 import org.lorislab.p6.process.model.ProcessDefinition;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RuntimeToken {
 
@@ -50,11 +54,42 @@ public class RuntimeToken {
 
         public List<ProcessToken> tokens = new ArrayList<>();
 
-        public List<ProcessToken> messages = new ArrayList<>();
+        public Map<String, List<Message>> messages = new HashMap<>();
 
         public ProcessToken updateToken;
 
         public ProcessInstance updateProcessInstance;
+
+        public void addMessage(ProcessToken token) {
+            Message message = createMessage(token);
+            if (message != null) {
+                messages.computeIfAbsent(message.queue, k -> new ArrayList<>()).add(message);
+            }
+        }
+
+        static Message createMessage(ProcessToken token) {
+            if (token == null) {
+                return null;
+            }
+            if (token.type == ProcessToken.Type.NULL) {
+                return null;
+            }
+            TokenMessageHeader header = new TokenMessageHeader();
+            header.tokenId = token.id;
+            if (token.type.message.parameters) {
+                header.processId = token.processId;
+                header.processVersion = token.processVersion;
+                header.nodeId = token.nodeName;
+                header.processInstanceId = token.processInstance;
+            }
+            MessageBuilder mb = MessageBuilder.builder()
+                    .queue(token.type.message.table)
+                    .header(header);
+            if (token.type.message.parameters) {
+                mb.data(token.data);
+            }
+            return mb.build();
+        }
 
     }
 }

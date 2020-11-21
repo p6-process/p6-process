@@ -23,11 +23,11 @@ public class MessageRepository {
     @Inject
     MessageMapper mapper;
 
-    private List<Tuple> tuple(List<Message> messages) {
-        return messages.stream().map(this::tuple).collect(Collectors.toList());
+    private static List<Tuple> tuple(List<Message> messages) {
+        return messages.stream().map(MessageRepository::tuple).collect(Collectors.toList());
     }
 
-    private Tuple tuple(Message m) {
+    private static Tuple tuple(Message m) {
         return Tuple.of(m.data, m.header);
     }
 
@@ -36,9 +36,7 @@ public class MessageRepository {
     }
 
     public Uni<Long> create(SqlClient client, Message m) {
-        return client.preparedQuery("INSERT INTO " + m.queue + " (data, header) VALUES ($1, $2) RETURNING (id)")
-                .execute(tuple(m))
-                .onItem().transform(pgRowSet -> pgRowSet.iterator().next().getLong(0));
+        return createMessage(client, m);
     }
 
     public Uni<Long> create(SqlClient client, String queue, List<Message> m) {
@@ -48,11 +46,7 @@ public class MessageRepository {
     }
 
     public Uni<Message> nextProcessMessage(Transaction tx, String queue) {
-        return tx.query("DELETE FROM " + queue + " WHERE id = (SELECT id FROM " + queue + " ORDER BY id  FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING id, date, count, data, label, header, '" + queue
-         + "' as queue")
-                .execute()
-                .map(RowSet::iterator)
-                .map(it -> it.hasNext() ? mapper.map(it.next()) : null);
+        return nextProcessMessage(tx, queue, mapper);
     }
 
     public Multi<String> findAllMessages(String queue) {
@@ -68,4 +62,17 @@ public class MessageRepository {
                 });
     }
 
+    public static Uni<Long> createMessage(SqlClient client, Message m) {
+        return client.preparedQuery("INSERT INTO " + m.queue + " (data, header) VALUES ($1, $2) RETURNING (id)")
+                .execute(tuple(m))
+                .onItem().transform(pgRowSet -> pgRowSet.iterator().next().getLong(0));
+    }
+
+    public static Uni<Message> nextProcessMessage(SqlClient tx, String queue, MessageMapper mapper) {
+        return tx.query("DELETE FROM " + queue + " WHERE id = (SELECT id FROM " + queue + " ORDER BY id  FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING id, date, count, data, label, header, '" + queue
+                + "' as queue")
+                .execute()
+                .map(RowSet::iterator)
+                .map(it -> it.hasNext() ? mapper.map(it.next()) : null);
+    }
 }

@@ -13,4 +13,11 @@ public class TokenMessageHeader {
 
     public String tokenId;
 
+    public String processInstanceId;
+
+    public String processId;
+
+    public String processVersion;
+
+    public String nodeId;
 }

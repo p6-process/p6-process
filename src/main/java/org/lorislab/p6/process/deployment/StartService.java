@@ -1,10 +1,9 @@
 package org.lorislab.p6.process.deployment;
 
 import io.quarkus.runtime.StartupEvent;
-import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.Uni;
 import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.pi.ProcessCommandMessageListener;
+import org.lorislab.p6.process.servicetask.ServiceTaskResponseMessageListener;
 import org.lorislab.p6.process.token.TokenExecutionMessageListener;
 import org.lorislab.p6.process.token.TokenSingletonMessageListener;
 
@@ -28,6 +27,9 @@ public class StartService {
     @Inject
     TokenSingletonMessageListener tokenSingletonMessageListener;
 
+    @Inject
+    ServiceTaskResponseMessageListener serviceTaskResponseMessageListener;
+
     void onStart(@Observes StartupEvent ev) {
         // load processes
         deploymentService.start();
@@ -40,6 +42,9 @@ public class StartService {
 
         // start token singleton message listener
         tokenSingletonMessageListener.start();
+
+        // start service task response message listener
+        serviceTaskResponseMessageListener.start();
     }
 
 }
