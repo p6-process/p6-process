@@ -39,7 +39,7 @@ public class RuntimeToken {
         node = null;
     }
 
-    private void moveTo(String nodeName) {
+    public void moveTo(String nodeName) {
         token.nodeName = nodeName;
         node = pd.nodes.get(token.nodeName);
         token.type = ProcessToken.Type.valueOf(pd.nodes.get(token.nodeName));
@@ -79,7 +79,7 @@ public class RuntimeToken {
             if (token.type.message.parameters) {
                 header.processId = token.processId;
                 header.processVersion = token.processVersion;
-                header.nodeId = token.nodeName;
+                header.nodeName = token.nodeName;
                 header.processInstanceId = token.processInstance;
             }
             MessageBuilder mb = MessageBuilder.builder()

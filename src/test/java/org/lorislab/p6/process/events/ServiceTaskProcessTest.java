@@ -31,14 +31,6 @@ public class ServiceTaskProcessTest extends AbstractTest {
 
         String value = UUID.randomUUID().toString();
         processServiceTask((h,d) -> Map.of("key1", value));
-//        Message message = waitForNextMessage(Queues.SERVICE_TASK_REQUEST_QUEUE);
-//        TokenMessageHeader header = message.header(TokenMessageHeader.class);
-//
-//        String value = UUID.randomUUID().toString();
-//        message.data.put("key1", value);
-//        message.queue = Queues.SERVICE_TASK_RESPONSE_QUEUE;
-//        Long mi = sendMessage(message);
-//        System.out.println("Response: " + mi);
 
         ProcessInstance pi = waitProcessFinished(r.id);
 

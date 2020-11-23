@@ -19,5 +19,5 @@ public class TokenMessageHeader {
 
     public String processVersion;
 
-    public String nodeId;
+    public String nodeName;
 }
