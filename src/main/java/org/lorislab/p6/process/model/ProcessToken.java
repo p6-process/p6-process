@@ -5,6 +5,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
 import org.lorislab.p6.process.rs.JsonObjectDeserializer;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @RegisterForReflection
@@ -12,11 +13,17 @@ public class ProcessToken {
 
     public String id = UUID.randomUUID().toString();
 
+    public LocalDateTime created = LocalDateTime.now();
+
+    public LocalDateTime finished;
+
     public String processInstance;
 
     public String processId;
 
     public String processVersion;
+
+    public String previousNodeName;
 
     public String nodeName;
 
@@ -26,7 +33,7 @@ public class ProcessToken {
 
     public String parent;
 
-    public String reference;
+    public Set<String> previousFrom = new HashSet<>();
 
     public Set<String> createdFrom = new HashSet<>();
 

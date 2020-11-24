@@ -10,6 +10,7 @@ import org.lorislab.p6.process.token.RuntimeToken;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Unremovable
@@ -30,8 +31,11 @@ public class EndEvent implements EventService {
 
                         // FINISHED process instance
                         p.status = ProcessInstance.Status.FINISHED;
+                        p.finished = LocalDateTime.now();
+
                         p.data.getMap().putAll(item.token.data.getMap());
                         item.token.status = ProcessToken.Status.FINISHED;
+                        item.token.finished = p.finished;
 
                         item.changeLog.updateProcessInstance = p;
                         item.changeLog.updateToken = item.token;

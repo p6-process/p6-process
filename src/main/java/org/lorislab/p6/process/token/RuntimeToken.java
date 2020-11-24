@@ -34,12 +34,14 @@ public class RuntimeToken {
     }
 
     public void moveToNull() {
+        token.previousNodeName = token.nodeName;
         token.nodeName = null;
         token.type = ProcessToken.Type.NULL;
         node = null;
     }
 
     public void moveTo(String nodeName) {
+        token.previousNodeName = token.nodeName;
         token.nodeName = nodeName;
         node = pd.nodes.get(token.nodeName);
         token.type = ProcessToken.Type.valueOf(pd.nodes.get(token.nodeName));

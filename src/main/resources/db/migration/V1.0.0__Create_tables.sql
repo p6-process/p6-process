@@ -5,21 +5,26 @@ CREATE TABLE PROCESS_INSTANCE (
    parent varchar(255),
    processId varchar(255),
    processVersion varchar(255),
-   status varchar(255)
+   status varchar(255),
+   created timestamp DEFAULT now(),
+   finished timestamp DEFAULT NULL
 );
 
 CREATE TABLE PROCESS_TOKEN (
    id varchar(255) NOT NULL PRIMARY KEY,
    data jsonb,
    nodeName varchar(255),
+   previousNodeName varchar(255),
    parent varchar(255),
    processId varchar(255),
    processInstance varchar(255),
    processVersion varchar(255),
-   reference varchar(255),
    status varchar(255),
    type varchar(255),
-   createdFrom varchar(255)[]
+   previousFrom varchar(255)[],
+   createdFrom varchar(255)[],
+   created timestamp DEFAULT now(),
+   finished timestamp DEFAULT NULL
 );
 
 ------------------------------------------------------

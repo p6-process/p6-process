@@ -9,6 +9,7 @@ import org.lorislab.p6.process.model.ProcessToken;
 import org.lorislab.p6.process.token.RuntimeToken;
 
 import javax.enterprise.context.ApplicationScoped;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,21 +27,24 @@ public class ParallelGatewayDiverging implements EventService {
             item.changeLog.tokens.add(tmp);
         });
         item.token.status = ProcessToken.Status.FINISHED;
+        item.token.finished = LocalDateTime.now();
+
         item.savePoint = true;
         item.moveToNull();
         return uni(item);
     }
 
-    private static ProcessToken createToken(String item, ProcessToken token, ProcessDefinition pd) {
+    private static ProcessToken createToken(String next, ProcessToken token, ProcessDefinition pd) {
         ProcessToken child = new ProcessToken();
-        child.nodeName = item;
+        child.nodeName = next;
         child.processId = token.processId;
         child.processVersion = token.processVersion;
-        child.parent = token.id;
-        child.type = ProcessToken.Type.valueOf(pd.nodes.get(item));
         child.processInstance = token.processInstance;
+        child.status = ProcessToken.Status.IN_EXECUTION;
+        child.type = ProcessToken.Type.valueOf(pd.nodes.get(next));
         child.data = token.data;
-        child.status= ProcessToken.Status.IN_EXECUTION;
+        child.createdFrom.add(token.id);
+        child.previousFrom.add(token.nodeName);
         return child;
     }
 }

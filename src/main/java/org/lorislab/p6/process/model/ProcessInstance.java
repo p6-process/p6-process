@@ -21,12 +21,17 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.json.JsonObject;
 import org.lorislab.p6.process.rs.JsonObjectDeserializer;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RegisterForReflection
 public class ProcessInstance {
 
     public String id = UUID.randomUUID().toString();
+
+    public LocalDateTime created = LocalDateTime.now();
+
+    public LocalDateTime finished;
 
     public String cmdId;
 

@@ -19,20 +19,21 @@ public class ProcessTokenRepository {
     private static final String CREATE_TOKEN = SQL.insert(TABLE).columns(
                 ProcessToken_.ID, ProcessToken_.PROCESS_INSTANCE, ProcessToken_.PROCESS_ID,
                 ProcessToken_.PROCESS_VERSION, ProcessToken_.NODE_NAME, ProcessToken_.STATUS,
-                ProcessToken_.TYPE, ProcessToken_.PARENT, ProcessToken_.REFERENCE,
-                ProcessToken_.CREATED_FROM, ProcessToken_.DATA
+                ProcessToken_.TYPE, ProcessToken_.PARENT, ProcessToken_.CREATED_FROM,
+                ProcessToken_.DATA, ProcessToken_.PREVIOUS_FROM, ProcessToken_.PREVIOUS_NODE_NAME
             ).returning(ProcessToken_.ID);
 
     private static final String UPDATE_TOKEN =  SQL.update(TABLE).columns(
                 ProcessToken_.PROCESS_INSTANCE, ProcessToken_.PROCESS_ID,
                 ProcessToken_.PROCESS_VERSION, ProcessToken_.NODE_NAME, ProcessToken_.STATUS,
-                ProcessToken_.TYPE, ProcessToken_.PARENT, ProcessToken_.REFERENCE,
-                ProcessToken_.CREATED_FROM, ProcessToken_.DATA
+                ProcessToken_.TYPE, ProcessToken_.PARENT,
+                ProcessToken_.CREATED_FROM, ProcessToken_.DATA, ProcessToken_.FINISHED,
+                ProcessToken_.PREVIOUS_FROM, ProcessToken_.PREVIOUS_NODE_NAME
             ).where(ProcessToken_.ID)
             .returning(ProcessToken_.ID);
 
-    private static final String SELECT_BY_REF_NODE_NAME = SQL.select(TABLE)
-            .from().where(ProcessToken_.REFERENCE, ProcessToken_.NODE_NAME);
+    private static final String SELECT_BY_PI_NODE_NAME = SQL.select(TABLE)
+            .from().where(ProcessToken_.PROCESS_INSTANCE, ProcessToken_.NODE_NAME, ProcessToken_.STATUS);
 
     @Inject
     PgPool pool;
@@ -43,16 +44,16 @@ public class ProcessTokenRepository {
 
     private Tuple update(ProcessToken m) {
         return SQL.tuple(m.processInstance, m.processId, m.processVersion, m.nodeName, m.status.name(),
-                m.type.name(), m.parent, m.reference,
-                m.createdFrom.toArray(new String[]{}), m.data, m.id
+                m.type.name(), m.parent, m.createdFrom.toArray(new String[]{}), m.data, m.finished,
+                m.previousFrom.toArray(new String[]{}), m.previousNodeName, m.id
         );
     }
 
     private Tuple create(ProcessToken m) {
         return SQL.tuple(
                 m.id, m.processInstance, m.processId, m.processVersion, m.nodeName, m.status.name(),
-                m.type.name(), m.parent, m.reference,
-                m.createdFrom.toArray(new String[]{}), m.data
+                m.type.name(), m.parent, m.createdFrom.toArray(new String[]{}), m.data,
+                m.previousFrom.toArray(new String[]{}), m.previousNodeName
         );
     }
 
@@ -75,9 +76,9 @@ public class ProcessTokenRepository {
         return findById(pool, id);
     }
 
-    public Uni<ProcessToken> findByReferenceAndNodeName(Transaction tx, String ref, String nn) {
-        return tx.preparedQuery(SELECT_BY_REF_NODE_NAME)
-                .execute(Tuple.of(ref, nn))
+    public Uni<ProcessToken> findByPIAndNodeName(Transaction tx, String ref, String nn) {
+        return tx.preparedQuery(SELECT_BY_PI_NODE_NAME)
+                .execute(Tuple.of(ref, nn, ProcessToken.Status.CREATED.name()))
                 .map(RowSet::iterator)
                 .map(i -> i.hasNext() ? processTokenMapper.map(i.next()) : null);
     }

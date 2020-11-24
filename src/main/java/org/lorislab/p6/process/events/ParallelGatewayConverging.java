@@ -21,24 +21,26 @@ public class ParallelGatewayConverging implements EventService {
 
     @Override
     public Uni<RuntimeToken> execute(RuntimeToken item) {
+        String next = item.node.next.get(0);
         return processTokenRepository
-                .findByReferenceAndNodeName(item.tx, item.token.parent, item.node.next.get(0))
+                .findByPIAndNodeName(item.tx, item.token.processInstance, next)
                 .onItem().transformToUni(t -> {
                     ProcessToken token;
                     if (t == null) {
-                        token = createToken(item);
+                        token = createToken(item, next);
                         item.changeLog.tokens.add(token);
                     } else {
                         token = t;
                         item.changeLog.updateToken = token;
                     }
                     token.createdFrom.add(item.token.id);
+                    token.previousFrom.add(item.token.previousNodeName);
                     token.data.getMap().putAll(item.token.data.getMap());
 
                     // create message if we finished the gateway
-                    int size1 = token.createdFrom.size();
+                    int size1 = token.previousFrom.size();
                     int size2 = item.node.previous.size();
-                    log.info("Token finished {} node parents {}. Result {}>={}, {}", token.createdFrom, item.node.previous, size1, size2, size1 >= size2);
+                    log.info("Token finished {} node parents {}. Result {}>={}, {}", token.previousFrom, item.node.previous, size1, size2, size1 >= size2);
                     if (size1 >= size2) {
                         log.info("Parallel gateway finished Token:{}", token);
                         item.changeLog.addMessage(token);
@@ -52,24 +54,13 @@ public class ParallelGatewayConverging implements EventService {
                 });
     }
 
-    private ProcessToken createToken(RuntimeToken item) {
-        String next = item.node.next.get(0);
+    private ProcessToken createToken(RuntimeToken item, String next) {
         ProcessToken token = new ProcessToken();
         token.processId = item.token.processId;
         token.processVersion = item.token.processVersion;
         token.nodeName = next;
         token.type = ProcessToken.Type.valueOf(item.pd.nodes.get(next));
-        token.parent = item.token.parent;
         token.processInstance = item.token.processInstance;
-        token.reference = token.parent;
-        token.createdFrom.add(item.token.id);
-        token.data = item.token.data;
-//        if (token.parent != null) {
-//            ProcessToken parent = processTokenDAO.findByGuid(token.parent);
-//            if (parent != null && parent.parent != null) {
-//                token.parent = parent.parent;
-//            }
-//        }
         return token;
     }
 

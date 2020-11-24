@@ -17,7 +17,9 @@
 package org.lorislab.p6.process.rs;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
@@ -36,6 +38,8 @@ public class Application {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(JsonObject.class, new JsonObjectDeserializer());
         DatabindCodec.mapper().registerModule(module);
+
+        DatabindCodec.mapper().registerModule(new JavaTimeModule());
         DatabindCodec.mapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
@@ -65,7 +69,7 @@ public class Application {
         return item ->  {
                 if (item != null) {
                     rc.response().putHeader(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON)
-                            .setStatusCode(code).end(Json.encodePrettily(item));
+                            .setStatusCode(code).end(Json.encode(item));
                 } else {
                     rc.response().setStatusCode(ResponseStatus.NOT_FOUND).end();
                 }

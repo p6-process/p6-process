@@ -26,7 +26,7 @@ public class ProcessInstanceRepository {
     ).returning(ProcessInstance_.ID);
 
     private static final String UPDATE_PI =  SQL.update(TABLE)
-            .columns(ProcessInstance_.PARENT, ProcessInstance_.STATUS, ProcessInstance_.DATA)
+            .columns(ProcessInstance_.PARENT, ProcessInstance_.STATUS, ProcessInstance_.DATA, ProcessInstance_.FINISHED)
             .where(ProcessInstance_.ID)
             .returning(ProcessInstance_.ID);
 
@@ -45,6 +45,7 @@ public class ProcessInstanceRepository {
     public Uni<ProcessInstance> findById(String id) {
         return findById(pool, id);
     }
+
     public Uni<ProcessInstance> findById(SqlClient client, String id) {
         return client.preparedQuery(SELECT_BY_ID).execute(Tuple.of(id))
                 .map(RowSet::iterator)
@@ -63,7 +64,7 @@ public class ProcessInstanceRepository {
 
     public Uni<String> update(Transaction tx, ProcessInstance pi) {
         return tx.preparedQuery(UPDATE_PI)
-                .execute(Tuple.of(pi.parent, pi.status.name(), pi.data, pi.id))
+                .execute(Tuple.of(pi.parent, pi.status.name(), pi.data, pi.finished, pi.id))
                 .onItem().transform(pgRowSet -> pgRowSet.iterator().next().getString(0));
     }
 //
