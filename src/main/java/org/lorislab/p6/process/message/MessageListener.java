@@ -54,6 +54,7 @@ public abstract class MessageListener {
                         tx.close();
                         return Uni.createFrom().item((Long) null);
                     }
+                    log.info("Queue {} message: {}", m.queue, m);
                     return onMessage(tx, m)
                             .onItem()
                             .transform(u -> tx.commit().onItem().transform(x -> u))

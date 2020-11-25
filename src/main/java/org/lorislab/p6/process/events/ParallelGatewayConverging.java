@@ -31,7 +31,6 @@ public class ParallelGatewayConverging implements EventService {
                         item.changeLog.tokens.add(token);
                     } else {
                         token = t;
-                        item.changeLog.updateToken = token;
                     }
                     token.createdFrom.add(item.token.id);
                     token.previousFrom.add(item.token.previousNodeName);

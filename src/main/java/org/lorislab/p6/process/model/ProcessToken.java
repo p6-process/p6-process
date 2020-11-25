@@ -67,7 +67,7 @@ public class ProcessToken {
 
         SERVICE_TASK(ProcessTokenMessageType.SERVICE_TASK_MSG, 1),
 
-        SERVICE_TASK_COMPLETE(ProcessTokenMessageType.TOKEN_MSG, 1),
+        SERVICE_TASK_RESPONSE(ProcessTokenMessageType.TOKEN_MSG, 1),
 
         PARALLEL_GATEWAY_DIVERGING(ProcessTokenMessageType.TOKEN_MSG, -1),
 

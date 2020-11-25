@@ -2,11 +2,15 @@ package org.lorislab.p6.process.model;
 
 
 import io.vertx.mutiny.sqlclient.Tuple;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Slf4j
 public class SQL {
 
     public static Tuple tuple(Object ...data) {
@@ -25,8 +29,17 @@ public class SQL {
         return new Select(table);
     }
 
-    public static class Select {
+    protected static class SqlOp {
         String sql;
+
+        public String build() {
+            log.info("SQL: " + sql);
+            return sql;
+        }
+    }
+
+    public static class Select extends SqlOp {
+
         String table;
 
         Select(String table) {
@@ -44,19 +57,39 @@ public class SQL {
             return this;
         }
 
-        public String where(String... columns) {
+        public Select where(String... columns) {
             sql += " WHERE ";
             sql += IntStream.rangeClosed(1, columns.length)
                     .boxed()
                     .map(x -> columns[x-1] +"=$" + x)
                     .collect(Collectors.joining(" AND "));
-            return sql;
+            return this;
         }
+
+        public Select where(Op... ops) {
+            sql += " WHERE ";
+            sql += IntStream.rangeClosed(1, ops.length)
+                    .boxed()
+                    .map(x -> ops[x-1].get() +"$" + x)
+                    .collect(Collectors.joining(" AND "));
+            return this;
+        }
+    }
+
+    public interface Op extends Supplier<String> {
 
     }
 
-    public static class Update {
-        String sql;
+    public static Op equal(String column) {
+        return () -> column + "=";
+    }
+
+    public static Op not(String column) {
+        return () -> column + "<>";
+    }
+
+    public static class Update extends SqlOp {
+
         int count;
 
         Update(String table) {
@@ -83,19 +116,17 @@ public class SQL {
             return this;
         }
 
-        public String returning(String... returning) {
+        public Update returning(String... returning) {
             if (returning.length > 0) {
                 sql += " RETURNING (";
                 sql += String.join(",", Arrays.asList(returning));
                 sql += ")";
             }
-            return sql;
+            return this;
         }
     }
 
-    public static class Insert {
-
-        String sql;
+    public static class Insert extends SqlOp {
 
         Insert(String table) {
             sql = "INSERT INTO " + table + " (";
@@ -109,13 +140,13 @@ public class SQL {
             return this;
         }
 
-        public String returning(String... returning) {
+        public Insert returning(String... returning) {
             if (returning.length > 0) {
                 sql += " RETURNING (";
                 sql += String.join(",", Arrays.asList(returning));
                 sql += ")";
             }
-            return sql;
+            return this;
         }
     }
 }

@@ -34,11 +34,10 @@ public class ServiceTaskResponseMessageListener extends MessageListener {
     @Override
     protected Uni<Long> onMessage(Transaction tx, Message message) {
         log.info("Queue {} message: {}", message.queue, message);
-//        return Uni.createFrom().item(message.id);
         TokenMessageHeader header = message.header(TokenMessageHeader.class);
         return processTokenRepository.findById(tx, header.tokenId)
                 .onItem().transformToUni(token -> {
-                    token.type = ProcessToken.Type.SERVICE_TASK_COMPLETE;
+                    token.type = ProcessToken.Type.SERVICE_TASK_RESPONSE;
                     token.data.getMap().putAll(message.data.getMap());
                     return processTokenService.executeToken(tx, token, message.id);
                 });

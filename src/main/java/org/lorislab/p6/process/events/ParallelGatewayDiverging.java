@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Unremovable
 @ApplicationScoped
 @EventType(ProcessToken.Type.PARALLEL_GATEWAY_DIVERGING)
@@ -22,29 +21,18 @@ public class ParallelGatewayDiverging implements EventService {
     @Override
     public Uni<RuntimeToken> execute(RuntimeToken item) {
         item.node.next.forEach(next -> {
-            ProcessToken tmp = createToken(next, item.token, item.pd);
+            ProcessToken tmp = createToken(next, item);
             item.changeLog.addMessage(tmp);
             item.changeLog.tokens.add(tmp);
         });
         item.token.status = ProcessToken.Status.FINISHED;
         item.token.finished = LocalDateTime.now();
 
+
         item.savePoint = true;
         item.moveToNull();
         return uni(item);
     }
 
-    private static ProcessToken createToken(String next, ProcessToken token, ProcessDefinition pd) {
-        ProcessToken child = new ProcessToken();
-        child.nodeName = next;
-        child.processId = token.processId;
-        child.processVersion = token.processVersion;
-        child.processInstance = token.processInstance;
-        child.status = ProcessToken.Status.IN_EXECUTION;
-        child.type = ProcessToken.Type.valueOf(pd.nodes.get(next));
-        child.data = token.data;
-        child.createdFrom.add(token.id);
-        child.previousFrom.add(token.nodeName);
-        return child;
-    }
+
 }

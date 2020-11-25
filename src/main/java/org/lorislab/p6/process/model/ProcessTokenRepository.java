@@ -9,19 +9,24 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.lorislab.p6.process.model.SQL.equal;
+import static org.lorislab.p6.process.model.SQL.not;
+
 @ApplicationScoped
 public class ProcessTokenRepository {
 
     private static final String TABLE = "PROCESS_TOKEN";
 
-    private static final String SELECT_BY_ID = SQL.select(TABLE).from().where(ProcessToken_.ID);
+    private static final String SELECT_BY_ID = SQL.select(TABLE).from().where(ProcessToken_.ID)
+            .build();
 
     private static final String CREATE_TOKEN = SQL.insert(TABLE).columns(
                 ProcessToken_.ID, ProcessToken_.PROCESS_INSTANCE, ProcessToken_.PROCESS_ID,
                 ProcessToken_.PROCESS_VERSION, ProcessToken_.NODE_NAME, ProcessToken_.STATUS,
                 ProcessToken_.TYPE, ProcessToken_.PARENT, ProcessToken_.CREATED_FROM,
                 ProcessToken_.DATA, ProcessToken_.PREVIOUS_FROM, ProcessToken_.PREVIOUS_NODE_NAME
-            ).returning(ProcessToken_.ID);
+            ).returning(ProcessToken_.ID)
+            .build();
 
     private static final String UPDATE_TOKEN =  SQL.update(TABLE).columns(
                 ProcessToken_.PROCESS_INSTANCE, ProcessToken_.PROCESS_ID,
@@ -30,10 +35,18 @@ public class ProcessTokenRepository {
                 ProcessToken_.CREATED_FROM, ProcessToken_.DATA, ProcessToken_.FINISHED,
                 ProcessToken_.PREVIOUS_FROM, ProcessToken_.PREVIOUS_NODE_NAME
             ).where(ProcessToken_.ID)
-            .returning(ProcessToken_.ID);
+            .returning(ProcessToken_.ID)
+            .build();
 
     private static final String SELECT_BY_PI_NODE_NAME = SQL.select(TABLE)
-            .from().where(ProcessToken_.PROCESS_INSTANCE, ProcessToken_.NODE_NAME, ProcessToken_.STATUS);
+            .from().where(ProcessToken_.PROCESS_INSTANCE, ProcessToken_.NODE_NAME, ProcessToken_.STATUS)
+            .build();
+
+    private static final String SELECT_COUNT_ACTIVE = SQL.select(TABLE)
+            .from("COUNT(*)")
+            .where(equal(ProcessToken_.PROCESS_INSTANCE), not(ProcessToken_.ID), not(ProcessToken_.STATUS), not(ProcessToken_.STATUS))
+            .build();
+
 
     @Inject
     PgPool pool;
@@ -76,9 +89,9 @@ public class ProcessTokenRepository {
         return findById(pool, id);
     }
 
-    public Uni<ProcessToken> findByPIAndNodeName(Transaction tx, String ref, String nn) {
+    public Uni<ProcessToken> findByPIAndNodeName(Transaction tx, String processInstance, String nodeName) {
         return tx.preparedQuery(SELECT_BY_PI_NODE_NAME)
-                .execute(Tuple.of(ref, nn, ProcessToken.Status.CREATED.name()))
+                .execute(Tuple.of(processInstance, nodeName, ProcessToken.Status.CREATED.name()))
                 .map(RowSet::iterator)
                 .map(i -> i.hasNext() ? processTokenMapper.map(i.next()) : null);
     }
@@ -87,13 +100,11 @@ public class ProcessTokenRepository {
         return tx.preparedQuery(UPDATE_TOKEN).execute(update(token))
                 .onItem().transform(pgRowSet -> pgRowSet.iterator().next().getString(0));
     }
-//
-//    public Uni<String> update(Transaction tx, List<ProcessToken> tokens) {
-//        return tx.preparedQuery(
-//                "UPDATE PROCESS_TOKEN SET processinstance=$2,processid=$3,processversion=$4,nodename=$5," +
-//                        "status=$6,type=$7,executionId=$8,parent=$9,reference=$10,createdfrom=$11,data=$12 " +
-//                        " WHERE id=$1 RETURNING (id)")
-//                .executeBatch(tuple(tokens))
-//                .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getString(0));
-//    }
+
+    public Uni<Long> countActive(Transaction tx, String processInstance, String ignoreTokenId) {
+        return tx.preparedQuery(SELECT_COUNT_ACTIVE)
+                .execute(Tuple.of(processInstance, ignoreTokenId, ProcessToken.Status.FAILED.name(), ProcessToken.Status.FINISHED.name()))
+                .map(RowSet::iterator)
+                .map(i -> i.hasNext() ? i.next().getLong(0) : 0);
+    }
 }

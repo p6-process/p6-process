@@ -58,8 +58,6 @@ public class RuntimeToken {
 
         public Map<String, List<Message>> messages = new HashMap<>();
 
-        public ProcessToken updateToken;
-
         public ProcessInstance updateProcessInstance;
 
         public void addMessage(ProcessToken token) {

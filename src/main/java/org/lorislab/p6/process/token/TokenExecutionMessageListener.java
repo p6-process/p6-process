@@ -30,7 +30,6 @@ public class TokenExecutionMessageListener extends MessageListener {
 
     @Override
     protected Uni<Long> onMessage(Transaction tx, Message message) {
-        log.info("Queue {} message: {}", message.queue, message);
         TokenMessageHeader header = message.header(TokenMessageHeader.class);
         return processTokenRepository.findById(tx, header.tokenId)
                 .onItem().transformToUni(token -> processTokenService.executeToken(tx, token, message.id));

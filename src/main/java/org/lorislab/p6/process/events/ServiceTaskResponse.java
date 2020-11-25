@@ -11,8 +11,8 @@ import javax.enterprise.context.ApplicationScoped;
 @Slf4j
 @Unremovable
 @ApplicationScoped
-@EventType(ProcessToken.Type.SERVICE_TASK_COMPLETE)
-public class ServiceTaskComplete implements EventService {
+@EventType(ProcessToken.Type.SERVICE_TASK_RESPONSE)
+public class ServiceTaskResponse implements EventService {
 
     @Override
     public Uni<RuntimeToken> execute(RuntimeToken item) {

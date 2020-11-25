@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.lorislab.p6.process.model.ProcessInstanceRepository;
 import org.lorislab.p6.process.model.ProcessInstance;
 import org.lorislab.p6.process.model.ProcessToken;
+import org.lorislab.p6.process.model.ProcessTokenRepository;
 import org.lorislab.p6.process.token.RuntimeToken;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -21,34 +22,39 @@ public class EndEvent implements EventService {
     @Inject
     ProcessInstanceRepository processInstanceRepository;
 
+    @Inject
+    ProcessTokenRepository processTokenRepository;
+
     @Override
     public Uni<RuntimeToken> execute(RuntimeToken item) {
-        if (item.token.status != ProcessToken.Status.FINISHED) {
+        return Uni.combine().all()
+                .unis(
+                    processInstanceRepository.findById(item.tx,item.token.processInstance),
+                    processTokenRepository.countActive(item.tx,item.token.processInstance, item.token.id))
+                .combinedWith((processInstance, count) -> update(item, processInstance, count));
+    }
 
-            // load process instance
-            return processInstanceRepository.findById(item.tx,item.token.processInstance)
-                    .onItem().transformToUni(p -> {
+    private RuntimeToken update(RuntimeToken item, ProcessInstance processInstance, Long count) {
+        if (processInstance == null) {
+            log.warn("No process instance {} fount token {}", item.token.processInstance, item.token.id);
+            item.savePoint = true;
+            return item;
+        }
+        log.info("MessageId: {}, ProcessInstance: {}, Active token: {}", item.messageId, processInstance.id, count);
 
-                        // FINISHED process instance
-                        p.status = ProcessInstance.Status.FINISHED;
-                        p.finished = LocalDateTime.now();
+        processInstance.data.getMap().putAll(item.token.data.getMap());
+        item.token.status = ProcessToken.Status.FINISHED;
+        item.token.finished = LocalDateTime.now();
 
-                        p.data.getMap().putAll(item.token.data.getMap());
-                        item.token.status = ProcessToken.Status.FINISHED;
-                        item.token.finished = p.finished;
+        item.changeLog.updateProcessInstance = processInstance;
 
-                        item.changeLog.updateProcessInstance = p;
-                        item.changeLog.updateToken = item.token;
-
-                        item.savePoint = true;
-                        item.moveToNull();
-                        return uni(item);
-                    });
-        } else {
-            log.warn("Token {} is already finished.", item.token);
+        if (count == 0) {
+            processInstance.status = ProcessInstance.Status.FINISHED;
+            processInstance.finished = item.token.finished;
         }
 
         item.savePoint = true;
-        return uni(item);
+        item.moveToNull();
+        return item;
     }
 }

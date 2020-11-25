@@ -27,7 +27,6 @@ public class ProcessCommandMessageListener extends MessageListener {
 
     @Override
     protected Uni<Long> onMessage(Transaction tx, Message message) {
-        log.info("Queue {} message: {}", message.queue, message);
         ProcessMessageHeader header = message.header(ProcessMessageHeader.class);
 
         // execute start process request

@@ -41,6 +41,7 @@ public class Application {
 
         DatabindCodec.mapper().registerModule(new JavaTimeModule());
         DatabindCodec.mapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        DatabindCodec.mapper().disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     /**

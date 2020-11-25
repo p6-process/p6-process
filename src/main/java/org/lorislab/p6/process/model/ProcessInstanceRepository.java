@@ -15,20 +15,24 @@ public class ProcessInstanceRepository {
 
     private static final String TABLE = "PROCESS_INSTANCE";
 
-    private static final String SELECT_BY_CMD_ID = SQL.select(TABLE).from().where(ProcessInstance_.CMD_ID);
+    private static final String SELECT_BY_CMD_ID = SQL.select(TABLE).from().where(ProcessInstance_.CMD_ID)
+            .build();
 
-    private static final String SELECT_BY_ID = SQL.select(TABLE).from().where(ProcessInstance_.ID);
+    private static final String SELECT_BY_ID = SQL.select(TABLE).from().where(ProcessInstance_.ID)
+            .build();
 
     private static final String CREATE_PI = SQL.insert(TABLE).columns(
             ProcessInstance_.ID, ProcessInstance_.PARENT, ProcessInstance_.PROCESS_ID,
             ProcessInstance_.PROCESS_VERSION, ProcessInstance_.STATUS,
             ProcessInstance_.DATA, ProcessInstance_.CMD_ID
-    ).returning(ProcessInstance_.ID);
+    ).returning(ProcessInstance_.ID)
+            .build();
 
     private static final String UPDATE_PI =  SQL.update(TABLE)
             .columns(ProcessInstance_.PARENT, ProcessInstance_.STATUS, ProcessInstance_.DATA, ProcessInstance_.FINISHED)
             .where(ProcessInstance_.ID)
-            .returning(ProcessInstance_.ID);
+            .returning(ProcessInstance_.ID)
+            .build();
 
     @Inject
     PgPool pool;
