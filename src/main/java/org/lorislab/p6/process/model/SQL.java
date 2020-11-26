@@ -13,139 +13,330 @@ import java.util.stream.IntStream;
 @Slf4j
 public class SQL {
 
+    public static Tuple tuple(Object data) {
+        return Tuple.of(data);
+    }
+
     public static Tuple tuple(Object ...data) {
         return Tuple.tuple(Arrays.asList(data));
     }
 
-    public static Update update(String table) {
-        return new Update(table);
+    public interface For extends Supplier<String> {
     }
 
-    public static Insert insert(String table) {
-        return new Insert(table);
+    public static For update() {
+        return () -> "UPDATE";
+    }
+    public static For skipLocked() {
+        return () -> "SKIP LOCKED";
     }
 
-    public static Select select(String table) {
-        return new Select(table);
+    public static String all() {
+        return "*";
     }
 
-    protected static class SqlOp {
-        String sql;
-
-        public String build() {
-            log.info("SQL: " + sql);
-            return sql;
-        }
+    public static String count(String... columns) {
+        return "COUNT(" + String.join(",", columns) + ")";
     }
 
-    public static class Select extends SqlOp {
+    public static String count() {
+        return count(all());
+    }
 
-        String table;
+    public static String value(String value) {
+        return "'" + value + "'";
+    }
 
-        Select(String table) {
-            this.table = table;
-            sql = "SELECT ";
-        }
+    public static String alias(String column, String alias) {
+        return column + " as " + alias;
+    }
 
-        public Select from(String ... columns) {
-            if (columns.length > 0) {
-                sql += String.join(",", Arrays.asList(columns));
-            } else {
-                sql += "*";
-            }
-            sql += " FROM " + table;
-            return this;
-        }
+    public interface Order extends Supplier<String> {
+    }
 
-        public Select where(String... columns) {
-            sql += " WHERE ";
-            sql += IntStream.rangeClosed(1, columns.length)
-                    .boxed()
-                    .map(x -> columns[x-1] +"=$" + x)
-                    .collect(Collectors.joining(" AND "));
-            return this;
-        }
+    public static Order asc(String column) {
+        return () -> column + " ASC";
+    }
 
-        public Select where(Op... ops) {
-            sql += " WHERE ";
-            sql += IntStream.rangeClosed(1, ops.length)
-                    .boxed()
-                    .map(x -> ops[x-1].get() +"$" + x)
-                    .collect(Collectors.joining(" AND "));
-            return this;
-        }
+    public static Order desc(String column) {
+        return () -> column + " DESC";
     }
 
     public interface Op extends Supplier<String> {
-
     }
 
     public static Op equal(String column) {
         return () -> column + "=";
     }
 
+    public static Op equal(String column, String sql) {
+        return () -> column + " = (" + sql + ")";
+    }
+
     public static Op not(String column) {
         return () -> column + "<>";
+    }
+
+    public static Update update(String table) {
+        return new Update(table);
+    }
+
+    public static Insert insert(String ... columns) {
+        return new Insert(columns);
+    }
+
+    public static Select select(String col, String ... cols) {
+        return new Select(col, cols);
+    }
+
+    public static Delete delete() {
+        return new Delete();
+    }
+
+    protected static abstract class SqlOp {
+        protected String sql(String sql) {
+            log.debug("SQL: {}", sql);
+            return sql;
+        }
+        public abstract String build();
+        public abstract String build(String table);
+    }
+
+    public static class Select extends SqlOp {
+
+        private String columns;
+
+        private String table;
+
+        private String where;
+
+        private String orderBy;
+
+        private String extend;
+
+        private String limit;
+
+        Select(String col, String ... cols) {
+            select(col, cols);
+        }
+
+        public Select select(String col, String ... cols) {
+            if (cols.length > 0) {
+                this.columns = col + "," + String.join(",", Arrays.asList(cols));
+            } else {
+                this.columns = col;
+            }
+            return this;
+        }
+
+        @Override
+        public String build() {
+            return build(table);
+        }
+
+        @Override
+        public String build(String table) {
+            String sql = "SELECT " + columns + " FROM " + table;
+            if (where != null) {
+                sql += " WHERE " + where;
+            }
+            if (orderBy != null) {
+                sql += " ORDER BY " + orderBy;
+            }
+            if (extend != null) {
+                sql += " FOR " + extend;
+            }
+            if (limit != null) {
+                sql += " LIMIT " + limit;
+            }
+            return sql(sql);
+        }
+
+        public Select from(String table) {
+            this.table = table;
+            return this;
+        }
+
+        public Select where(Op... ops) {
+            where = IntStream.rangeClosed(1, ops.length)
+                    .boxed()
+                    .map(x -> ops[x-1].get() +"$" + x)
+                    .collect(Collectors.joining(" AND "));
+            return this;
+        }
+
+        public Select orderBy(Order ... orders) {
+            this.orderBy = Arrays.stream(orders).map(Supplier::get).collect(Collectors.joining(","));
+            return this;
+        }
+
+        public Select extend(For ... items) {
+            this.extend = Arrays.stream(items).map(Supplier::get).collect(Collectors.joining(" "));
+            return this;
+        }
+
+        public Select limit(String limit) {
+            this.limit = limit;
+            return this;
+        }
+
+        public Select limit(Long limit) {
+           return limit("" + limit);
+        }
     }
 
     public static class Update extends SqlOp {
 
         int count;
 
+        String returning;
+
+        String table;
+
+        String columns;
+
+        String where;
+
         Update(String table) {
-            sql = "UPDATE " + table + " SET ";
+            update(table);
         }
 
-        public Update columns(String... columns) {
-            count = columns.length;
-            sql += IntStream.rangeClosed(1, count)
-                    .boxed()
-                    .map(x -> columns[x-1] +"=$" + x)
-                    .collect(Collectors.joining(","));
+        @Override
+        public String build() {
+            return build(table);
+        }
+
+        @Override
+        public String build(String table) {
+            String sql = "UPDATE " + table + " SET " + columns;
+            if (where != null) {
+                sql += " WHERE " + where;
+            }
+            if (returning != null) {
+                sql += " RETURNING " + returning;
+            }
+            return sql(sql);
+        }
+
+        public Update update(String table) {
+            this.table = table;
             return this;
         }
 
-        public Update where(String... columns) {
-            sql += " WHERE ";
+        public Update set(String... columns) {
+            this.count = columns.length;
+            this.columns = IntStream.rangeClosed(1, count).boxed().map(x -> columns[x-1] +"=$" + x).collect(Collectors.joining(","));
+            return this;
+        }
+
+        public Update where(Op... ops) {
             int begin = count + 1;
-            count = count + columns.length;
-            sql += IntStream.rangeClosed(begin, count)
+            where = IntStream.rangeClosed(begin, count + ops.length)
                     .boxed()
-                    .map(x -> columns[x-begin] +"=$" + x)
+                    .map(x -> ops[x-begin].get() +"$" + x)
                     .collect(Collectors.joining(" AND "));
             return this;
         }
 
         public Update returning(String... returning) {
-            if (returning.length > 0) {
-                sql += " RETURNING (";
-                sql += String.join(",", Arrays.asList(returning));
-                sql += ")";
-            }
+            this.returning = String.join(",", returning);
             return this;
         }
     }
 
     public static class Insert extends SqlOp {
 
-        Insert(String table) {
-            sql = "INSERT INTO " + table + " (";
+        String columns;
+
+        String values;
+
+        String table;
+
+        String returning;
+
+        Insert(String... columns) {
+            columns(columns);
+        }
+
+        @Override
+        public String build(String table) {
+            String sql = "INSERT INTO " + table + columns + " VALUES " + values;
+            if (returning != null) {
+                sql += " RETURNING " + returning;
+            }
+            return sql(sql);
+        }
+
+        @Override
+        public String build() {
+            return build(table);
+        }
+
+        public Insert into(String table) {
+            this.table = table;
+            return this;
         }
 
         public Insert columns(String... columns) {
-            sql += String.join(",", Arrays.asList(columns));
-            sql += ") VALUES (";
-            sql += IntStream.rangeClosed(1, columns.length).boxed().map(x -> "$" + x).collect(Collectors.joining(","));
-            sql += ")";
+            this.columns = Arrays.stream(columns).collect(Collectors.joining(",", " (", ")"));
+            this.values = IntStream.rangeClosed(1, columns.length).boxed().map(x -> "$" + x).collect(Collectors.joining(",", "(", ")"));
             return this;
         }
 
         public Insert returning(String... returning) {
-            if (returning.length > 0) {
-                sql += " RETURNING (";
-                sql += String.join(",", Arrays.asList(returning));
-                sql += ")";
+            this.returning = String.join(" ,", returning);
+            return this;
+        }
+    }
+
+    public static class Delete extends SqlOp {
+
+        String table;
+
+        String where;
+
+        String returning;
+
+        Delete() {
+        }
+
+        @Override
+        public String build() {
+            return build(table);
+        }
+
+        @Override
+        public String build(String table) {
+            String sql = "DELETE FROM " + table;
+            if (where != null) {
+                sql += " WHERE " + where;
             }
+            if (returning != null) {
+                sql += " RETURNING " + returning;
+            }
+            return sql(sql);
+        }
+
+        public Delete from(String table) {
+            this.table = table;
+            return this;
+        }
+
+        public Delete where(Op... ops) {
+            where = IntStream.rangeClosed(1, ops.length)
+                    .boxed()
+                    .map(x -> ops[x-1].get() +"$" + x)
+                    .collect(Collectors.joining(" AND "));
+            return this;
+        }
+
+        public Delete where(Op op) {
+            where = op.get();
+            return this;
+        }
+
+        public Delete returning(String... returning) {
+            this.returning = String.join(" ,", returning);
             return this;
         }
     }
