@@ -23,7 +23,6 @@ public class TokenSingletonMessageListener extends MessageListener {
     ProcessTokenService processTokenService;
 
     @Override
-    @LogService(log = false)
     protected String name() {
         return Queues.TOKEN_SINGLETON_QUEUE;
     }

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionLoader;
 import org.lorislab.p6.process.model.runtime.ProcessDefinitionRuntime;
+import org.lorislab.quarkus.log.cdi.LogService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Singleton;
@@ -19,7 +20,7 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
-public class DeploymentService {
+public class DeploymentService extends AbstractTest {
 
     @ConfigProperty(name = "p6.deployment.enabled", defaultValue = "true")
     boolean enabled;
@@ -29,6 +30,7 @@ public class DeploymentService {
 
     private final Map<String, ProcessDefinitionRuntime> DEFINITIONS = new HashMap<>();
 
+    @LogService(stacktrace = false)
     public void start() {
         if (!enabled) {
             log.info("Deployment is disabled");

@@ -26,7 +26,6 @@ public class ServiceTaskResponseMessageListener extends MessageListener {
     ProcessTokenService processTokenService;
 
     @Override
-    @LogService(log = false)
     protected String name() {
         return Queues.SERVICE_TASK_RESPONSE_QUEUE;
     }

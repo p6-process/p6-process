@@ -58,10 +58,6 @@ public class SQL {
         return () -> column + " ASC";
     }
 
-    public static Order desc(String column) {
-        return () -> column + " DESC";
-    }
-
     public interface Op extends Supplier<String> {
     }
 

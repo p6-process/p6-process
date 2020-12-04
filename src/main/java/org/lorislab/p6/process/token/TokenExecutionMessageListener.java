@@ -23,7 +23,6 @@ public class TokenExecutionMessageListener extends MessageListener {
     ProcessTokenService processTokenService;
 
     @Override
-    @LogService(log = false)
     protected String name() {
         return Queues.TOKEN_EXECUTE_QUEUE;
     }

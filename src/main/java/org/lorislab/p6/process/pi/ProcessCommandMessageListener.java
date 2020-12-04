@@ -20,7 +20,6 @@ public class ProcessCommandMessageListener extends MessageListener {
     ProcessInstanceService processInstanceService;
 
     @Override
-    @LogService(log = false)
     protected String name() {
         return Queues.PROCESS_REQUEST;
     }

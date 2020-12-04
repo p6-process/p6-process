@@ -26,10 +26,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.ext.web.RoutingContext;
 
-import io.vertx.mutiny.sqlclient.Row;
-import io.vertx.mutiny.sqlclient.SqlClient;
-import org.lorislab.quarkus.log.cdi.LogParam;
-
 import java.util.function.Consumer;
 
 public class Application {
@@ -84,19 +80,4 @@ public class Application {
         };
     }
 
-    @LogParam(assignableFrom = {RoutingContext.class})
-    public static String logRoutingContext(Object message) {
-        RoutingContext r = (RoutingContext) message;
-        return r.normalisedPath();
-    }
-
-    @LogParam(assignableFrom = {SqlClient.class})
-    public static String logTransaction(Object object) {
-        return "tx:" + object.hashCode();
-    }
-
-    @LogParam(assignableFrom = {Row.class})
-    public static String logRow(Object object) {
-        return "row:" + object.hashCode();
-    }
 }
