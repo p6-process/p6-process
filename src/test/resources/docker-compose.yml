@@ -2,72 +2,39 @@ version: "2"
 
 services:
 
-  p6-executor-artemis:
-    container_name: p6-executor-artemis
-    image: vromero/activemq-artemis:2.9.0-alpine
-    environment:
-      ARTEMIS_USERNAME: "admin"
-      ARTEMIS_PASSWORD: "admin"
-      DISABLE_SECURITY: "true"
-      ARTEMIS_PERF_JOURNAL: "NEVER"
-    volumes:
-      - ./broker-00.xml:/var/lib/artemis/etc-override/broker-00.xml
-    labels:
-      - "test.Wait.forLogMessage.regex=.*AMQ241004: Artemis Console available at.*"
-      - "test.Wait.forLogMessage.times=1"
-      - "test.log=true"
-      - "test.property.amqp-port=$${port:p6-executor-artemis:5672}"
-      - "test.property.amqp-host=$${host:p6-executor-artemis}"
-      - "test.property.amqp-client-port=$${port:p6-executor-artemis:5672}"
-      - "test.property.amqp-client-host=$${host:p6-executor-artemis}"
-    ports:
-      - "8161:8161"
-      - "5672:5672"
-    networks:
-      - test
-      -
-  p6-executor-postgres:
-    container_name: p6-executor-postgres
-    image: postgres:10.5
+  p6-db:
+    container_name: p6-db
+    image: bitnami/postgresql:12.2.0
     environment:
       POSTGRES_DB: "p6"
       POSTGRES_USER: "p6"
       POSTGRES_PASSWORD: "p6"
+      DISABLE_WELCOME_MESSAGE: "true"
     labels:
       - "test.Wait.forLogMessage.regex=.*database system is ready to accept connections.*\\s"
-      - "test.Wait.forLogMessage.times=2"
-      - "test.log=true"
-      - "test.property.quarkus.datasource.url=jdbc:postgresql://$${host:p6-executor-postgres}:$${port:p6-executor-postgres:5432}/p6?sslmode=disable"
-    ports:
-      - "5433:5433"
-    networks:
-      - test
-
-  p6-executor-infinispan:
-    container_name: p6-executor-infinispan
-    image: quay.io/lorislab/infinispan-quarkus-server:27102019
-    ports:
-      - "11222:11222"
-    labels:
-      - "test.Wait.forLogMessage.regex=.*Infinispan Server.*started in.*"
       - "test.Wait.forLogMessage.times=1"
       - "test.log=true"
-      - "test.property.quarkus.infinispan-client.server-list=$${host:p6-executor-infinispan}:$${port:p6-executor-infinispan:11222}"
+      - "test.property.quarkus.datasource.reactive.url=postgresql://$${host:p6-db}:$${port:p6-db:5432}/p6?sslmode=disable"
+      - "test.property.pg.port=$${port:p6-db:5432}"
+      - "test.property.pg.host=$${host:p6-db}"
+    ports:
+      - "5432:5432"
     networks:
-      - test
+      - "test"
 
-  p6-executor:
-    container_name: p6-executor
-    image: quay.io/p6-process/p6-executor:latest
+  p6-process:
+    container_name: p6-process
+    image: p6-process:latest
     ports:
       - "8080:8080"
+    environment:
+      QUARKUS_GRPC_CLIENTS_ETCD_PORT: 2379
+      QUARKUS_GRPC_CLIENTS_ETCD_HOST: p6-etcd
     labels:
       - "test.unit=false"
       - "test.priority=101"
       - "test.image.pull=DEFAULT"
-      - "test.env.QUARKUS_DATASOURCE_URL=jdbc:postgresql://p6-executor-postgres:5432/p6?sslmode=disable"
-      - "test.env.QUARKUS_INFINISPAN_CLIENT_SERVER_LIST=p6-executor-infinispan:11222"
-      - "test.env.AMQP_HOST=p6-executor-artemis"
+      - "test.property.quarkus.http.test-port=$${port:p6-process:8080}"
     volumes:
       - ./p6:/work/p6
     networks:

@@ -1,0 +1,14 @@
+id: startEndProcess
+version: 1.2.3
+labels:
+  application: test
+  module: module
+metadata:
+  ALL_PARAMETERS: true
+nodes:
+  start:
+    type: START_EVENT
+    next:
+      - end
+  end:
+    type: END_EVENT

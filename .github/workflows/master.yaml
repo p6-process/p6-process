@@ -5,46 +5,41 @@ on:
     branches:
       - master
 env:
-  SAMO_VER: 1.11.0
-  GRAALVM_VER: 19.3.1
-  GRAALVM_JAVA: java11
-  GRAALVM_HOME: .graalvm
-  JAVA_HOME: .graalvm
-  MAVEN_CLI_OPTS: "-s .m2/settings.xml --batch-mode"
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  SAMO_DOCKER_CONFIG: ${{ secrets.DOCKER_CONFIG }}
+  SAMO_VER: 2.0.0
+  SAMO_DOCKER_REGISTRY: ghcr.io
+  SAMO_DOCKER_REPO_PREFIX: lorislab
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Samo
-        run: |
-          curl https://github.com/lorislab/samo/releases/download/$SAMO_VER/samo_${SAMO_VER}_Linux_x86_64.tar.gz -O -J -L && tar xfz samo_${SAMO_VER}_Linux_x86_64.tar.gz samo
-          sudo mv samo /usr/local/bin/.
-          rm *.tar.gz
-      - name: GraalVM
-        run: |
-          curl https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-$GRAALVM_VER/graalvm-ce-$GRAALVM_JAVA-linux-amd64-$GRAALVM_VER.tar.gz -O -J -L && tar xfz graalvm-ce-$GRAALVM_JAVA-linux-amd64-$GRAALVM_VER.tar.gz
-          mv graalvm-ce-$GRAALVM_JAVA-$GRAALVM_VER $GRAALVM_HOME
-          $GRAALVM_HOME/bin/gu install native-image
-          rm *.tar.gz
       - uses: actions/cache@v1
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
-      - name: Config build
+      - name: setup-graalvm-ce
+        uses: rinx/setup-graalvm-ce@v0.0.5
+        with:
+          graalvm-version: "20.2.0"
+          java-version: "java11"
+          native-image: "true"
+      - name: Install samo
         run: |
-          samo docker config
-          samo maven settings-add-server
-          samo maven set-build-version
+          curl https://github.com/lorislab/samo/releases/download/$SAMO_VER/samo_${SAMO_VER}_Linux_x86_64.tar.gz -O -J -L && tar xfz samo_${SAMO_VER}_Linux_x86_64.tar.gz samo
+          chmod +x samo
+          sudo mv samo /usr/local/bin/.
+          rm *.tar.gz
       - name: Build application
-        run: mvn $MAVEN_CLI_OPTS clean package -Pnative
+        run: |
+           samo project version set --version build
+           mvn --batch-mode clean package -Dnative
       - name: Build docker
-        run: samo maven docker-build
+        run: samo project docker build --version build,latest,dev
       - name: Test docker
-        run: mvn $MAVEN_CLI_OPTS failsafe:integration-test
+        run: mvn --batch-mode failsafe:integration-test failsafe:verify
       - name: Publish docker
-        run: samo maven docker-push
+        run: |
+          echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u USERNAME --password-stdin
+          samo project docker push --docker-push-tags latest

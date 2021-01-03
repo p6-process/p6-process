@@ -16,7 +16,9 @@
 
 package org.lorislab.p6.process.rs;
 
+import io.quarkus.test.junit.NativeImageTest;
 
-public class ProcessInstanceRestControllerTestIT extends ProcessInstanceRestControllerT {
+@NativeImageTest
+public class ProcessInstanceRestControllerTestIT extends ProcessInstanceRestControllerTest {
 
 }

@@ -16,216 +16,277 @@
 
 package org.lorislab.p6.process.test;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.restassured.RestAssured;
-import io.vertx.amqp.*;
+import io.restassured.response.Response;
+import io.smallrye.mutiny.Uni;
 import io.vertx.core.json.JsonObject;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.lorislab.jel.testcontainers.docker.DockerComposeService;
-import org.lorislab.jel.testcontainers.docker.DockerTestEnvironment;
-import org.lorislab.p6.process.flow.model.*;
+import io.vertx.mutiny.pgclient.PgPool;
+import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.sqlclient.PoolOptions;
+import org.junit.jupiter.api.Assertions;
+import org.lorislab.p6.process.message.Message;
+import org.lorislab.p6.process.message.MessageMapperImpl;
+import org.lorislab.p6.process.message.MessageRepository;
+import org.lorislab.p6.process.message.Queues;
+import org.lorislab.p6.process.model.ProcessInstance;
+import org.lorislab.p6.process.rs.StartProcessCommandDTO;
+import org.lorislab.p6.process.token.TokenMessageHeader;
+import org.lorislab.quarkus.testcontainers.DockerComposeTestResource;
+import org.lorislab.quarkus.testcontainers.QuarkusTestcontainers;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import org.lorislab.jel.testcontainers.InjectLoggerExtension;
+import java.time.Duration;
+import java.util.Map;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.lorislab.p6.process.rs.Application.APPLICATION_JSON;
 
 /**
  * The abstract test
  */
-@ExtendWith(InjectLoggerExtension.class)
+@QuarkusTestcontainers
+@QuarkusTestResource(DockerComposeTestResource.class)
 public abstract class AbstractTest {
 
-    public static DockerTestEnvironment ENVIRONMENT = new DockerTestEnvironment();
+    protected Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public static String ADDRESS_DEPLOYMENT = "deployment";
+    private static final PgPool PG_POOL;
 
-    static String ADDRESS_START_PROCESS = "process-start";
-
-    static String ADDRESS_SERVICE_TASK = "service-task";
-
-    static String ADDRESS_TOKEN_EXECUTE = "token-execute";
-
-    @Inject
-    protected Logger log;
-
-    /**
-     * Starts the containers before the tests
-     */
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-
-        ENVIRONMENT.start();
-        DockerComposeService testService = ENVIRONMENT.getService("p6-executor");
-        if (testService != null) {
-            RestAssured.port = testService.getPort(8080);
-        }
+        PG_POOL = createPgPool();
     }
 
-    protected AmqpMessage receivedMessage(String address) {
-        return receivedMessage(address, 5);
+    private static PgPool createPgPool() {
+        PoolOptions poolOptions = new PoolOptions();
+        PgConnectOptions con = new PgConnectOptions();
+        con.setHost(System.getProperty("pg.host", "localhost"));
+        con.setUser(System.getProperty("pg.user", "p6"));
+        con.setPassword(System.getProperty("pg.password", "p6"));
+        con.setDatabase(System.getProperty("pg.database", "p6"));
+        con.setPort(Integer.parseInt(System.getProperty("pg.port", "5432")));
+        return new PgPool(io.vertx.pgclient.PgPool.pool(con, poolOptions));
     }
 
-    protected AmqpMessage receivedMessage(String address, long timeout) {
-
-        AmqpClient client = null;
-        try {
-            client = AmqpClient.create(new AmqpClientOptions());
-
-            CompletableFuture<AmqpReceiver> rf = new CompletableFuture<>();
-            client.createReceiver(address, x -> rf.complete(x.result()));
-            AmqpReceiver receiver = rf.get(timeout, TimeUnit.SECONDS);
-
-            CompletableFuture<AmqpMessage> message = new CompletableFuture<>();
-            receiver.handler(message::complete);
-            return message.get(5, TimeUnit.SECONDS);
-        } catch (TimeoutException | InterruptedException | ExecutionException ex) {
-            throw new IllegalStateException("Error received message", ex);
-        } finally {
-            close(client);
-        }
+    protected Long sendMessage(Message message) {
+        return MessageRepository.createMessage(PG_POOL, message).await().indefinitely();
     }
 
-    protected void sendMessage(String address, AmqpMessage... messages) {
-        AmqpClient client = null;
-        try {
-            client = AmqpClient.create(new AmqpClientOptions());
-
-            CompletableFuture<AmqpSender> senderFuture = new CompletableFuture<>();
-            client.createSender(address, x -> senderFuture.complete(x.result()));
-            AmqpSender sender = senderFuture.get(5, TimeUnit.SECONDS);
-
-            for (AmqpMessage msg : messages) {
-                CompletableFuture<Void> message = new CompletableFuture<>();
-                sender.sendWithAck(msg, a -> message.complete(a.result()));
-                message.get(5, TimeUnit.SECONDS);
-            };
-
-        } catch (Exception ex) {
-            throw new IllegalStateException("Error send message", ex);
-        } finally {
-            close(client);
-        }
+    protected Message getNextMessage(String queue) {
+        return MessageRepository.nextProcessMessage(PG_POOL, queue, new MessageMapperImpl())
+                .await().indefinitely();
     }
 
-    private void close(AmqpClient client) {
-        if (client == null) {
-            return;
-        }
-        try {
-            CompletableFuture<Void> close = new CompletableFuture<>();
-            client.close(c -> {
-                close.complete(c.result());
-            });
-            close.get(5, TimeUnit.SECONDS);
-        } catch (Exception ex) {
-            throw new IllegalStateException("Error send message", ex);
-        }
-    }
-
-    protected String loadResource(String name) {
-        try {
-            return Files.readString(
-                    Paths.get(AbstractTest.class.getResource(name).toURI()));
-        } catch (URISyntaxException | IOException ux) {
-            throw new RuntimeException(ux);
-        }
-    }
-
-    protected void waitProcessFinished(String processId, String processInstanceId) {
-
-        log.info("Wait for the process {} to finished execution guid {} ", processId, processInstanceId);
+    protected Message waitForNextMessage(String queue) {
+        final WaitMessage result = new WaitMessage();
+        log.info("Wait for the next message from '{}'", queue);
         await()
                 .atMost(5, SECONDS)
-                .untilAsserted(() -> given()
-                        .when()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .pathParam("guid", processInstanceId)
-                        .get("/v1/instance/{guid}")
-                        .prettyPeek()
-                        .then()
-                        .statusCode(Response.Status.OK.getStatusCode())
-                        .body("status", equalTo("FINISHED"))
-                );
+                .untilAsserted(() -> {
+                    result.message = getNextMessage(queue);
+                    Assertions.assertNotNull(result.message);
+                });
+        return result.message;
     }
 
-    protected String startProcess(String processId, String processVersion, Map<String, Object> body) {
-        log.info("Test {}:{}", processId, processVersion);
-        String processInstanceId = UUID.randomUUID().toString();
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("processId", processId);
-        data.put("processInstanceId", processInstanceId);
-        data.put("processVersion", processVersion);
-
-        log.info("Start the process {}", processInstanceId);
-        AmqpMessage startProcess = AmqpMessage.create()
-                .applicationProperties(JsonObject.mapFrom(data))
-                .withBody(JsonObject.mapFrom(body).toString())
-                .id(UUID.randomUUID().toString())
-                .correlationId(processInstanceId)
-                .build();
-        sendMessage(ADDRESS_START_PROCESS, startProcess);
-        return processInstanceId;
+    public static final class WaitMessage {
+        Message message;
     }
 
     protected void processServiceTask(ExecuteServiceTask execute) {
-        AmqpMessage message = receivedMessage(ADDRESS_SERVICE_TASK);
-        String tmp = message.bodyAsString();
-        log.info("Service task message {} - {}", message.applicationProperties(), tmp);
-
-        JsonObject json = message.applicationProperties();
-        JsonObject body = new JsonObject(tmp);
-
-        ServiceTaskData serviceData = new ServiceTaskData();
-        serviceData.data = Collections.unmodifiableMap(body.getMap());
-        serviceData.guid = json.getString("guid");
-        serviceData.name = json.getString("name");
-        serviceData.processId = json.getString("processId");
-        serviceData.processVersion = json.getString("processVersion");
-
-        // execute test
-        Map<String, Object> data = execute.execute(serviceData);
-        if (data != null) {
-            body.getMap().putAll(data);
+        Message message = waitForNextMessage(Queues.SERVICE_TASK_REQUEST_QUEUE);
+        TokenMessageHeader header = message.header(TokenMessageHeader.class);
+        Map<String, Object> data = execute.execute(header, message.data);
+        if (data != null && !data.isEmpty()) {
+            message.data.getMap().putAll(data);
         }
-
-        // send response message
-        AmqpMessage serviceTaskComplete = AmqpMessage.create()
-                .applicationProperties(message.applicationProperties())
-                .withBody(body.toString())
-                .id(UUID.randomUUID().toString())
-                .correlationId(message.correlationId())
-                .build();
-
-        sendMessage(ADDRESS_TOKEN_EXECUTE, serviceTaskComplete);
+        message.queue = Queues.SERVICE_TASK_RESPONSE_QUEUE;
+        Long id = sendMessage(message);
+        log.info("ResponseId: {} of messageId: {}", id, message.id);
     }
 
-    public static class ServiceTaskData {
-        public String guid;
-        public String name;
-        public String processId;
-        public String processVersion;
-        public Map<String, Object> data;
-    }
-
+//    @DockerService("p6-process")
+//    protected DockerComposeService app;
+//
+//    @BeforeEach
+//    public void init() {
+//        if (app != null) {
+//            RestAssured.port = app.getPort(8080);
+//        }
+//    }
+//
+//    protected ConnectionFactory createConnectionFactory() {
+//        String username = System.getProperty("quarkus.artemis.username");
+//        String password = System.getProperty("quarkus.artemis.password");
+//        String url = System.getProperty("quarkus.artemis.url");
+//        return new ActiveMQConnectionFactory(url, username, password);
+//    }
+//
+//    protected ProcessToken receivedMessage(String address) {
+//        return receivedMessage(address, 3000);
+//    }
+//
+//    protected ProcessToken receivedMessage(String address, long timeout) {
+//        try {
+//            ConnectionFactory cf = createConnectionFactory();
+//            try (JMSContext context = cf.createContext(Session.AUTO_ACKNOWLEDGE);) {
+//                Destination destination = context.createQueue(address);
+//                JMSConsumer consumer = context.createConsumer(destination);
+//                Message message = consumer.receive(timeout);
+//
+//                String content = message.getBody(String.class);
+//                if (content != null && !content.isBlank()) {
+//                    Jsonb jsonb = JsonbBuilder.create();
+//                    return jsonb.fromJson(content, ProcessToken.class);
+//                }
+//            }
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//            throw new IllegalStateException("Error received message", ex);
+//        }
+//        return null;
+//    }
+//
+//    protected <T> void sendMessage(String address, MessageBeforeSendListener<T> listener, T... items) {
+//        try {
+//            ConnectionFactory cf = createConnectionFactory();
+//            try (JMSContext context = cf.createContext(Session.SESSION_TRANSACTED);) {
+//                Destination destination = context.createQueue(address);
+//                JMSProducer producer = context.createProducer();
+//
+//
+//                Jsonb jsonb = JsonbBuilder.create();
+//                for (T item : items) {
+//                    Message message = createJmsMessage(context, jsonb, item);
+//                    if (listener != null) {
+//                        listener.update(message, item);
+//                    }
+//                    producer.send(destination, message);
+//                }
+//                context.commit();
+//            }
+//        } catch (Exception ex) {
+//            throw new IllegalStateException("Error received message", ex);
+//        }
+//    }
+//
+//    protected void waitProcessFinished(String processId, String processInstanceId) {
+//
+//        log.info("Wait for the process {} to finished execution guid {} ", processId, processInstanceId);
+//        await()
+//                .atMost(7, SECONDS)
+//                .untilAsserted(() -> given()
+//                        .when()
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .pathParam("guid", processInstanceId)
+//                        .get("/v1/instance/{guid}")
+//                        .prettyPeek()
+//                        .then()
+//                        .statusCode(Response.Status.OK.getStatusCode())
+//                        .body("status", equalTo("FINISHED"))
+//                );
+//    }
+//
+//    protected String startProcess(String processId, String processVersion, Map<String, Object> body) {
+//        log.info("Test {}:{}", processId, processVersion);
+//        String processInstanceId = UUID.randomUUID().toString();
+//
+//
+//        ProcessStream.StartProcessRequest request = new ProcessStream.StartProcessRequest();
+//        request.processId = processId;
+//        request.processInstanceId = processInstanceId;
+//        request.processVersion = processVersion;
+//        request.data = body;
+//
+//        log.info("Start the process {}", processInstanceId);
+//        sendMessage(ADDRESS_START_PROCESS, null, request);
+//        return processInstanceId;
+//    }
+//
+//    protected void processServiceTask(ExecuteServiceTask execute) {
+//        ProcessToken token = receivedMessage(ADDRESS_SERVICE_TASK);
+//
+//        log.info("Service task message {} ", token);
+//
+//        ServiceTaskData serviceData = new ServiceTaskData();
+//        serviceData.data = Collections.unmodifiableMap(token.getData());
+//        serviceData.guid = token.getId();
+//        serviceData.name = token.getNodeName();
+//        serviceData.processId = token.getProcessId();
+//        serviceData.processVersion = token.getProcessVersion();
+//
+//        // execute test
+//        Map<String, Object> data = execute.execute(serviceData);
+//        if (data != null) {
+//            token.getData().putAll(data);
+//        }
+//        sendMessage(ADDRESS_TOKEN_EXECUTE, this::setCorrelationId, token);
+//    }
+//
+//    public static class ServiceTaskData {
+//        public String guid;
+//        public String name;
+//        public String processId;
+//        public String processVersion;
+//        public Map<String, Object> data;
+//    }
+//
+//    protected  void setCorrelationId(Message m, ProcessToken t) {
+//        try {
+//            m.setJMSCorrelationID(t.getExecutionId());
+//        } catch (JMSException ex) {
+//            throw new IllegalStateException(ex);
+//        }
+//    }
+//
+//    public interface MessageBeforeSendListener<T> {
+//
+//        void update(Message message, T item);
+//    }
+//
     public interface ExecuteServiceTask {
 
-        Map<String, Object> execute(ServiceTaskData data);
+        Map<String, Object> execute(TokenMessageHeader header, JsonObject data);
     }
 
+    protected void startProcess(StartProcessCommandDTO cmd) {
+        given()
+                .when()
+                .contentType(APPLICATION_JSON)
+                .body(cmd)
+                .post("/command/start-process")
+                .then()
+                .statusCode(HttpResponseStatus.ACCEPTED.code());
+    }
+
+    protected ProcessInstance waitProcessFinished(String commandId) {
+        final WaitResult result = new WaitResult();
+        log.info("Wait for the process commandId '{}; to finished", commandId);
+        await()
+                .atMost(5, SECONDS)
+                .untilAsserted(() -> {
+                    Response response = given()
+                            .when()
+                            .contentType(APPLICATION_JSON)
+                            .pathParam("commandId", commandId)
+                            .get("/processes/command/{commandId}");
+
+                            response.then().statusCode(HttpResponseStatus.OK.code())
+                                    .body("status", equalTo("FINISHED"));
+
+                    result.processInstance = response.as(ProcessInstance.class);
+                });
+        return result.processInstance;
+    }
+
+    public static final class WaitResult {
+        ProcessInstance processInstance;
+    }
 }

@@ -1,55 +1,32 @@
 package org.lorislab.p6.process.rs;
 
-import org.lorislab.p6.process.dao.ProcessInstanceContentDAO;
-import org.lorislab.p6.process.dao.ProcessInstanceDAO;
-import org.lorislab.p6.process.dao.model.ProcessInstance;
-import org.lorislab.p6.process.dao.model.ProcessInstanceContent;
+import io.quarkus.vertx.web.Route;
+import io.quarkus.vertx.web.RouteBase;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.RoutingContext;
+import org.lorislab.p6.process.model.ProcessInstanceRepository;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.List;
 
-import static org.lorislab.p6.process.stream.DataUtil.deserialize;
+import static org.lorislab.p6.process.rs.Application.*;
 
-@Path("instance")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+@ApplicationScoped
+@RouteBase(path = "processes", produces = APPLICATION_JSON)
 public class ProcessInstanceRestController {
 
     @Inject
-    ProcessInstanceDAO dao;
+    ProcessInstanceRepository processInstanceRepository;
 
-    @Inject
-    ProcessInstanceContentDAO contentDAO;
-
-    @GET
-    public Response get() {
-        List<ProcessInstance> tmp = dao.find(null, null);
-        if (tmp == null || tmp.isEmpty()) {
-            return Response.noContent().build();
-        }
-        return Response.ok(tmp).build();
+    @Route(path = "instance/:id", methods = HttpMethod.GET)
+    public void get(RoutingContext rc) {
+        String id = rc.pathParam("id");
+        processInstanceRepository.findById(id).subscribe().with(ok(rc), error(rc));
     }
 
-    @GET
-    @Path("{guid}")
-    public Response get(@PathParam("guid") String guid) {
-        ProcessInstance tmp = dao.findBy(guid);
-        if (tmp == null) {
-            return Response.noContent().build();
-        }
-        return Response.ok(tmp).build();
-    }
-
-    @GET
-    @Path("{guid}/parameters")
-    public Response getParameters(@PathParam("guid") String guid) {
-        ProcessInstanceContent content = contentDAO.findBy(guid);
-        if (content == null || content.getData() == null) {
-            return Response.noContent().build();
-        }
-        return Response.ok(deserialize(content.getData())).build();
+    @Route(path = "command/:id", methods = HttpMethod.GET)
+    public void getByCmdId(RoutingContext rc) {
+        String commandId = rc.pathParam("id");
+        processInstanceRepository.findByCmdId(commandId).subscribe().with(ok(rc), error(rc));
     }
 }

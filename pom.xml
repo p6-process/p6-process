@@ -40,9 +40,8 @@
     </developers>
 
     <properties>
-        <testcontainers.version>1.12.4</testcontainers.version>
-        <quarkus.version>1.2.0.Final</quarkus.version>
-        <surefire-plugin.version>2.22.1</surefire-plugin.version>
+        <quarkus.version>1.10.5.Final</quarkus.version>
+        <surefire-plugin.version>3.0.0-M4</surefire-plugin.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -62,28 +61,36 @@
     
     <dependencies>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.10</version>
-            <scope>provided</scope>
+            <groupId>org.lorislab.p6</groupId>
+            <artifactId>p6-process-model</artifactId>
+            <version>0.2.2</version>
+        </dependency>
+
+        <!-- LORISLAB -->
+        <dependency>
+            <groupId>org.lorislab.quarkus</groupId>
+            <artifactId>barn-pg-client</artifactId>
+            <version>0.3.0</version>
         </dependency>
         <dependency>
             <groupId>org.lorislab.quarkus</groupId>
-            <artifactId>jel-quarkus-jpa</artifactId>
-            <version>0.12.0</version>
-        </dependency>        
-        <dependency>
-            <groupId>org.lorislab.quarkus</groupId>
-            <artifactId>jel-quarkus-log</artifactId>
-            <version>0.12.0</version>
-        </dependency>        
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-context-propagation</artifactId>
+            <artifactId>log-cdi</artifactId>
+            <version>0.4.0</version>
         </dependency>
         <dependency>
+            <groupId>org.lorislab.quarkus</groupId>
+            <artifactId>log-mutiny</artifactId>
+            <version>0.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.lorislab.quarkus</groupId>
+            <artifactId>log-vertx-web</artifactId>
+            <version>0.4.0</version>
+        </dependency>
+        <!-- QUARKUS -->
+        <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-reactive-messaging-amqp</artifactId>
+            <artifactId>quarkus-arc</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -91,39 +98,26 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-hibernate-orm</artifactId>
+            <artifactId>quarkus-vertx-web</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-jdbc-postgresql</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-flyway</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-infinispan-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy-jackson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-openapi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-jpamodelgen</artifactId>
-            <version>5.4.6.Final</version>
-            <scope>provided</scope>
+            <artifactId>quarkus-reactive-pg-client</artifactId>
         </dependency>
 
+        <!-- BUILD -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.10</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.lorislab.vertx</groupId>
+            <artifactId>vertx-sql-mapper</artifactId>
+            <version>0.4.0</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- TEST -->
         <dependency>
@@ -137,38 +131,20 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.lorislab.jel</groupId>
-            <artifactId>jel-testcontainers</artifactId>
-            <version>0.9.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${testcontainers.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>${testcontainers.version}</version>
+            <groupId>org.lorislab.quarkus</groupId>
+            <artifactId>quarkus-testcontainers</artifactId>
+            <version>0.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
-            <version>4.0.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.lorislab.maven</groupId>
-                <artifactId>semver-release-maven-plugin</artifactId>
-                <version>0.4.0</version>
-            </plugin>
             <plugin>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-maven-plugin</artifactId>
@@ -194,68 +170,25 @@
                 <version>${surefire-plugin.version}</version>
                 <configuration>
                     <systemProperties>
-                        <com.arjuna.ats.arjuna.objectstore.objectStoreDir>${project.build.directory}/jta
-                        </com.arjuna.ats.arjuna.objectstore.objectStoreDir>
-                        <ObjectStoreEnvironmentBean.objectStoreDir>${project.build.directory}/jta
-                        </ObjectStoreEnvironmentBean.objectStoreDir>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                     </systemProperties>
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-bootstrap-maven-plugin</artifactId>
+                <version>${quarkus.version}</version>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>native</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                        <phase>integration-test</phase>
-                    </execution>
-                </executions>
                 <configuration>
                     <systemPropertyVariables>
                         <java.util.logging.SimpleFormatter.format>%1$tF %1$tH:%1$tM:%1$tS,%1$tL %4$-5s [%3$s] %5$s %n
                         </java.util.logging.SimpleFormatter.format>
-                        <test.integration>true</test.integration>
                     </systemPropertyVariables>
                 </configuration>
-            </plugin>            
-            <plugin>
-                <groupId>org.lorislab.maven</groupId>
-                <artifactId>mp-rest-client-maven-plugin</artifactId>
-                <version>0.4.0</version>
-                <executions>
-                    <execution>
-                        <id>p6-model</id>
-                        <goals>
-                            <goal>codegen</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>src/main/resources/models/p6-flow/openapi.yaml</inputSpec>
-                            <output>${project.build.directory}/generated-sources/models</output>
-                            <modelPackage>org.lorislab.p6.process.flow.model</modelPackage>
-                            <generateSupportingFiles>false</generateSupportingFiles>
-                            <apiInterfaceDoc>false</apiInterfaceDoc>
-                            <generateApis>false</generateApis>
-                            <fieldGen>PUBLIC</fieldGen>
-                            <jsonLib>JACKSON</jsonLib>
-                            <additionalProperties>
-                                <additionalProperty>useBeanValidation=false</additionalProperty>
-                            </additionalProperties>
-                            <modelAnnotations>
-                                <modelAnnotation>lombok.ToString(callSuper=true)</modelAnnotation>
-                                <modelAnnotation>io.quarkus.runtime.annotations.RegisterForReflection</modelAnnotation>
-                            </modelAnnotations>
-                            <configOptions>
-                                <sourceFolder>p6-process</sourceFolder>
-                            </configOptions>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
@@ -263,6 +196,11 @@
     <profiles>
         <profile>
             <id>native</id>
+            <activation>
+                <property>
+                    <name>native</name>
+                </property>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
@@ -271,42 +209,12 @@
                         <version>${quarkus.version}</version>
                         <executions>
                             <execution>
-                                <id>native</id>
                                 <goals>
                                     <goal>native-image</goal>
                                 </goals>
                                 <configuration>
-                                    <enableHttpUrlHandler>true</enableHttpUrlHandler>
+                                    <additionalBuildArgs>-H:+RemoveSaturatedTypeFlows</additionalBuildArgs>
                                 </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>ddl</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>de.jpdigital</groupId>
-                        <artifactId>hibernate54-ddl-maven-plugin</artifactId>
-                        <version>2.3.0</version>
-                        <configuration>
-                            <dialects>
-                                <param>postgresql9</param>
-                            </dialects>
-                            <packages>
-                                <param>org.lorislab.p6.data</param>
-                            </packages>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>gen-ddl</goal>
-                                </goals>
-                                <phase>process-classes</phase>
                             </execution>
                         </executions>
                     </plugin>

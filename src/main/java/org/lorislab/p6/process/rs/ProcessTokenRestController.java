@@ -1,38 +1,28 @@
 package org.lorislab.p6.process.rs;
 
-import org.lorislab.p6.process.dao.ProcessTokenDAO;
-import org.lorislab.p6.process.dao.model.ProcessToken;
+import io.quarkus.vertx.web.Route;
+import io.quarkus.vertx.web.RouteBase;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.RoutingContext;
+import org.lorislab.p6.process.model.ProcessTokenRepository;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.List;
 
-@Path("token")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+import static org.lorislab.p6.process.rs.Application.*;
+
+
+@ApplicationScoped
+@RouteBase(path = "tokens", consumes = APPLICATION_JSON)
 public class ProcessTokenRestController {
 
     @Inject
-    ProcessTokenDAO dao;
+    ProcessTokenRepository processTokenRepository;
 
-    @GET
-    public Response get() {
-        List<ProcessToken> tmp = dao.find(null, null);
-        if (tmp == null || tmp.isEmpty()) {
-            return Response.noContent().build();
-        }
-        return Response.ok(tmp).build();
+    @Route(path = ":id", methods = HttpMethod.GET)
+    public void get(RoutingContext rc) {
+        String id = rc.pathParam("id");
+        processTokenRepository.findById(id).subscribe().with(ok(rc), error(rc));
     }
 
-    @GET
-    @Path("{guid}")
-    public Response get(@PathParam("guid") String guid) {
-        ProcessToken tmp = dao.findBy(guid);
-        if (tmp == null) {
-            return Response.noContent().build();
-        }
-        return Response.ok(tmp).build();
-    }
 }
