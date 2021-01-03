@@ -7,7 +7,7 @@ on:
 env:
   SAMO_VER: 2.0.0
   SAMO_DOCKER_REGISTRY: ghcr.io
-  SAMO_DOCKER_REPO_PREFIX: lorislab
+  SAMO_DOCKER_REPO_PREFIX: lorislab/
 jobs:
   build:
     runs-on: ubuntu-latest

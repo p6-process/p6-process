@@ -28,8 +28,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      QUARKUS_GRPC_CLIENTS_ETCD_PORT: 2379
-      QUARKUS_GRPC_CLIENTS_ETCD_HOST: p6-etcd
+      QUARKUS_DATASOURCE_REACTIVE_URL: postgresql://p6-db:5432/p6?sslmode=disable
     labels:
       - "test.unit=false"
       - "test.priority=101"
