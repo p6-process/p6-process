@@ -42,4 +42,4 @@ jobs:
       - name: Publish docker
         run: |
           echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u USERNAME --password-stdin
-          samo project docker push --docker-push-tags latest
+          samo project docker push --version latest
