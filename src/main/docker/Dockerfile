@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.2
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3
 WORKDIR /work/
 COPY target/*-runner /work/application
 RUN mkdir -p /work/p6 && chmod -R 775 /work

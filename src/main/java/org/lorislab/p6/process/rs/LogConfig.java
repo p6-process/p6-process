@@ -3,11 +3,11 @@ package org.lorislab.p6.process.rs;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.mutiny.sqlclient.Row;
 import io.vertx.mutiny.sqlclient.SqlClient;
-import org.lorislab.quarkus.log.LogParamValue;
+import org.lorislab.quarkus.log.cdi.LogParamValue;
 
 import javax.enterprise.inject.Produces;
 
-import static org.lorislab.quarkus.log.LogParamValue.assignable;
+import static org.lorislab.quarkus.log.cdi.LogParamValue.assignable;
 
 public class LogConfig {
 

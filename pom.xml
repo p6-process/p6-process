@@ -40,7 +40,7 @@
     </developers>
 
     <properties>
-        <quarkus.version>1.10.2.Final</quarkus.version>
+        <quarkus.version>1.10.5.Final</quarkus.version>
         <surefire-plugin.version>3.0.0-M4</surefire-plugin.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
@@ -70,22 +70,22 @@
         <dependency>
             <groupId>org.lorislab.quarkus</groupId>
             <artifactId>barn-pg-client</artifactId>
-            <version>0.3.0-SNAPSHOT</version>
+            <version>0.3.0</version>
         </dependency>
         <dependency>
             <groupId>org.lorislab.quarkus</groupId>
             <artifactId>log-cdi</artifactId>
-            <version>0.4.0-SNAPSHOT</version>
+            <version>0.4.0</version>
         </dependency>
         <dependency>
             <groupId>org.lorislab.quarkus</groupId>
             <artifactId>log-mutiny</artifactId>
-            <version>0.4.0-SNAPSHOT</version>
+            <version>0.4.0</version>
         </dependency>
         <dependency>
             <groupId>org.lorislab.quarkus</groupId>
             <artifactId>log-vertx-web</artifactId>
-            <version>0.4.0-SNAPSHOT</version>
+            <version>0.4.0</version>
         </dependency>
         <!-- QUARKUS -->
         <dependency>
@@ -115,7 +115,7 @@
         <dependency>
             <groupId>org.lorislab.vertx</groupId>
             <artifactId>vertx-sql-mapper</artifactId>
-            <version>0.2.0</version>
+            <version>0.4.0</version>
             <scope>provided</scope>
         </dependency>
 
@@ -133,7 +133,7 @@
         <dependency>
             <groupId>org.lorislab.quarkus</groupId>
             <artifactId>quarkus-testcontainers</artifactId>
-            <version>0.11.0</version>
+            <version>0.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
